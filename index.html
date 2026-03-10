@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#1a305c"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Planning Power"/>
+  <meta name="description" content="Planning Power — Metallization and Slitting Production Planning SaaS"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <title>Planning Power</title>
+
+  <link rel="manifest" href="./manifest.json"/>
+  <link rel="icon"             type="image/png" sizes="32x32"   href="./icons/icon-32.png"/>
+  <link rel="icon"             type="image/png" sizes="16x16"   href="./icons/icon-16.png"/>
+  <link rel="apple-touch-icon" type="image/png" sizes="192x192" href="./icons/icon-192.png"/>
+  <link rel="apple-touch-icon" type="image/png" sizes="152x152" href="./icons/icon-152.png"/>
+
+  <!--
+  =============================================================
+    FIREBASE CONFIG  — paste your project keys here
+    Get from: Firebase Console > Project Settings > Web App
+    Leave empty "" to run in local Demo Mode
+  =============================================================
+  -->
+  <script>
+    window.PP_FIREBASE_CONFIG = {
+      apiKey:            "AIzaSyB-4-BZ50PTBPbbNL--rW7nJtEDnYE708g",
+      authDomain:        "planning-power.firebaseapp.com",
+      projectId:         "planning-power",
+      storageBucket:     "planning-power.firebasestorage.app",
+      messagingSenderId: "316350796829",
+      appId:             "1:316350796829:web:92b22e0447ffe7320e62f4",
+    };
+  </script>
+
+  <!-- Firebase SDK loaded only when config is filled in -->
+  <script>
+    (function(){
+      var cfg = window.PP_FIREBASE_CONFIG;
+      if (!cfg || !cfg.projectId) {
+        console.info('%cPlanning Power: Demo Mode — add Firebase config for live sync','color:#f59e0b;font-weight:bold');
+        return;
+      }
+      function load(src, cb){ var s=document.createElement('script'); s.src=src; s.onload=cb; document.head.appendChild(s); }
+      load('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js', function(){
+        load('https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js', function(){
+          console.info('%cFirebase connected','color:#22c55e;font-weight:bold');
+        });
+      });
+    })();
+  </script>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:#0e1f40;font-family:system-ui,sans-serif}
+    #root{height:100%}
+
+    /* ── Splash ───────────────────────────────────────────── */
+    #pp-splash{
+      position:fixed;inset:0;z-index:9999;
+      background:linear-gradient(150deg,#1a305c 0%,#0c1a35 55%,#0f2040 100%);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      transition:opacity .55s ease;overflow:hidden;
+    }
+    #pp-splash.pp-fade{opacity:0;pointer-events:none}
+    .pp-ring{
+      position:absolute;border-radius:50%;top:50%;left:50%;
+      transform:translate(-50%,-50%);pointer-events:none;
+      border:1px solid rgba(251,191,36,.06);
+    }
+    .pp-icon-wrap{
+      animation:ppIconAnim 3s ease-in-out infinite;
+      filter:drop-shadow(0 0 20px rgba(251,191,36,.55));
+    }
+    @keyframes ppIconAnim{
+      0%,100%{filter:drop-shadow(0 0 14px rgba(251,191,36,.4));transform:translateY(0) scale(1)}
+      50%{filter:drop-shadow(0 0 38px rgba(251,191,36,.9));transform:translateY(-6px) scale(1.04)}
+    }
+    .pp-bar-wrap{width:180px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:26px;overflow:hidden}
+    .pp-bar{height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,#f59e0b,#fbbf24,#fde047);animation:ppBarLoad 2.2s ease forwards}
+    @keyframes ppBarLoad{0%{width:0}50%{width:70%}90%{width:95%}100%{width:100%}}
+
+    /* ── PWA Install Banner ────────────────────────────────── */
+    #pp-install-banner{
+      display:none;
+      position:fixed;bottom:24px;left:50%;
+      transform:translateX(-50%) translateY(120px);
+      z-index:8888;
+      background:linear-gradient(135deg,#1a305c,#0c1628);
+      border:1.5px solid rgba(251,191,36,.4);
+      border-radius:20px;
+      padding:14px 16px;
+      box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 0 1px rgba(251,191,36,.1);
+      width:min(400px,calc(100vw - 32px));
+    }
+    #pp-install-banner.pp-show{
+      display:block;
+      animation:ppBannerSlide .5s cubic-bezier(.34,1.56,.64,1) forwards;
+    }
+    @keyframes ppBannerSlide{
+      from{transform:translateX(-50%) translateY(120px);opacity:0}
+      to{transform:translateX(-50%) translateY(0);opacity:1}
+    }
+    .pp-banner-row{display:flex;align-items:center;gap:14px}
+    .pp-banner-icon{
+      width:54px;height:54px;border-radius:14px;overflow:hidden;flex-shrink:0;
+      border:1.5px solid rgba(251,191,36,.3);
+    }
+    .pp-banner-icon img{width:100%;height:100%;display:block}
+    .pp-banner-text{flex:1;min-width:0}
+    .pp-banner-title{font-size:14px;font-weight:800;color:#fff;margin-bottom:3px;font-family:system-ui}
+    .pp-banner-sub{font-size:11.5px;color:rgba(255,255,255,.48);line-height:1.45;font-family:system-ui}
+    .pp-banner-btns{display:flex;gap:8px;flex-shrink:0}
+
+    .pp-install-btn{
+      position:relative;
+      background:linear-gradient(135deg,#f59e0b,#fbbf24);
+      color:#1c0e00;border:none;border-radius:11px;
+      padding:10px 18px;font-size:13px;font-weight:800;
+      cursor:pointer;white-space:nowrap;font-family:system-ui;
+      box-shadow:0 4px 16px rgba(245,158,11,.45);
+      transition:all .15s;
+    }
+    .pp-install-btn:hover{background:#fde047;box-shadow:0 6px 22px rgba(245,158,11,.6);transform:translateY(-1px)}
+    .pp-install-btn:active{transform:translateY(0);box-shadow:0 2px 8px rgba(245,158,11,.4)}
+    /* Pulse ring */
+    .pp-install-btn::after{
+      content:'';position:absolute;inset:-4px;border-radius:15px;
+      border:2px solid rgba(251,191,36,.5);
+      animation:ppPulse 2s ease-in-out infinite;
+    }
+    @keyframes ppPulse{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}
+
+    .pp-dismiss-btn{
+      background:transparent;border:1px solid rgba(255,255,255,.14);
+      border-radius:9px;padding:9px 11px;color:rgba(255,255,255,.4);
+      font-size:14px;cursor:pointer;font-family:system-ui;line-height:1;
+      transition:all .15s;
+    }
+    .pp-dismiss-btn:hover{border-color:rgba(255,255,255,.28);color:rgba(255,255,255,.65)}
+
+    /* ── iOS tip ────────────────────────────────────────────── */
+    #pp-ios-tip{
+      display:none;position:fixed;bottom:24px;left:50%;
+      transform:translateX(-50%);z-index:8888;
+      background:linear-gradient(135deg,#1a305c,#0c1628);
+      border:1.5px solid rgba(251,191,36,.3);border-radius:16px;
+      padding:14px 20px 14px 16px;
+      width:min(360px,calc(100vw - 32px));
+      box-shadow:0 12px 36px rgba(0,0,0,.5);
+    }
+    #pp-ios-tip.pp-show{display:block;animation:ppBannerSlide .4s ease forwards}
+    .pp-ios-text{font-size:13px;color:rgba(255,255,255,.65);line-height:1.6;font-family:system-ui;text-align:center}
+    .pp-ios-text strong{color:#fbbf24}
+    .pp-ios-close{
+      position:absolute;top:10px;right:12px;
+      background:none;border:none;color:rgba(255,255,255,.35);
+      font-size:16px;cursor:pointer;line-height:1;padding:4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SPLASH SCREEN -->
+  <div id="pp-splash">
+    <div class="pp-ring" style="width:300px;height:300px"></div>
+    <div class="pp-ring" style="width:480px;height:480px;opacity:.5"></div>
+    <div class="pp-ring" style="width:660px;height:660px;opacity:.25"></div>
+
+    <!-- PP Icon inline SVG -->
+    <div class="pp-icon-wrap">
+      <svg width="100" height="100" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="s_bg" cx="45%" cy="38%" r="75%">
+            <stop offset="0%" stop-color="#1c3870"/>
+            <stop offset="50%" stop-color="#0e1f45"/>
+            <stop offset="100%" stop-color="#060c1e"/>
+          </radialGradient>
+          <linearGradient id="s_g" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#fff5a0"/>
+            <stop offset="30%" stop-color="#fde047"/>
+            <stop offset="65%" stop-color="#f59e0b"/>
+            <stop offset="100%" stop-color="#92400e"/>
+          </linearGradient>
+          <filter id="s_glow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2.5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="s_bloom" x="-15%" y="-15%" width="130%" height="130%">
+            <feGaussianBlur stdDeviation="5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="s_star" x="-200%" y="-200%" width="500%" height="500%">
+            <feGaussianBlur stdDeviation="4" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="s_boltglow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="3" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="s_slot" cx="50%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#162448"/>
+            <stop offset="100%" stop-color="#060c22"/>
+          </radialGradient>
+          <radialGradient id="s_gloss" cx="30%" cy="20%" r="65%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.10)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </radialGradient>
+          <clipPath id="s_clip"><circle cx="100" cy="100" r="93"/></clipPath>
+        </defs>
+
+        <!-- Disc -->
+        <circle cx="100" cy="100" r="94" fill="url(#s_bg)"/>
+        <!-- Gloss sheen top-left -->
+        <circle cx="100" cy="100" r="90" fill="url(#s_gloss)"/>
+
+        <!-- Ring: bloom layers -->
+        <circle cx="100" cy="100" r="91" fill="none" stroke="#f59e0b" stroke-width="14" opacity="0.12" filter="url(#s_bloom)"/>
+        <circle cx="100" cy="100" r="91" fill="none" stroke="#f59e0b" stroke-width="8"  opacity="0.32"/>
+        <circle cx="100" cy="100" r="91" fill="none" stroke="#f59e0b" stroke-width="5"  opacity="0.62"/>
+        <!-- Crisp gold ring -->
+        <circle cx="100" cy="100" r="90" fill="none" stroke="#fde047" stroke-width="3.2" opacity="0.92"/>
+        <!-- Bright shimmer on ring -->
+        <circle cx="100" cy="100" r="89" fill="none" stroke="#fffab0" stroke-width="1.2" opacity="0.55"/>
+        <!-- Inner dark shadow -->
+        <circle cx="100" cy="100" r="86" fill="none" stroke="rgba(0,0,0,0.45)" stroke-width="4"/>
+
+        <g clip-path="url(#s_clip)">
+          <!-- LEFT BRACKET ARC: from starburst (100,99) → outer-bottom of left slot -->
+          <!-- Bloom glow -->
+          <path d="M100 99 C72 80 48 74 44 130" stroke="#f59e0b" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.25" filter="url(#s_bloom)"/>
+          <!-- Main arc -->
+          <path d="M100 99 C72 80 48 74 44 130" stroke="url(#s_g)" stroke-width="5.5" stroke-linecap="round" fill="none" filter="url(#s_glow)"/>
+          <!-- Gloss highlight -->
+          <path d="M100 99 C72 80 48 74 44 130" stroke="rgba(255,250,170,0.65)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+
+          <!-- RIGHT BRACKET ARC (mirror) -->
+          <path d="M100 99 C128 80 152 74 156 130" stroke="#f59e0b" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.25" filter="url(#s_bloom)"/>
+          <path d="M100 99 C128 80 152 74 156 130" stroke="url(#s_g)" stroke-width="5.5" stroke-linecap="round" fill="none" filter="url(#s_glow)"/>
+          <path d="M100 99 C128 80 152 74 156 130" stroke="rgba(255,250,170,0.65)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+
+          <!-- LEFT SLOT RECTANGLE -->
+          <!-- Glow aura -->
+          <rect x="46" y="74" width="40" height="55" rx="5" fill="none" stroke="#f59e0b" stroke-width="10" opacity="0.22" filter="url(#s_bloom)"/>
+          <!-- Dark fill -->
+          <rect x="46" y="74" width="40" height="55" rx="5" fill="url(#s_slot)"/>
+          <!-- Gold bezel -->
+          <rect x="46" y="74" width="40" height="55" rx="5" fill="none" stroke="#f59e0b"   stroke-width="6.5" opacity="0.35"/>
+          <rect x="46" y="74" width="40" height="55" rx="5" fill="none" stroke="#fbbf24"   stroke-width="4.5"/>
+          <rect x="46" y="74" width="40" height="55" rx="5" fill="none" stroke="#fde047"   stroke-width="2"   opacity="0.8"/>
+          <rect x="46" y="74" width="40" height="55" rx="5" fill="none" stroke="#fffab0"   stroke-width="1"   opacity="0.5"/>
+          <!-- Inner gloss strip -->
+          <rect x="51" y="79" width="30" height="12" rx="2" fill="rgba(255,255,200,0.12)"/>
+
+          <!-- RIGHT SLOT RECTANGLE (mirror) -->
+          <rect x="114" y="74" width="40" height="55" rx="5" fill="none" stroke="#f59e0b" stroke-width="10" opacity="0.22" filter="url(#s_bloom)"/>
+          <rect x="114" y="74" width="40" height="55" rx="5" fill="url(#s_slot)"/>
+          <rect x="114" y="74" width="40" height="55" rx="5" fill="none" stroke="#f59e0b" stroke-width="6.5" opacity="0.35"/>
+          <rect x="114" y="74" width="40" height="55" rx="5" fill="none" stroke="#fbbf24" stroke-width="4.5"/>
+          <rect x="114" y="74" width="40" height="55" rx="5" fill="none" stroke="#fde047" stroke-width="2"   opacity="0.8"/>
+          <rect x="114" y="74" width="40" height="55" rx="5" fill="none" stroke="#fffab0" stroke-width="1"   opacity="0.5"/>
+          <rect x="119" y="79" width="30" height="12" rx="2" fill="rgba(255,255,200,0.12)"/>
+
+          <!-- LEFT LIGHTNING BOLT -->
+          <path d="M58 133 L76 133 L69 153 L79 153 L62 175 L67 156 L57 156 Z" fill="#f59e0b" opacity="0.5" filter="url(#s_boltglow)"/>
+          <path d="M58 133 L76 133 L69 153 L79 153 L62 175 L67 156 L57 156 Z" fill="url(#s_g)"/>
+          <path d="M58 133 L76 133 L69 153 L79 153 L62 175 L67 156 L57 156 Z" fill="none" stroke="#fffab0" stroke-width="1" opacity="0.55"/>
+
+          <!-- RIGHT LIGHTNING BOLT (mirror around x=100) -->
+          <path d="M142 133 L124 133 L131 153 L121 153 L138 175 L133 156 L143 156 Z" fill="#f59e0b" opacity="0.5" filter="url(#s_boltglow)"/>
+          <path d="M142 133 L124 133 L131 153 L121 153 L138 175 L133 156 L143 156 Z" fill="url(#s_g)"/>
+          <path d="M142 133 L124 133 L131 153 L121 153 L138 175 L133 156 L143 156 Z" fill="none" stroke="#fffab0" stroke-width="1" opacity="0.55"/>
+
+          <!-- CENTER STARBURST -->
+          <!-- Tight glow -->
+          <circle cx="100" cy="99" r="8" fill="white" opacity="0.15" filter="url(#s_star)"/>
+          <!-- 4-point sharp diamond star -->
+          <path d="M100 86 L102 97 L113 99 L102 101 L100 112 L98 101 L87 99 L98 97 Z" fill="white" opacity="0.98"/>
+          <!-- H lens flare -->
+          <line x1="87" y1="99" x2="48"  y2="99" stroke="white" stroke-width="1.8" opacity="0.55" stroke-linecap="round"/>
+          <line x1="113" y1="99" x2="152" y2="99" stroke="white" stroke-width="1.8" opacity="0.55" stroke-linecap="round"/>
+          <!-- V lens flare -->
+          <line x1="100" y1="86" x2="100" y2="72" stroke="white" stroke-width="1.4" opacity="0.45" stroke-linecap="round"/>
+          <line x1="100" y1="112" x2="100" y2="126" stroke="white" stroke-width="1.4" opacity="0.45" stroke-linecap="round"/>
+          <!-- Hot core -->
+          <circle cx="100" cy="99" r="4" fill="white"/>
+        </g>
+      </svg>
+    </div>
+
+    <div style="margin-top:20px;font-family:system-ui,sans-serif;font-weight:800;font-size:24px;color:#fff;letter-spacing:.6px">PLANNING POWER</div>
+    <div style="margin-top:5px;font-size:11px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase">Production Planning SaaS</div>
+    <div class="pp-bar-wrap"><div class="pp-bar"></div></div>
+    <div style="margin-top:14px;font-size:11px;color:rgba(255,255,255,.18)">v3.0 &nbsp;·&nbsp; Metallization &amp; Slitting</div>
+  </div>
+
+  <!-- PWA INSTALL BANNER (Android / Chrome / Edge) -->
+  <div id="pp-install-banner" role="dialog" aria-label="Install Planning Power">
+    <div class="pp-banner-row">
+      <div class="pp-banner-icon">
+        <img src="./icons/icon-192.png" alt="PP icon" loading="lazy"/>
+      </div>
+      <div class="pp-banner-text">
+        <div class="pp-banner-title">Install Planning Power</div>
+        <div class="pp-banner-sub">Offline access &amp; faster launch — works without internet</div>
+      </div>
+      <div class="pp-banner-btns">
+        <button class="pp-install-btn" id="pp-install-btn">Install</button>
+        <button class="pp-dismiss-btn" id="pp-dismiss-btn">&#x2715;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- iOS INSTALL TIP -->
+  <div id="pp-ios-tip" role="dialog">
+    <button class="pp-ios-close" id="pp-ios-close">&#x2715;</button>
+    <div class="pp-ios-text">
+      &#x1F4F2; Install on iPhone / iPad:<br/>
+      Tap <strong>Share &#x2B71;</strong> then <strong>"Add to Home Screen"</strong>
+    </div>
+  </div>
+
+  <div id="root"></div>
+
+  <script type="text/babel" src="./PlanningPower.jsx" data-presets="react"></script>
+
+  <script>
+    // Mount React
+    (function tryMount(){
+      if(typeof React==='undefined'||typeof ReactDOM==='undefined'||typeof XLSX==='undefined')
+        return setTimeout(tryMount,150);
+      try{
+        var c=document.getElementById('root');
+        if(!c._pp){
+          c._pp=true;
+          ReactDOM.createRoot(c);
+          setTimeout(function(){
+            var s=document.getElementById('pp-splash');
+            if(s){s.classList.add('pp-fade');setTimeout(function(){s.remove()},600)}
+          },1800);
+        }
+      }catch(e){console.error(e)}
+    })();
+
+    // PWA install
+    var _prompt=null;
+    var banner=document.getElementById('pp-install-banner');
+    var installBtn=document.getElementById('pp-install-btn');
+    var dismissBtn=document.getElementById('pp-dismiss-btn');
+    var iosTip=document.getElementById('pp-ios-tip');
+    var iosClose=document.getElementById('pp-ios-close');
+    var isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+
+    window.addEventListener('beforeinstallprompt',function(e){
+      e.preventDefault(); _prompt=e;
+      if(!isStandalone&&!sessionStorage.getItem('pp-dismissed'))
+        setTimeout(function(){banner.classList.add('pp-show')},4500);
+    });
+
+    installBtn&&installBtn.addEventListener('click',function(){
+      if(!_prompt)return;
+      banner.classList.remove('pp-show');
+      _prompt.prompt();
+      _prompt.userChoice.then(function(){_prompt=null});
+    });
+
+    dismissBtn&&dismissBtn.addEventListener('click',function(){
+      banner.classList.remove('pp-show');
+      sessionStorage.setItem('pp-dismissed','1');
+    });
+
+    // iOS tip
+    var isIos=/iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+    if(isIos&&!navigator.standalone&&!sessionStorage.getItem('pp-ios-dismissed'))
+      setTimeout(function(){iosTip.classList.add('pp-show')},5500);
+
+    iosClose&&iosClose.addEventListener('click',function(){
+      iosTip.classList.remove('pp-show');
+      sessionStorage.setItem('pp-ios-dismissed','1');
+    });
+
+    window.addEventListener('appinstalled',function(){
+      banner.classList.remove('pp-show');_prompt=null;
+      console.log('%cPlanning Power installed as PWA','color:#22c55e;font-weight:bold');
+    });
+
+    // Service worker
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',function(){
+        navigator.serviceWorker.register('./sw.js')
+          .then(function(){console.log('%cSW registered','color:#22c55e')})
+          .catch(function(e){console.warn('SW failed:',e)});
+      });
+    }
+  </script>
+</body>
+</html>
