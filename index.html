@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0a66c2">
+<title>FPJob — Flexible Packaging Network</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="FPJob">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+  const fbConfig = {
+    apiKey:"AIzaSyDExample_REPLACE",
+    authDomain:"fpjob-4e4e1.firebaseapp.com",
+    databaseURL:"https://fpjob-4e4e1-default-rtdb.firebaseio.com",
+    projectId:"fpjob-4e4e1",
+    storageBucket:"fpjob-4e4e1.firebasestorage.app",
+    messagingSenderId:"000000000",
+    appId:"1:000:web:000"
+  };
+  try{firebase.initializeApp(fbConfig);window.db=firebase.database();window.fbOK=true;}catch(e){window.fbOK=false;}
+</script>
+
+<style>
+:root{
+  --pri:#0a66c2;--pri-h:#004182;--pri-l:#70b5f9;--pri-bg:#e8f3ff;
+  --bg:#f4f2ee;--white:#fff;--card:#fff;--card-hover:#f8f8f8;
+  --text:#000;--text2:#333;--text3:#666;--text4:#999;--text5:#b0b0b0;
+  --border:#e8e8e8;--border2:#d0d0d0;
+  --green:#057642;--green-bg:#e2f5ea;
+  --orange:#b24020;--orange-bg:#fce8e0;
+  --red:#cc1016;--red-bg:#fce4e4;
+  --r:12px;--r2:16px;--r3:24px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow2:0 4px 12px rgba(0,0,0,.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Source Sans 3',system-ui,sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;min-height:100vh;overflow-x:hidden;}
+input,select,textarea,button{font-family:inherit;}
+.hide{display:none!important;}
+
+/* ═══ SCREENS ═══ */
+.screen{display:none;min-height:100vh;}
+.screen.active{display:block;}
+
+/* ═══ LOGIN/REGISTER ═══ */
+.auth-screen{background:linear-gradient(180deg,#0a66c2 0%,#004182 100%);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+.auth-logo{width:100px;height:100px;border-radius:24px;overflow:hidden;margin-bottom:20px;box-shadow:0 8px 32px rgba(0,0,0,.3);background:#c1440e;display:flex;align-items:center;justify-content:center;}
+.auth-logo img{width:100%;height:100%;object-fit:contain;display:block;}
+.auth-brand{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;color:#fff;margin-bottom:4px;}
+.auth-brand span{color:var(--pri-l);}
+.auth-sub{font-size:14px;color:rgba(255,255,255,.7);text-align:center;margin-bottom:28px;line-height:1.5;}
+.auth-card{background:#fff;border-radius:var(--r2);padding:28px 22px;width:100%;max-width:360px;box-shadow:var(--shadow2);}
+.auth-title{font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.auth-desc{font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.5;}
+.field{margin-bottom:16px;}
+.field-label{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:block;}
+.field-input{width:100%;padding:14px 16px;background:var(--bg);border:2px solid var(--border);border-radius:var(--r);color:var(--text);font-size:16px;outline:none;transition:border-color .2s;}
+.field-input:focus{border-color:var(--pri);}
+.field-input::placeholder{color:var(--text5);}
+.field-select{width:100%;padding:14px 16px;background:var(--bg);border:2px solid var(--border);border-radius:var(--r);color:var(--text);font-size:15px;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 12L2 6h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+.btn{width:100%;padding:16px;border-radius:var(--r3);border:none;font-size:16px;font-weight:800;cursor:pointer;transition:all .15s;}
+.btn:active{transform:scale(.97);}
+.btn-pri{background:var(--pri);color:#fff;box-shadow:0 2px 8px rgba(10,102,194,.3);}
+.btn-pri:hover{background:var(--pri-h);}
+.btn-out{background:transparent;color:var(--pri);border:2px solid var(--pri);}
+.btn-out:hover{background:var(--pri-bg);}
+.btn-sm{padding:10px 20px;font-size:13px;border-radius:var(--r3);width:auto;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-gray{background:var(--border);color:var(--text3);}
+.err-box{background:var(--red-bg);color:var(--red);padding:12px;border-radius:var(--r);font-size:13px;font-weight:600;margin-bottom:12px;display:none;text-align:center;}
+.err-box.show{display:block;}
+.success-box{background:var(--green-bg);color:var(--green);padding:12px;border-radius:var(--r);font-size:13px;font-weight:600;margin-bottom:12px;text-align:center;}
+
+/* Photo upload */
+.photo-upload{width:100px;height:100px;border-radius:50%;background:var(--bg);border:3px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 16px;cursor:pointer;overflow:hidden;position:relative;transition:border-color .2s;}
+.photo-upload:hover{border-color:var(--pri);}
+.photo-upload img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.photo-upload span{font-size:28px;}
+.photo-upload small{font-size:10px;color:var(--text4);font-weight:600;}
+
+/* Pending approval */
+.pending-screen{text-align:center;padding:60px 24px;}
+.pending-icon{font-size:64px;margin-bottom:16px;}
+.pending-title{font-size:22px;font-weight:800;margin-bottom:8px;}
+.pending-desc{font-size:14px;color:var(--text3);line-height:1.6;}
+
+/* ═══ MAIN APP ═══ */
+.app-header{background:var(--pri);padding:10px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.app-header-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);overflow:hidden;border:2px solid rgba(255,255,255,.3);flex-shrink:0;}
+.app-header-avatar img{width:100%;height:100%;object-fit:cover;}
+.app-header-search{flex:1;padding:8px 14px;background:rgba(255,255,255,.15);border:none;border-radius:8px;color:#fff;font-size:14px;outline:none;}
+.app-header-search::placeholder{color:rgba(255,255,255,.6);}
+.header-icon{background:none;border:none;color:rgba(255,255,255,.85);font-size:20px;cursor:pointer;padding:6px;border-radius:50%;}
+.header-icon:active{background:rgba(255,255,255,.1);}
+
+/* Tab bar */
+.tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--white);border-top:1px solid var(--border);display:flex;z-index:100;padding:2px 0 env(safe-area-inset-bottom,6px);}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 4px;cursor:pointer;border:none;background:none;color:var(--text4);font-size:10px;font-weight:700;font-family:inherit;transition:color .2s;}
+.tab.active{color:var(--pri);}
+.tab.active .tab-icon{color:var(--pri);}
+.tab-icon{font-size:20px;color:var(--text4);}
+.tab-badge{position:relative;}
+.tab-badge::after{content:attr(data-count);position:absolute;top:-4px;right:-8px;background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:10px;display:none;}
+.tab-badge.has-badge::after{display:block;}
+
+.tab-content{display:none;padding:12px 16px;padding-bottom:80px;}
+.tab-content.active{display:block;}
+
+/* ═══ CARDS ═══ */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:8px;box-shadow:var(--shadow);}
+.card:active{background:var(--card-hover);}
+
+/* Job card */
+.job-card{padding:16px;}
+.job-type-badge{font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;}
+.badge-walkin{background:var(--orange-bg);color:var(--orange);}
+.badge-hiring{background:var(--pri-bg);color:var(--pri);}
+.badge-urgent{background:var(--red-bg);color:var(--red);}
+.job-company{font-size:14px;font-weight:800;color:var(--text);}
+.job-title{font-size:13px;color:var(--text3);margin-top:2px;}
+.job-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.job-tag{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;}
+.job-actions{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.job-actions .btn-sm{flex:1;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px;}
+
+/* Member card */
+.member-card{display:flex;align-items:center;gap:12px;padding:14px 16px;}
+.member-avatar{width:48px;height:48px;border-radius:50%;background:var(--pri-bg);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:var(--pri);flex-shrink:0;overflow:hidden;}
+.member-avatar img{width:100%;height:100%;object-fit:cover;}
+.member-info{flex:1;min-width:0;}
+.member-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.member-role{font-size:12px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.member-org{font-size:11px;color:var(--text4);margin-top:1px;}
+.member-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.mbadge-approved{background:var(--green-bg);color:var(--green);}
+.mbadge-pending{background:var(--orange-bg);color:var(--orange);}
+.mbadge-rejected{background:var(--red-bg);color:var(--red);}
+.member-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* Section headers */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:16px;}
+.sec-title{font-size:16px;font-weight:800;color:var(--text);}
+.sec-count{font-size:12px;color:var(--text4);font-weight:600;}
+
+/* Stats */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 12px;text-align:center;box-shadow:var(--shadow);}
+.stat-num{font-size:24px;font-weight:900;color:var(--pri);line-height:1;}
+.stat-label{font-size:10px;color:var(--text4);font-weight:700;margin-top:4px;text-transform:uppercase;letter-spacing:.3px;}
+
+/* Filter chips */
+.chip-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;-webkit-overflow-scrolling:touch;}
+.chip{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--white);color:var(--text3);cursor:pointer;white-space:nowrap;transition:all .15s;}
+.chip.active{background:var(--pri);color:#fff;border-color:var(--pri);}
+
+/* Search */
+.search-box{position:relative;margin-bottom:12px;}
+.search-box input{width:100%;padding:12px 16px 12px 40px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);font-size:14px;color:var(--text);outline:none;box-shadow:var(--shadow);}
+.search-box input:focus{border-color:var(--pri);}
+.search-box::before{content:'🔍';position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;}
+.search-box input::placeholder{color:var(--text5);}
+
+/* Empty */
+.empty{text-align:center;padding:40px 20px;}
+.empty-icon{font-size:48px;margin-bottom:8px;}
+.empty-text{font-size:14px;color:var(--text4);line-height:1.5;}
+
+/* Toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(100px);background:#333;color:#fff;padding:12px 24px;border-radius:var(--r);font-size:14px;font-weight:600;box-shadow:var(--shadow2);z-index:9999;transition:transform .3s;pointer-events:none;text-align:center;max-width:90%;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;align-items:flex-end;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal-sheet{background:var(--white);border-radius:var(--r2) var(--r2) 0 0;padding:24px 20px 32px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px;}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:16px;}
+
+/* Admin approve card */
+.approve-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--shadow);}
+.approve-photo{width:56px;height:56px;border-radius:50%;background:var(--bg);overflow:hidden;flex-shrink:0;}
+.approve-photo img{width:100%;height:100%;object-fit:cover;}
+.approve-btns{display:flex;gap:8px;margin-top:12px;}
+
+/* Profile page */
+.profile-header{background:var(--pri);padding:40px 20px 24px;text-align:center;position:relative;}
+.profile-avatar{width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.2);margin:0 auto 12px;overflow:hidden;border:4px solid rgba(255,255,255,.4);}
+.profile-avatar img{width:100%;height:100%;object-fit:cover;}
+.profile-name{font-size:20px;font-weight:800;color:#fff;}
+.profile-role{font-size:14px;color:rgba(255,255,255,.75);margin-top:2px;}
+.profile-card{margin:-16px 16px 0;position:relative;z-index:10;}
+
+/* Load more */
+.load-more{text-align:center;padding:12px;}
+.load-more button{background:var(--card);border:1.5px solid var(--border);color:var(--pri);padding:10px 24px;border-radius:var(--r3);font-weight:700;font-size:13px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ -->
+<!-- SCREEN: LOGIN (Phone Entry)        -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen active" id="scrLogin">
+  <div class="auth-screen">
+    <div class="auth-logo"><img src="icon-512.png" alt="FPJob"></div>
+    <div class="auth-brand">FP<span>Job</span></div>
+    <div class="auth-sub">Flexible Packaging Industry ka<br>Verified Professional Network 🇮🇳</div>
+
+    <div class="auth-card">
+      <div class="auth-title">Login / Register</div>
+      <div class="auth-desc">अपना mobile number डालें। अगर account है तो login, नहीं तो register होगा।</div>
+      <div class="err-box" id="loginErr"></div>
+      <div class="field">
+        <label class="field-label">Mobile Number</label>
+        <input class="field-input" id="loginPhone" type="tel" maxlength="10" placeholder="10 digit number" inputmode="numeric" pattern="[0-9]*">
+      </div>
+      <button class="btn btn-pri" onclick="handleLogin()">Continue →</button>
+      <div style="text-align:center;margin-top:16px;">
+        <button onclick="showAdminLogin()" style="background:none;border:none;color:var(--text4);font-size:12px;cursor:pointer;font-weight:600;">🔐 Admin Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- SCREEN: CONFIRM/EDIT PROFILE       -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="scrProfile">
+  <div class="auth-screen" style="justify-content:flex-start;padding-top:40px;">
+    <div class="auth-card" style="max-width:380px;">
+      <div class="auth-title" id="profileTitle">Confirm Your Details</div>
+      <div class="auth-desc" id="profileDesc">हमने आपकी information database से find की है। Confirm करें या edit करें।</div>
+      <div class="err-box" id="profileErr"></div>
+
+      <!-- Photo -->
+      <div class="photo-upload" id="photoUpload" onclick="document.getElementById('photoInput').click()">
+        <span id="photoIcon">📷</span>
+        <small id="photoText">Upload Photo</small>
+        <img id="photoPreview" style="display:none;">
+      </div>
+      <input type="file" id="photoInput" accept="image/*" capture="user" style="display:none;" onchange="handlePhoto(this)">
+
+      <div class="field">
+        <label class="field-label">Full Name *</label>
+        <input class="field-input" id="regName" placeholder="आपका पूरा नाम">
+      </div>
+      <div class="field">
+        <label class="field-label">Organization / Company *</label>
+        <input class="field-input" id="regOrg" placeholder="e.g. SRF Limited, JPFL Nashik">
+      </div>
+      <div class="field">
+        <label class="field-label">Designation *</label>
+        <select class="field-select" id="regDesig">
+          <option value="">Select Designation</option>
+          <option value="Operator">Operator (ITI / Technician)</option>
+          <option value="Engineer">Engineer (Diploma / B.Tech)</option>
+          <option value="Manager">Manager / Supervisor / Incharge</option>
+          <option value="HoD">HoD / AGM / GM / Head</option>
+          <option value="Supplier">Supplier / Vendor</option>
+          <option value="HR">HR / Recruiter</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Department</label>
+        <select class="field-select" id="regDept">
+          <option value="">Select Department</option>
+          <option>Metalliser</option>
+          <option>Slitter</option>
+          <option>BOPP</option>
+          <option>BOPET</option>
+          <option>CPP</option>
+          <option>Mechanical</option>
+          <option>E&I (Electrical & Instrumentation)</option>
+          <option>Production</option>
+          <option>Quality</option>
+          <option>Utility</option>
+          <option>Packing & Dispatch</option>
+          <option>Store / Purchase</option>
+          <option>HR</option>
+          <option>PPC</option>
+          <option>IT</option>
+          <option>Sales</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Employee Code (optional)</label>
+        <input class="field-input" id="regEmpCode" placeholder="e.g. EMP001">
+      </div>
+      <button class="btn btn-pri" onclick="submitProfile()">Submit for Approval →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- SCREEN: PENDING APPROVAL           -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="scrPending">
+  <div class="auth-screen" style="background:var(--bg);">
+    <div class="pending-screen">
+      <div class="pending-icon">⏳</div>
+      <div class="pending-title">Approval Pending</div>
+      <div class="pending-desc">
+        आपकी request Admin को भेज दी गई है।<br>
+        Approve होते ही आपको app access मिल जाएगा।<br><br>
+        <span style="color:var(--pri);font-weight:700;">Usually 1-2 hours में approve हो जाता है।</span>
+      </div>
+      <button class="btn btn-out btn-sm" style="margin-top:24px;" onclick="checkApproval()">🔄 Check Status</button>
+      <button class="btn btn-gray btn-sm" style="margin-top:8px;" onclick="logout()">← Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- SCREEN: ADMIN LOGIN                -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="scrAdminLogin">
+  <div class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-title">🔐 Admin Login</div>
+      <div class="auth-desc">Admin PIN enter करें</div>
+      <div class="err-box" id="adminErr"></div>
+      <div class="field">
+        <label class="field-label">Admin Phone</label>
+        <input class="field-input" id="adminPhone" type="tel" maxlength="10" placeholder="Admin number" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label class="field-label">PIN</label>
+        <input class="field-input" id="adminPin" type="password" maxlength="20" placeholder="Admin PIN">
+      </div>
+      <button class="btn btn-pri" onclick="adminLogin()">Admin Login →</button>
+      <button class="btn btn-out" style="margin-top:8px;" onclick="goScreen('scrLogin')">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- SCREEN: MAIN APP                   -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="scrApp">
+  <!-- Header -->
+  <div class="app-header">
+    <div class="app-header-avatar" onclick="switchTab('Profile')">
+      <img id="headerAvatar" src="" onerror="this.style.display='none'">
+    </div>
+    <input class="app-header-search" id="globalSearch" type="text" placeholder="Search jobs, members..." oninput="globalSearchHandler()">
+    <button class="header-icon" id="adminGear" style="display:none;" onclick="switchTab('Admin')">⚙️</button>
+  </div>
+
+  <!-- TAB: Feed / Jobs -->
+  <div class="tab-content active" id="tabFeed">
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num" id="sFeedJobs">0</div><div class="stat-label">Jobs</div></div>
+      <div class="stat-box"><div class="stat-num" id="sFeedMembers">0</div><div class="stat-label">Members</div></div>
+      <div class="stat-box"><div class="stat-num" id="sFeedCompanies">50+</div><div class="stat-label">Companies</div></div>
+    </div>
+
+    <div class="chip-row" id="jobChips">
+      <div class="chip active" onclick="filterJobType('all')">All</div>
+      <div class="chip" onclick="filterJobType('walkin')">🏭 Walk-In</div>
+      <div class="chip" onclick="filterJobType('specific')">📋 Positions</div>
+      <div class="chip" onclick="filterJobType('urgent')">🔴 Urgent</div>
+    </div>
+
+    <div id="jobList"></div>
+    <div class="load-more" id="jobMore" style="display:none;"><button onclick="loadMoreJobs()">Load More Jobs ↓</button></div>
+  </div>
+
+  <!-- TAB: Members -->
+  <div class="tab-content" id="tabMembers">
+    <div class="search-box"><input id="memberSearch" type="text" placeholder="Search by name, company, department..." oninput="searchMembers()"></div>
+    <div class="chip-row" id="memberChips"></div>
+    <div id="memberList"></div>
+    <div class="load-more" id="memberMore" style="display:none;"><button onclick="loadMoreMembers()">Load More ↓</button></div>
+  </div>
+
+  <!-- TAB: Post Job -->
+  <div class="tab-content" id="tabPost">
+    <div class="card" style="border:none;box-shadow:none;padding:0;">
+      <div class="sec-title" style="margin-bottom:4px;">📝 Post a Job</div>
+      <div style="font-size:12px;color:var(--text4);margin-bottom:20px;">Free में job post करें — सभी members देखेंगे</div>
+      <div class="field"><label class="field-label">Company *</label><input class="field-input" id="pCompany" placeholder="e.g. SRF Limited"></div>
+      <div class="field"><label class="field-label">Position *</label><input class="field-input" id="pTitle" placeholder="e.g. Shift Engineer - E&I"></div>
+      <div class="field"><label class="field-label">Department</label>
+        <select class="field-select" id="pDept"><option value="">Select</option><option>Mechanical</option><option>E&I</option><option>Production</option><option>Quality</option><option>Metalliser</option><option>Slitter</option><option>BOPP/BOPET</option><option>CPP</option><option>Utility</option><option>Packing</option><option>HR</option><option>PPC</option><option>Sales</option><option>Other</option></select>
+      </div>
+      <div class="field"><label class="field-label">Location *</label><input class="field-input" id="pLocation" placeholder="e.g. Indore, Nashik"></div>
+      <div style="display:flex;gap:10px;">
+        <div class="field" style="flex:1;"><label class="field-label">Salary</label><input class="field-input" id="pSalary" placeholder="e.g. 35-45K"></div>
+        <div class="field" style="flex:1;"><label class="field-label">Experience</label><input class="field-input" id="pExp" placeholder="e.g. 3-8 yrs"></div>
+      </div>
+      <div class="field"><label class="field-label">Description</label><textarea class="field-input" id="pDesc" rows="3" placeholder="Job details..."></textarea></div>
+      <div class="field"><label class="field-label">Contact *</label><input class="field-input" id="pContact" placeholder="Phone or Email"></div>
+      <div class="field" style="display:flex;align-items:center;gap:10px;">
+        <input type="checkbox" id="pWalkin" style="width:20px;height:20px;accent-color:var(--pri);">
+        <label for="pWalkin" style="font-size:14px;font-weight:600;">Walk-In Drive</label>
+      </div>
+      <button class="btn btn-pri" onclick="postJob()">📤 Post Job</button>
+    </div>
+  </div>
+
+  <!-- TAB: Profile -->
+  <div class="tab-content" id="tabProfile" style="padding:0;">
+    <div class="profile-header">
+      <div class="profile-avatar"><img id="profAvatar" src="" onerror="this.parentElement.innerHTML='👤'"></div>
+      <div class="profile-name" id="profName">-</div>
+      <div class="profile-role" id="profRole">-</div>
+    </div>
+    <div class="profile-card">
+      <div class="card" id="profDetails"></div>
+      <button class="btn btn-out" style="margin-top:12px;" onclick="logout()">🚪 Logout</button>
+      <button class="btn btn-sm btn-gray" style="margin-top:8px;width:100%;" onclick="installApp()">📲 Install App</button>
+    </div>
+  </div>
+
+  <!-- TAB: Admin -->
+  <div class="tab-content" id="tabAdmin">
+    <div class="sec-title" style="margin-bottom:4px;">⚙️ Admin Panel</div>
+    <div style="font-size:12px;color:var(--text4);margin-bottom:16px;">Manage members, approvals, and devices</div>
+
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num" id="sAdmPending">0</div><div class="stat-label">Pending</div></div>
+      <div class="stat-box"><div class="stat-num" id="sAdmApproved">0</div><div class="stat-label">Approved</div></div>
+      <div class="stat-box"><div class="stat-num" id="sAdmTotal">0</div><div class="stat-label">Total</div></div>
+    </div>
+
+    <div class="chip-row">
+      <div class="chip active" onclick="adminFilter('pending')">⏳ Pending</div>
+      <div class="chip" onclick="adminFilter('approved')">✅ Approved</div>
+      <div class="chip" onclick="adminFilter('rejected')">❌ Rejected</div>
+      <div class="chip" onclick="adminFilter('all')">All</div>
+    </div>
+
+    <div id="adminList"></div>
+  </div>
+
+  <!-- Bottom Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('Feed')" id="tFeed"><span class="tab-icon">💼</span>Jobs</button>
+    <button class="tab" onclick="switchTab('Members')" id="tMembers"><span class="tab-icon">👥</span>Network</button>
+    <button class="tab" onclick="switchTab('Post')" id="tPost"><span class="tab-icon">📝</span>Post</button>
+    <button class="tab" onclick="switchTab('Profile')" id="tProfile"><span class="tab-icon">👤</span>Me</button>
+    <button class="tab hide" onclick="switchTab('Admin')" id="tAdmin"><span class="tab-icon tab-badge" id="adminBadge">⚙️</span>Admin</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+<!-- Modal -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()"><div class="modal-sheet" id="modalSheet"></div></div>
+
+<script src="/data.js"></script>
+<script>
+// ════════════════════════════════════════
+// APP STATE
+// ════════════════════════════════════════
+const ADMIN_PHONE = '6393770168'; // Your admin phone
+const ADMIN_PIN = 'sunitavks26';
+let SESSION = JSON.parse(localStorage.getItem('fpjob_session') || 'null');
+let IS_ADMIN = false;
+let ALL_MEMBERS = {}; // phone -> member data (localStorage + Firebase)
+let ALL_JOBS = typeof JOBS_DATA !== 'undefined' ? JOBS_DATA : [];
+let SEED_DB = typeof CONTACTS_DATA !== 'undefined' ? CONTACTS_DATA : [];
+
+// Pagination
+let _jobPage=0, _memberPage=0;
+const PER_PAGE = 20;
+let _jobFilter='all', _memberFilter='All';
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+function init(){
+  // Load members from localStorage (seed + registered)
+  ALL_MEMBERS = JSON.parse(localStorage.getItem('fpjob_members') || '{}');
+
+  // Seed from contacts if empty
+  if(Object.keys(ALL_MEMBERS).length < 100){
+    SEED_DB.forEach(c => {
+      const ph = (c.phone||'').replace(/[^\d]/g,'').slice(-10);
+      if(ph.length===10 && !ALL_MEMBERS[ph]){
+        ALL_MEMBERS[ph] = {
+          phone:ph, name:c.name||'', org:c.org||'',
+          dept:c.cat||'', designation:mapDesig(c.cat||''),
+          empCode:'', photo:'', status:'seed',
+          registeredAt:0, source:'database'
+        };
+      }
+    });
+    saveMembers();
+  }
+
+  // Check session
+  if(SESSION){
+    if(SESSION.isAdmin){
+      IS_ADMIN = true;
+      showApp();
+    } else {
+      const mem = ALL_MEMBERS[SESSION.phone];
+      if(mem && mem.status === 'approved'){
+        showApp();
+      } else if(mem && (mem.status === 'pending' || mem.status === 'registered')){
+        goScreen('scrPending');
+      } else {
+        showApp(); // seed users can browse
+      }
+    }
+  }
+  // else stay on login screen
+}
+
+function mapDesig(cat){
+  const c = (cat||'').toLowerCase();
+  if(/manager|supervisor|incharge|head|hod|agm|gm|core/.test(c)) return 'Manager';
+  if(/engineer|engg/.test(c)) return 'Engineer';
+  if(/hr|recruit/.test(c)) return 'HR';
+  if(/supplier|vendor/.test(c)) return 'Supplier';
+  return 'Operator';
+}
+
+function saveMembers(){ localStorage.setItem('fpjob_members', JSON.stringify(ALL_MEMBERS)); }
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-bar .tab').forEach(t=>t.classList.remove('active'));
+  const tc = document.getElementById('tab'+name);
+  const tb = document.getElementById('t'+name);
+  if(tc) tc.classList.add('active');
+  if(tb) tb.classList.add('active');
+  if(name==='Members'){ initMemberChips(); searchMembers(); }
+  if(name==='Feed'){ renderJobs(); }
+  if(name==='Admin'){ renderAdmin(); }
+  if(name==='Profile'){ renderProfile(); }
+}
+
+function showApp(){
+  goScreen('scrApp');
+  IS_ADMIN = SESSION && SESSION.isAdmin;
+  if(IS_ADMIN){
+    document.getElementById('tAdmin').classList.remove('hide');
+    document.getElementById('adminGear').style.display = 'block';
+    updateAdminBadge();
+  }
+  renderJobs();
+  document.getElementById('sFeedJobs').textContent = ALL_JOBS.length;
+  document.getElementById('sFeedMembers').textContent = Object.keys(ALL_MEMBERS).length;
+}
+
+// ════════════════════════════════════════
+// LOGIN FLOW
+// ════════════════════════════════════════
+function handleLogin(){
+  const phone = document.getElementById('loginPhone').value.replace(/\D/g,'');
+  if(phone.length !== 10){ showErr('loginErr','10 digit number डालें'); return; }
+
+  // Check if phone exists in database
+  const existing = ALL_MEMBERS[phone];
+  if(existing && existing.status === 'approved'){
+    // Already approved — direct login
+    SESSION = { phone, name:existing.name, isAdmin:false };
+    localStorage.setItem('fpjob_session', JSON.stringify(SESSION));
+    showApp();
+    toast('✅ Welcome back, ' + existing.name + '!');
+    return;
+  }
+
+  if(existing && (existing.status === 'pending' || existing.status === 'registered')){
+    SESSION = { phone, name:existing.name, isAdmin:false };
+    localStorage.setItem('fpjob_session', JSON.stringify(SESSION));
+    goScreen('scrPending');
+    return;
+  }
+
+  // Show profile screen — pre-fill if in seed database
+  SESSION = { phone, name:'', isAdmin:false };
+  localStorage.setItem('fpjob_session', JSON.stringify(SESSION));
+
+  if(existing && existing.source === 'database'){
+    document.getElementById('profileTitle').textContent = 'Confirm Your Details';
+    document.getElementById('profileDesc').textContent = 'हमने आपकी info database से find की है। Confirm करें या edit करें।';
+    document.getElementById('regName').value = existing.name || '';
+    document.getElementById('regOrg').value = existing.org || '';
+    document.getElementById('regDesig').value = existing.designation || '';
+    document.getElementById('regDept').value = existing.dept || '';
+  } else {
+    document.getElementById('profileTitle').textContent = 'New Registration';
+    document.getElementById('profileDesc').textContent = 'आपका number database में नहीं है। नई registration करें — Admin approve करेगा।';
+    document.getElementById('regName').value = '';
+    document.getElementById('regOrg').value = '';
+    document.getElementById('regDesig').value = '';
+    document.getElementById('regDept').value = '';
+  }
+  goScreen('scrProfile');
+}
+
+let _photoData = '';
+function handlePhoto(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _photoData = e.target.result;
+    document.getElementById('photoPreview').src = _photoData;
+    document.getElementById('photoPreview').style.display = 'block';
+    document.getElementById('photoIcon').style.display = 'none';
+    document.getElementById('photoText').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitProfile(){
+  const name = document.getElementById('regName').value.trim();
+  const org = document.getElementById('regOrg').value.trim();
+  const desig = document.getElementById('regDesig').value;
+  if(!name || !org || !desig){ showErr('profileErr','Name, Organization और Designation भरें'); return; }
+  if(!_photoData){ showErr('profileErr','Photo upload करें verification के लिए'); return; }
+
+  const phone = SESSION.phone;
+  ALL_MEMBERS[phone] = {
+    phone, name, org,
+    dept: document.getElementById('regDept').value,
+    designation: desig,
+    empCode: document.getElementById('regEmpCode').value.trim(),
+    photo: _photoData,
+    status: 'pending',
+    registeredAt: Date.now(),
+    source: 'registered'
+  };
+  saveMembers();
+
+  SESSION.name = name;
+  localStorage.setItem('fpjob_session', JSON.stringify(SESSION));
+
+  // Try Firebase notification
+  if(window.fbOK){
+    try{
+      window.db.ref('pending/'+phone).set({
+        phone, name, org, designation:desig, time:Date.now()
+      });
+    }catch(e){}
+  }
+
+  toast('✅ Registration submitted! Admin approval pending.');
+  goScreen('scrPending');
+}
+
+function checkApproval(){
+  if(!SESSION) return;
+  const mem = ALL_MEMBERS[SESSION.phone];
+  if(mem && mem.status === 'approved'){
+    toast('✅ Approved! Opening app...');
+    showApp();
+  } else {
+    toast('⏳ Still pending. Please wait.');
+  }
+}
+
+// Admin login
+function showAdminLogin(){ goScreen('scrAdminLogin'); }
+function adminLogin(){
+  const phone = document.getElementById('adminPhone').value.replace(/\D/g,'');
+  const pin = document.getElementById('adminPin').value;
+  if(phone === ADMIN_PHONE && pin === ADMIN_PIN){
+    SESSION = { phone, name:'Admin', isAdmin:true };
+    localStorage.setItem('fpjob_session', JSON.stringify(SESSION));
+    IS_ADMIN = true;
+    showApp();
+    toast('🔐 Admin mode activated');
+  } else {
+    showErr('adminErr','Wrong credentials');
+  }
+}
+
+function logout(){
+  SESSION = null;
+  IS_ADMIN = false;
+  localStorage.removeItem('fpjob_session');
+  goScreen('scrLogin');
+  toast('Logged out');
+}
+
+// ════════════════════════════════════════
+// JOBS
+// ════════════════════════════════════════
+function renderJobs(){
+  const list = document.getElementById('jobList');
+  let filtered = ALL_JOBS;
+  if(_jobFilter==='walkin') filtered = filtered.filter(j=>j.walkin);
+  else if(_jobFilter==='specific') filtered = filtered.filter(j=>!j.walkin);
+  else if(_jobFilter==='urgent') filtered = filtered.filter(j=>j.urgent);
+
+  const q = document.getElementById('globalSearch')?.value?.toLowerCase() || '';
+  if(q) filtered = filtered.filter(j=>(j.company+j.title+j.location+j.dept+j.desc).toLowerCase().includes(q));
+
+  const shown = filtered.slice(0, (_jobPage+1)*PER_PAGE);
+  document.getElementById('sFeedJobs').textContent = filtered.length;
+
+  if(shown.length===0){
+    list.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">कोई job नहीं मिली</div></div>';
+    document.getElementById('jobMore').style.display='none';
+    return;
+  }
+
+  list.innerHTML = shown.map(j=>{
+    const isEmail = (j.contact||'').includes('@');
+    const phone = (j.contact||'').replace(/[^\d]/g,'').slice(-10);
+    let badge = j.walkin ? '<span class="job-type-badge badge-walkin">🏭 Walk-In Drive</span>' :
+                j.urgent ? '<span class="job-type-badge badge-urgent">🔴 Urgent</span>' :
+                '<span class="job-type-badge badge-hiring">Hiring</span>';
+    return `<div class="card job-card">
+      ${badge}
+      <div class="job-company">${esc(j.company)}</div>
+      <div class="job-title">${esc(j.title)}</div>
+      <div class="job-meta">
+        ${j.location?`<span class="job-tag">📍 ${esc(j.location)}</span>`:''}
+        ${j.exp?`<span class="job-tag">⏱ ${esc(j.exp)}</span>`:''}
+        ${j.salary?`<span class="job-tag">💰 ${esc(j.salary)}</span>`:''}
+        ${j.dept?`<span class="job-tag">🏭 ${esc(j.dept)}</span>`:''}
+        ${j.qual?`<span class="job-tag">🎓 ${esc(j.qual)}</span>`:''}
+      </div>
+      ${j.desc?`<div style="font-size:12px;color:var(--text3);margin-top:8px;line-height:1.5;max-height:60px;overflow:hidden;">${esc(j.desc)}</div>`:''}
+      <div class="job-actions">
+        ${phone.length>=10?`<a href="tel:+91${phone}" class="btn btn-sm btn-green" style="text-decoration:none;">📞 Call</a><a href="https://wa.me/91${phone}" target="_blank" class="btn btn-sm" style="background:#25d366;color:#fff;text-decoration:none;">💬 WhatsApp</a>`:''}
+        ${isEmail?`<a href="mailto:${esc(j.contact)}" class="btn btn-sm btn-pri" style="text-decoration:none;">📧 Email</a>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('jobMore').style.display = shown.length < filtered.length ? 'block' : 'none';
+}
+
+function filterJobType(type){
+  _jobFilter=type; _jobPage=0;
+  document.querySelectorAll('#jobChips .chip').forEach((c,i)=>{
+    c.classList.toggle('active', ['all','walkin','specific','urgent'][i]===type);
+  });
+  renderJobs();
+}
+function loadMoreJobs(){ _jobPage++; renderJobs(); }
+function globalSearchHandler(){ _jobPage=0; renderJobs(); }
+
+function postJob(){
+  const company=document.getElementById('pCompany').value.trim();
+  const title=document.getElementById('pTitle').value.trim();
+  const location=document.getElementById('pLocation').value.trim();
+  const contact=document.getElementById('pContact').value.trim();
+  if(!company||!title||!location||!contact){toast('⚠️ Required fields भरें');return;}
+  ALL_JOBS.unshift({id:'j_'+Date.now(),company,title,dept:document.getElementById('pDept').value,
+    location,salary:document.getElementById('pSalary').value,exp:document.getElementById('pExp').value,
+    desc:document.getElementById('pDesc').value,contact,walkin:document.getElementById('pWalkin').checked,
+    urgent:false,date:new Date().toISOString().slice(0,10)});
+  toast('✅ Job posted!');
+  switchTab('Feed');
+}
+
+// ════════════════════════════════════════
+// MEMBERS DIRECTORY
+// ════════════════════════════════════════
+function getMemberArray(){
+  return Object.values(ALL_MEMBERS).filter(m=>m.name&&m.name.length>2);
+}
+
+function initMemberChips(){
+  const cats={};
+  getMemberArray().forEach(m=>{
+    const d = m.designation || m.dept || 'Other';
+    cats[d] = (cats[d]||0)+1;
+  });
+  const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const div = document.getElementById('memberChips');
+  div.innerHTML = `<div class="chip ${_memberFilter==='All'?'active':''}" onclick="filterMemberCat('All')">All</div>` +
+    sorted.map(([k,v])=>`<div class="chip ${_memberFilter===k?'active':''}" onclick="filterMemberCat('${k}')">${k} (${v})</div>`).join('');
+}
+
+function filterMemberCat(cat){
+  _memberFilter=cat; _memberPage=0;
+  initMemberChips();
+  searchMembers();
+}
+
+function searchMembers(){
+  const q = (document.getElementById('memberSearch')?.value||'').toLowerCase();
+  let members = getMemberArray();
+  if(_memberFilter!=='All') members = members.filter(m=>(m.designation||m.dept||'').includes(_memberFilter));
+  if(q) members = members.filter(m=>(m.name+m.org+m.dept+m.designation).toLowerCase().includes(q));
+
+  const shown = members.slice(0, (_memberPage+1)*PER_PAGE);
+  const list = document.getElementById('memberList');
+
+  if(!shown.length){
+    list.innerHTML='<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">No members found</div></div>';
+    document.getElementById('memberMore').style.display='none';
+    return;
+  }
+
+  list.innerHTML = shown.map(m=>{
+    const ph = m.phone||'';
+    const statusBadge = m.status==='approved'?'<span class="member-badge mbadge-approved">✅ Verified</span>' :
+                         m.status==='pending'?'<span class="member-badge mbadge-pending">⏳ Pending</span>' : '';
+    const initial = (m.name||'?')[0].toUpperCase();
+    return `<div class="card member-card" onclick="showMemberDetail('${ph}')">
+      <div class="member-avatar">${m.photo?`<img src="${m.photo}">`:`<span>${initial}</span>`}</div>
+      <div class="member-info">
+        <div class="member-name">${esc(m.name)}</div>
+        <div class="member-role">${esc(m.designation||'')} ${m.dept?'• '+esc(m.dept):''}</div>
+        <div class="member-org">${esc(m.org||'')}</div>
+      </div>
+      ${statusBadge}
+    </div>`;
+  }).join('');
+
+  document.getElementById('memberMore').style.display = shown.length < members.length ? 'block' : 'none';
+}
+function loadMoreMembers(){ _memberPage++; searchMembers(); }
+
+function showMemberDetail(ph){
+  const m = ALL_MEMBERS[ph];
+  if(!m) return;
+  let html = `<div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="width:80px;height:80px;border-radius:50%;background:var(--pri-bg);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--pri);font-weight:900;">
+        ${m.photo?`<img src="${m.photo}" style="width:100%;height:100%;object-fit:cover;">`:(m.name||'?')[0].toUpperCase()}
+      </div>
+      <div style="font-size:18px;font-weight:800;">${esc(m.name)}</div>
+      <div style="font-size:13px;color:var(--text3);">${esc(m.designation||'')} • ${esc(m.dept||'')}</div>
+      <div style="font-size:12px;color:var(--text4);">${esc(m.org||'')}</div>
+      ${m.empCode?`<div style="font-size:11px;color:var(--text4);margin-top:4px;">Employee Code: ${esc(m.empCode)}</div>`:''}
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      ${ph?`<a href="tel:+91${ph}" class="btn btn-sm btn-green" style="text-decoration:none;">📞 Call</a>
+      <a href="https://wa.me/91${ph}" target="_blank" class="btn btn-sm btn-pri" style="text-decoration:none;">💬 WhatsApp</a>`:''}
+    </div>`;
+  if(IS_ADMIN){
+    html += `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--text4);margin-bottom:8px;">ADMIN ACTIONS</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">Status: <b>${m.status||'seed'}</b> | Source: ${m.source||'database'}</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm btn-green" onclick="adminAction('${ph}','approved')">✅ Approve</button>
+        <button class="btn btn-sm btn-red" onclick="adminAction('${ph}','rejected')">❌ Reject</button>
+      </div>
+    </div>`;
+  }
+  openModal(html);
+}
+
+// ════════════════════════════════════════
+// PROFILE
+// ════════════════════════════════════════
+function renderProfile(){
+  if(!SESSION) return;
+  const m = ALL_MEMBERS[SESSION.phone] || {};
+  document.getElementById('profName').textContent = m.name || SESSION.name || 'User';
+  document.getElementById('profRole').textContent = (m.designation||'') + (m.dept?' • '+m.dept:'');
+  if(m.photo) document.getElementById('profAvatar').src = m.photo;
+  if(m.photo) document.getElementById('headerAvatar').src = m.photo;
+
+  document.getElementById('profDetails').innerHTML = `
+    <div style="font-size:14px;line-height:2.2;">
+      <div><span style="color:var(--text4);font-size:12px;">📱 Phone:</span> <b>+91 ${SESSION.phone||''}</b></div>
+      <div><span style="color:var(--text4);font-size:12px;">🏢 Organization:</span> <b>${esc(m.org||'-')}</b></div>
+      <div><span style="color:var(--text4);font-size:12px;">🏭 Department:</span> <b>${esc(m.dept||'-')}</b></div>
+      <div><span style="color:var(--text4);font-size:12px;">👔 Designation:</span> <b>${esc(m.designation||'-')}</b></div>
+      ${m.empCode?`<div><span style="color:var(--text4);font-size:12px;">🆔 Emp Code:</span> <b>${esc(m.empCode)}</b></div>`:''}
+      <div><span style="color:var(--text4);font-size:12px;">📌 Status:</span> <b style="color:${m.status==='approved'?'var(--green)':m.status==='pending'?'var(--orange)':'var(--text4)'}">${(m.status||'seed').toUpperCase()}</b></div>
+    </div>`;
+}
+
+// ════════════════════════════════════════
+// ADMIN PANEL
+// ════════════════════════════════════════
+let _adminView = 'pending';
+function adminFilter(view){
+  _adminView = view;
+  document.querySelectorAll('#tabAdmin .chip').forEach(c=>c.classList.remove('active'));
+  event.target.classList.add('active');
+  renderAdmin();
+}
+
+function renderAdmin(){
+  if(!IS_ADMIN) return;
+  const all = Object.values(ALL_MEMBERS);
+  const pending = all.filter(m=>m.status==='pending'||m.status==='registered');
+  const approved = all.filter(m=>m.status==='approved');
+  const rejected = all.filter(m=>m.status==='rejected');
+
+  document.getElementById('sAdmPending').textContent = pending.length;
+  document.getElementById('sAdmApproved').textContent = approved.length;
+  document.getElementById('sAdmTotal').textContent = all.length;
+  updateAdminBadge();
+
+  let shown = [];
+  if(_adminView==='pending') shown = pending;
+  else if(_adminView==='approved') shown = approved;
+  else if(_adminView==='rejected') shown = rejected;
+  else shown = all.filter(m=>m.status && m.status!=='seed').sort((a,b)=>(b.registeredAt||0)-(a.registeredAt||0));
+
+  const list = document.getElementById('adminList');
+  if(!shown.length){
+    list.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No members in this category</div></div>';
+    return;
+  }
+
+  list.innerHTML = shown.map(m=>{
+    const ph = m.phone||'';
+    const initial = (m.name||'?')[0].toUpperCase();
+    const statusColor = m.status==='approved'?'var(--green)':m.status==='pending'?'var(--orange)':'var(--red)';
+    return `<div class="approve-card">
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div class="approve-photo">${m.photo?`<img src="${m.photo}">`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--pri-bg);font-size:22px;font-weight:900;color:var(--pri);">${initial}</div>`}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.name||'Unknown')}</div>
+          <div style="font-size:12px;color:var(--text3);">${esc(m.designation||'')} • ${esc(m.org||'')}</div>
+          <div style="font-size:11px;color:var(--text4);">📱 +91${ph} ${m.empCode?'• ID:'+m.empCode:''}</div>
+          <div style="font-size:11px;color:${statusColor};font-weight:700;margin-top:2px;">${(m.status||'').toUpperCase()}</div>
+        </div>
+      </div>
+      ${m.status==='pending'?`<div class="approve-btns">
+        <button class="btn btn-sm btn-green" onclick="adminAction('${ph}','approved')">✅ Approve</button>
+        <button class="btn btn-sm btn-red" onclick="adminAction('${ph}','rejected')">❌ Reject</button>
+        <button class="btn btn-sm btn-gray" onclick="showMemberDetail('${ph}')">👁 View</button>
+      </div>`:`<div style="margin-top:8px;display:flex;gap:8px;">
+        <button class="btn btn-sm btn-gray" onclick="showMemberDetail('${ph}')">👁 Details</button>
+        ${m.status==='approved'?`<button class="btn btn-sm btn-red" onclick="adminAction('${ph}','rejected')">Block</button>`:''}
+        ${m.status==='rejected'?`<button class="btn btn-sm btn-green" onclick="adminAction('${ph}','approved')">Re-Approve</button>`:''}
+      </div>`}
+    </div>`;
+  }).join('');
+}
+
+function adminAction(phone, status){
+  if(!IS_ADMIN) return;
+  const m = ALL_MEMBERS[phone];
+  if(!m) return;
+  m.status = status;
+  saveMembers();
+  toast(status==='approved'?'✅ '+m.name+' Approved!':'❌ '+m.name+' Rejected');
+  renderAdmin();
+  closeModal();
+}
+
+function updateAdminBadge(){
+  const pending = Object.values(ALL_MEMBERS).filter(m=>m.status==='pending'||m.status==='registered').length;
+  const badge = document.getElementById('adminBadge');
+  if(badge){
+    badge.dataset.count = pending;
+    badge.classList.toggle('has-badge', pending > 0);
+  }
+}
+
+// ════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+let _tt;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),3000);}
+function showErr(id,msg){const e=document.getElementById(id);e.textContent=msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),4000);}
+function openModal(html){document.getElementById('modalSheet').innerHTML=html;document.getElementById('modalBg').classList.add('show');}
+function closeModal(){document.getElementById('modalBg').classList.remove('show');}
+
+// ════════════════════════════════════════
+// PWA
+// ════════════════════════════════════════
+let _pwa=null;
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').then(r=>{
+    r.addEventListener('updatefound',()=>{const n=r.installing;if(!n)return;n.addEventListener('statechange',()=>{
+      if(n.state==='installed'&&navigator.serviceWorker.controller){n.postMessage('SKIP_WAITING');toast('🔄 Updating...');setTimeout(()=>location.reload(),2000);}
+    });});
+  });
+}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_pwa=e;});
+window.addEventListener('appinstalled',()=>{_pwa=null;toast('🎉 App Installed!');});
+async function installApp(){
+  if(_pwa){try{_pwa.prompt();const r=await _pwa.userChoice;if(r.outcome==='accepted')toast('✅ Installing...');_pwa=null;}catch(e){}}
+  else toast('Use Chrome menu → Add to Home Screen');
+}
+
+// ════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
