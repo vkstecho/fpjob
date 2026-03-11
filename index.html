@@ -1,0 +1,3382 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0A66C2">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FPJob">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<title>FPJob – Packaging Industry Network</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+:root{
+  --bg:#0F1419; --card:#1A2332; --card2:#162030;
+  --primary:#0A66C2; --primary-dark:#004182; --primary-glow:rgba(10,102,194,0.3);
+  --green:#22C55E; --green-dim:rgba(34,197,94,0.15);
+  --gold:#F59E0B; --red:#EF4444; --red-dim:rgba(239,68,68,0.15);
+  --border:#1E3A5F; --border2:#243447;
+  --text:#E7E9EA; --text2:#B0B8C1; --muted:#607B96;
+  --font:'DM Sans',sans-serif; --font-head:'Barlow Condensed',sans-serif;
+}
+html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);overflow:hidden}
+/* ── Screens ── */
+.screen{display:none!important;position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;flex-direction:column}
+.screen.show{display:flex!important}
+/* ── Toast ── */
+#toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);padding:10px 22px;
+  border-radius:20px;font-size:14px;font-weight:600;color:#fff;z-index:9999;display:none;
+  max-width:88vw;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.5);pointer-events:none}
+/* ── Animations ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glow{0%,100%{box-shadow:0 0 30px var(--primary-glow)}50%{box-shadow:0 0 60px rgba(10,102,194,.5)}}
+.fadeUp{animation:fadeUp .25s ease forwards}
+/* ── Buttons ── */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;
+  font-family:var(--font);font-weight:700;border-radius:24px;transition:all .15s;outline:none;
+  -webkit-appearance:none}
+.btn-blue{background:var(--primary);color:#fff;padding:14px 28px;font-size:15px;
+  box-shadow:0 4px 20px var(--primary-glow)}
+.btn-blue:active{opacity:.85;transform:scale(.98)}
+.btn-green{background:#22C55E;color:#fff;padding:12px 20px;font-size:14px}
+.btn-red{background:rgba(239,68,68,.15);color:#EF4444;border:1.5px solid rgba(239,68,68,.3);padding:10px 18px;font-size:13px}
+.btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary);padding:12px 24px;font-size:14px}
+.btn-wa{background:rgba(37,211,102,.15);color:#25D366;border:1.5px solid rgba(37,211,102,.3);padding:10px 18px;font-size:13px}
+.btn-w100{width:100%}
+/* ── Inputs ── */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--muted);
+  letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px}
+.inp-row{display:flex;align-items:center;background:var(--card2);
+  border:1.5px solid var(--border);border-radius:10px;padding:0 14px;
+  transition:border-color .2s;gap:10px}
+.inp-row:focus-within{border-color:var(--primary)}
+.inp-row input,.inp-row select,.inp-row textarea{
+  background:transparent;border:none;outline:none;padding:13px 0;
+  font-size:15px;color:var(--text);font-family:var(--font);flex:1;width:100%;min-width:0}
+.inp-row select option{background:#1A2332;color:var(--text)}
+.inp-ico{font-size:18px;flex-shrink:0;line-height:1}
+/* ── Cards ── */
+.card{background:var(--card);border:1px solid var(--border2);border-radius:12px}
+/* ── Bottom Sheet Modal ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;
+  display:none;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:500px;
+  max-height:92vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom,16px);
+  animation:sheetUp .28s cubic-bezier(.32,1,.23,1)}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 0}
+.sheet-hdr{padding:16px 20px 10px;display:flex;align-items:center;justify-content:space-between}
+/* ── Nav ── */
+#nav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,20,25,.96);
+  backdrop-filter:blur(20px);border-top:1px solid var(--border);
+  display:none;z-index:100;padding-bottom:env(safe-area-inset-bottom,0)}
+.nav-items{display:flex;max-width:500px;margin:0 auto}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:9px 4px 11px;cursor:pointer;color:var(--muted);font-size:10px;font-weight:700;
+  letter-spacing:.3px;border:none;background:transparent;font-family:var(--font);
+  transition:color .15s;position:relative}
+.nav-btn.on{color:var(--primary)}
+.nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+/* ── FAB ── */
+#fab{position:fixed;bottom:72px;right:16px;width:52px;height:52px;border-radius:26px;
+  background:var(--primary);color:#fff;border:none;font-size:26px;cursor:pointer;
+  box-shadow:0 4px 24px var(--primary-glow);display:none;align-items:center;
+  justify-content:center;z-index:90;transition:transform .15s}
+#fab:active{transform:scale(.9)}
+/* ── App header ── */
+.app-hdr{background:rgba(15,20,25,.95);backdrop-filter:blur(20px);
+  border-bottom:none;padding:12px 16px 0;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;flex-shrink:0}
+.logo{font-family:var(--font-head);font-size:22px;font-weight:800;letter-spacing:1px}
+.logo span{color:#F97316}
+/* ── Language bar ── */
+.lang-bar{width:100%;display:flex;gap:0;margin-top:10px;border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);overflow:hidden}
+.lang-btn{flex:1;padding:7px 4px;font-size:11px;font-weight:700;text-align:center;
+  cursor:pointer;background:transparent;border:none;color:var(--muted);
+  font-family:var(--font);transition:all .15s;letter-spacing:.3px;white-space:nowrap}
+.lang-btn.on{color:var(--primary);background:rgba(10,102,194,.1);border-bottom:2px solid var(--primary)}
+/* ── Filter chips ── */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:6px 14px;border-radius:16px;font-size:12px;font-weight:700;
+  cursor:pointer;border:1.5px solid var(--border);background:transparent;
+  color:var(--muted);font-family:var(--font);transition:all .15s;white-space:nowrap}
+.chip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+/* ── Section title ── */
+.sec-ttl{font-family:var(--font-head);font-size:19px;font-weight:800;letter-spacing:.3px}
+/* ── Member card ── */
+.m-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;
+  padding:12px;display:flex;align-items:center;gap:12px;cursor:pointer;
+  margin-bottom:8px;transition:border-color .15s}
+.m-card:hover{border-color:rgba(10,102,194,.4)}
+/* ── Job card ── */
+.j-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;
+  padding:14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.j-card:hover{border-color:rgba(10,102,194,.4);box-shadow:0 0 0 1px var(--primary-glow)}
+/* ── Avatar ── */
+.av{border-radius:50%;overflow:hidden;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;flex-shrink:0;color:#fff}
+/* ── Pending card ── */
+.p-card{background:var(--card);border:1px solid var(--border2);border-radius:12px;
+  padding:14px;margin-bottom:10px}
+/* ── Search ── */
+.search-bar{display:flex;align-items:center;gap:10px;background:var(--card2);
+  border:1.5px solid var(--border);border-radius:24px;padding:10px 16px}
+.search-bar input{flex:1;background:transparent;border:none;outline:none;
+  font-size:14px;color:var(--text);font-family:var(--font)}
+/* ── Stat ── */
+.stat{background:var(--card2);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;flex:1;min-width:0;text-align:center}
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* ── Notif panel ── */
+#notif-panel{position:fixed;top:0;right:-100%;width:min(320px,100%);height:100%;
+  background:var(--card);border-left:1px solid var(--border);z-index:300;
+  transition:right .28s ease;overflow-y:auto;display:flex;flex-direction:column}
+#notif-panel.open{right:0}
+
+/* ── Fingerprint screen ── */
+#fp-screen{position:fixed;inset:0;background:var(--bg);z-index:600;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px}
+#fp-screen.show{display:flex}
+.fp-ring{width:120px;height:120px;border-radius:50%;border:3px solid var(--border);
+  display:flex;align-items:center;justify-content:center;margin-bottom:24px;
+  cursor:pointer;transition:all .3s;position:relative}
+.fp-ring.scanning{border-color:var(--primary);box-shadow:0 0 0 8px var(--primary-glow);animation:fpPulse 1s ease infinite}
+.fp-ring.success{border-color:var(--green);box-shadow:0 0 0 8px var(--green-dim)}
+.fp-ring.error{border-color:var(--red);box-shadow:0 0 0 8px rgba(239,68,68,.2)}
+@keyframes fpPulse{0%,100%{box-shadow:0 0 0 8px var(--primary-glow)}50%{box-shadow:0 0 0 16px rgba(10,102,194,.1)}}
+
+/* ════ SPLASH ════ */
+#splash{background:var(--bg);align-items:center;justify-content:center;min-height:100vh;gap:0}
+.s-logo{width:88px;height:88px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  border-radius:24px;display:flex;align-items:center;justify-content:center;
+  animation:glow 2s infinite;margin-bottom:24px}
+.s-name{font-family:var(--font-head);font-size:52px;font-weight:800;letter-spacing:3px;margin-bottom:8px}
+.s-name em{color:#F97316;font-style:normal}
+.s-sub{font-size:12px;color:var(--muted);letter-spacing:1px;margin-bottom:48px}
+.s-dots{display:flex;gap:6px}
+.s-dot{width:8px;height:8px;border-radius:50%;background:var(--primary);animation:pulse 1.2s ease infinite}
+.s-dot:nth-child(2){animation-delay:.2s}.s-dot:nth-child(3){animation-delay:.4s}
+
+/* ════ LOGIN ════ */
+#login{background:var(--bg);align-items:center;min-height:100vh;padding:0 0 40px}
+.l-wrap{width:100%;max-width:400px;padding:40px 24px 20px}
+.l-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+.l-logo{width:46px;height:46px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.l-appname{font-family:var(--font-head);font-size:30px;font-weight:800;letter-spacing:1px}
+.l-appname em{color:#F97316;font-style:normal}
+.l-tag{font-size:11px;color:var(--muted)}
+.l-step{display:none}
+.l-step.on{display:block;animation:fadeUp .22s ease}
+.l-ttl{font-size:22px;font-weight:800;margin-bottom:6px}
+.l-sub{font-size:13px;color:var(--text2);margin-bottom:22px;line-height:1.6}
+.phone-row{display:flex;align-items:center;background:var(--card2);
+  border:1.5px solid var(--border);border-radius:10px;overflow:hidden;
+  transition:border-color .2s;margin-bottom:8px}
+.phone-row:focus-within{border-color:var(--primary)}
+.ph-pre{padding:14px 12px;font-size:15px;font-weight:700;color:var(--text2);
+  border-right:1px solid var(--border);flex-shrink:0}
+#ph-inp{flex:1;background:transparent;border:none;outline:none;padding:14px 12px;
+  font-size:20px;font-weight:700;color:var(--text);letter-spacing:2px;font-family:var(--font)}
+.known-badge{padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;
+  margin-bottom:14px;display:none;animation:fadeUp .2s ease}
+.known-badge.green{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.known-badge.gold{background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.3)}
+/* Camera */
+#cam-wrap{width:160px;height:160px;border-radius:50%;margin:0 auto 20px;
+  cursor:pointer;position:relative}
+#cam-img{width:160px;height:160px;border-radius:50%;object-fit:cover;
+  background:var(--card2);border:2.5px solid var(--border);display:block}
+#cam-ph{position:absolute;inset:0;border-radius:50%;background:var(--card2);
+  border:2.5px dashed var(--border);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px}
+#cam-ph span{font-size:11px;color:var(--muted)}
+#cam-overlay{position:absolute;bottom:6px;right:6px;width:36px;height:36px;
+  border-radius:50%;background:var(--primary);border:2.5px solid var(--bg);
+  display:flex;align-items:center;justify-content:center;font-size:16px;pointer-events:none}
+/* Camera modal */
+#cam-modal{position:fixed;inset:0;background:#000;z-index:1000;display:none;
+  flex-direction:column;align-items:center;justify-content:center}
+#cam-modal.open{display:flex}
+#cam-video{width:100%;max-width:480px;flex:1;object-fit:cover;display:block}
+#cam-canvas{display:none}
+.cam-snap{width:70px;height:70px;border-radius:50%;background:#fff;
+  border:4px solid rgba(255,255,255,.3);cursor:pointer;flex-shrink:0;margin:24px 0 16px}
+.cam-close{position:absolute;top:16px;left:16px;background:rgba(0,0,0,.6);border:none;
+  color:#fff;width:40px;height:40px;border-radius:50%;font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;z-index:10}
+/* Wait step */
+.wait-spin{width:72px;height:72px;border-radius:50%;border:3px solid var(--border);
+  border-top-color:var(--primary);animation:spin 1s linear infinite;margin:0 auto 20px}
+/* Error */
+.err-msg{color:var(--red);font-size:13px;margin-top:6px;display:none}
+.err-msg.show{display:block;animation:fadeUp .2s ease}
+
+/* ════ APP ════ */
+#app{background:var(--bg);padding-bottom:64px}
+.page{display:none} .page.on{display:block;animation:fadeUp .2s ease}
+#hdr-pic{width:34px;height:34px;border-radius:50%;background:var(--primary);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;overflow:hidden;flex-shrink:0}
+
+/* ════ ADMIN ════ */
+#admin{background:var(--bg)}
+.adm-hdr{background:var(--card);border-bottom:1px solid var(--border);
+  padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.adm-tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+.adm-tabs::-webkit-scrollbar{display:none}
+.adm-tab{flex-shrink:0;padding:12px 18px;font-size:13px;font-weight:700;
+  color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;
+  transition:all .15s;white-space:nowrap;background:transparent;border-left:none;
+  border-right:none;border-top:none;font-family:var(--font)}
+.adm-tab.on{color:var(--primary);border-bottom-color:var(--primary)}
+.adm-pg{display:none;padding:14px;animation:fadeUp .2s ease}
+.adm-pg.on{display:block}
+.badge-count{display:inline-flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;padding:0 5px;border-radius:9px;font-size:10px;
+  font-weight:800;background:var(--red);color:#fff;margin-left:4px}
+
+/* ── Load more button ── */
+.load-more-btn{width:100%;padding:12px;background:var(--card2);border:1.5px solid var(--border);
+  border-radius:12px;color:var(--primary);font-size:13px;font-weight:700;cursor:pointer;
+  font-family:var(--font);margin-top:8px;transition:all .15s}
+.load-more-btn:hover{border-color:var(--primary);background:rgba(10,102,194,.08)}
+
+@media(min-width:480px){
+  .l-wrap{padding-top:60px}
+  .sheet{border-radius:16px;margin:auto;margin-bottom:20px}
+  .overlay{align-items:center}
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- ══════════════ SPLASH ══════════════ -->
+<div id="splash" class="screen show">
+  <div class="s-logo">
+    <svg width="46" height="46" fill="none" viewBox="0 0 24 24">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="9" cy="7" r="4" stroke="#fff" stroke-width="2.2"/>
+      <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="s-name">FP<em>JOB</em></div>
+  <div class="s-sub">FLEXIBLE PACKAGING INDUSTRY NETWORK</div>
+  <div class="s-dots">
+    <div class="s-dot"></div><div class="s-dot"></div><div class="s-dot"></div>
+  </div>
+</div>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="login" class="screen">
+  <div class="l-wrap">
+    <div class="l-logo-row">
+      <div class="l-logo">
+        <svg width="26" height="26" fill="none" viewBox="0 0 24 24">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="9" cy="7" r="4" stroke="#fff" stroke-width="2.2"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="l-appname">FP<em>JOB</em></div>
+        <div class="l-tag">Packaging Industry Network · India</div>
+      </div>
+    </div>
+
+    <!-- Language on login -->
+    <div style="display:flex;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:10px;overflow:hidden">
+      <button class="lang-btn on" onclick="setLang('en',this)" style="flex:1;padding:8px 4px;font-size:11px;font-weight:700;cursor:pointer;background:rgba(10,102,194,.1);border:none;color:var(--primary);font-family:var(--font)">English</button>
+      <button class="lang-btn" onclick="setLang('hi',this)" style="flex:1;padding:8px 4px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;border:none;color:var(--muted);font-family:var(--font)">हिन्दी</button>
+      <button class="lang-btn" onclick="setLang('od',this)" style="flex:1;padding:8px 4px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;border:none;color:var(--muted);font-family:var(--font)">ଓଡ଼ିଆ</button>
+      <button class="lang-btn" onclick="setLang('bn',this)" style="flex:1;padding:8px 4px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;border:none;color:var(--muted);font-family:var(--font)">বাংলা</button>
+    </div>
+
+    <!-- STEP 1: Phone -->
+    <div id="l-s1" class="l-step on">
+      <div class="l-ttl" data-i18n="login_title">Mobile number daalo</div>
+      <div class="l-sub" data-i18n="login_sub">India ka #1 Flexible Packaging professionals network — Admin verified members only</div>
+      <div class="phone-row">
+        <div class="ph-pre">+91</div>
+        <input id="ph-inp" type="tel" inputmode="numeric" maxlength="10"
+          placeholder="10 digit number" oninput="onPhone(this)">
+      </div>
+      <div id="known-badge" class="known-badge green">✅ Aap approved member hain — seedha login ho jayega</div>
+      <div id="pre-badge" class="known-badge" style="display:none;background:rgba(10,102,194,.15);color:var(--primary);border:1px solid rgba(10,102,194,.3)">📋 Aapka number hamare database mein hai — Photo lo + confirm karo</div>
+      <div id="revoked-badge" class="known-badge" style="display:none;background:rgba(249,115,22,.1);color:#F97316;border:1px solid rgba(249,115,22,.3)">🔒 Access revoked — Dubara photo le kar verify karo</div>
+      <div id="new-badge" class="known-badge gold">👋 Naya member — Apni details bharo</div>
+      <div id="err1" class="err-msg"></div>
+      <button class="btn btn-blue btn-w100" style="margin-top:16px" onclick="s1Next()">
+        Aage Badhein →
+      </button>
+      <div style="text-align:center;margin-top:20px">
+        <button onclick="showAdminLogin()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);padding:8px">🔐 Admin Login</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Details + Photo -->
+    <div id="l-s2" class="l-step">
+      <div class="l-ttl" id="s2-ttl">Apni Details Bharo</div>
+      <div class="l-sub" id="s2-sub">Sahi details bharo — admin verify karega</div>
+      <div id="cam-wrap" onclick="openCam()">
+        <img id="cam-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="">
+        <div id="cam-ph">
+          <svg width="34" height="34" fill="none" viewBox="0 0 24 24" stroke="#607B96" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span>Photo lo</span>
+        </div>
+        <div id="cam-overlay">📷</div>
+      </div>
+      <div class="field">
+        <label>Naam *</label>
+        <div class="inp-row"><span class="inp-ico">👤</span>
+          <input id="l-name" type="text" placeholder="Poora naam likho">
+        </div>
+      </div>
+      <div class="field">
+        <label>Designation *</label>
+        <div class="inp-row"><span class="inp-ico">💼</span>
+          <select id="l-desig">
+            <option value="">-- Select --</option>
+            <optgroup label="Shop Floor">
+              <option>Trainee / GET</option><option>Operator</option>
+              <option>Sr. Operator</option><option>Shift Incharge</option>
+            </optgroup>
+            <optgroup label="Technical">
+              <option>ITI Technician</option><option>Maintenance Fitter</option>
+              <option>Maintenance Electrician</option><option>Instrument Technician</option>
+              <option>Jr. Officer</option><option>Officer</option><option>Sr. Officer</option>
+            </optgroup>
+            <optgroup label="Engineering">
+              <option>Engineer / Executive</option><option>Shift Engineer</option>
+              <option>Sr. Engineer</option><option>Asst. Manager</option>
+            </optgroup>
+            <optgroup label="Management">
+              <option>Manager</option><option>Sr. Manager</option>
+              <option>AGM / DGM</option><option>GM / VP</option><option>Plant Head</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option>HR / Admin</option><option>Sales / Marketing</option>
+              <option>QC / QA</option><option>R&amp;D</option>
+              <option>Supplier / Vendor</option><option>Consultant</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Total Experience *</label>
+        <div class="inp-row"><span class="inp-ico">🏆</span>
+          <select id="l-exp">
+            <option value="">-- Select --</option>
+            <option>Fresher (0 Years)</option><option>Less than 1 Year</option>
+            <option>1 Year</option><option>2 Years</option><option>3 Years</option>
+            <option>4 Years</option><option>5 Years</option><option>6 Years</option>
+            <option>7 Years</option><option>8 Years</option><option>9 Years</option>
+            <option>10 Years</option><option>11–12 Years</option><option>13–15 Years</option>
+            <option>16–20 Years</option><option>20+ Years</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Current / Last Salary (Optional)</label>
+        <div class="inp-row"><span class="inp-ico">💰</span>
+          <input id="l-salary" type="text" placeholder="e.g. 25,000/month or 4.5 LPA">
+        </div>
+      </div>
+      <div class="field">
+        <label>Department *</label>
+        <div class="inp-row"><span class="inp-ico">🏭</span>
+          <select id="l-dept">
+            <option value="">-- Select --</option>
+            <option>Metallizer / DMAT</option><option>BOPP Production</option>
+            <option>BOPET Production</option><option>CPP Production</option>
+            <option>Slitter / Rewinder</option><option>Lamination</option>
+            <option>Coating / Extrusion Coating</option><option>Printing / Flexo</option>
+            <option>Extrusion</option><option>Vacuum Coating</option>
+            <option>Mechanical Maintenance</option><option>Electrical / E&amp;I</option>
+            <option>Instrumentation</option><option>Quality / QC</option>
+            <option>R&amp;D / Lab</option><option>Projects</option>
+            <option>Stores / Purchase</option><option>HR / Admin</option>
+            <option>Sales / Marketing</option><option>Dispatch / Logistics</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Company *</label>
+        <div class="inp-row"><span class="inp-ico">🏢</span>
+          <select id="l-co" onchange="onCoChange()">
+            <option value="">-- Select --</option>
+            <optgroup label="Film Manufacturers">
+              <option>Uflex Ltd</option><option>SRF Limited</option>
+              <option>Jindal Poly Films Ltd</option><option>Cosmo Films Ltd</option>
+              <option>Polyplex Corporation Ltd</option><option>JPFL Films Pvt Ltd</option>
+              <option>Toppan Speciality Films</option><option>Ester Filmtech Ltd</option>
+              <option>Aerolam Industries</option><option>GLS Films</option>
+              <option>Taghleef Industries</option><option>Max Specialty Films</option>
+              <option>Garware Hi-Tech Films</option><option>Vacmet India Ltd</option>
+              <option>Alpine Pack Pvt Ltd</option><option>Nahar Poly Films</option>
+            </optgroup>
+            <optgroup label="Packaging Companies">
+              <option>Huhtamaki India</option><option>Constantia Flexibles</option>
+              <option>Essel Propack</option><option>TPAC Packaging India</option>
+              <option>Jhaveri Flexo India Pvt Ltd</option><option>Macro Polymer</option>
+              <option>Pearl Polymers</option>
+            </optgroup>
+            <optgroup label="Equipment / Others">
+              <option>BOBST India</option><option>Leybold India</option>
+              <option>SKF India</option>
+            </optgroup>
+            <option value="__other">Other (Type karein)</option>
+          </select>
+        </div>
+      </div>
+      <div id="other-co-wrap" class="field" style="display:none">
+        <label>Company naam (manual)</label>
+        <div class="inp-row"><span class="inp-ico">✏️</span>
+          <input id="l-co-other" type="text" placeholder="Company naam likho">
+        </div>
+      </div>
+      <!-- Vendor/Supplier extra fields -->
+      <div id="vendor-fields" style="display:none;border:1.5px solid rgba(251,146,60,.3);border-radius:12px;padding:14px;margin-bottom:14px;background:rgba(251,146,60,.05)">
+        <div style="font-size:12px;font-weight:800;color:#FB923C;margin-bottom:10px;letter-spacing:.5px">🏪 VENDOR / SUPPLIER DETAILS</div>
+        <div class="field">
+          <label>Services / Products *</label>
+          <div class="inp-row"><span class="inp-ico">📦</span>
+            <input id="l-services" type="text" placeholder="e.g. Adhesives, Inks, Rollers, Spare Parts">
+          </div>
+        </div>
+        <div class="field">
+          <label>Website (Optional)</label>
+          <div class="inp-row"><span class="inp-ico">🌐</span>
+            <input id="l-website" type="url" placeholder="https://www.example.com">
+          </div>
+        </div>
+        <div class="field">
+          <label>Brochure / Business Card (Optional)</label>
+          <div style="position:relative">
+            <div id="brochure-preview" style="display:none;margin-bottom:8px;border-radius:10px;overflow:hidden;border:1px solid var(--border)"></div>
+            <button type="button" onclick="pickBrochure()" style="width:100%;padding:14px;background:var(--card2);border:1.5px dashed rgba(251,146,60,.4);border-radius:10px;color:#FB923C;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px">
+              📎 Upload Brochure / Business Card
+            </button>
+            <input type="file" id="brochure-input" accept="image/*,.pdf" style="display:none" onchange="onBrochureSelect(this)">
+          </div>
+        </div>
+      </div>
+      <div id="err2" class="err-msg"></div>
+      <button class="btn btn-blue btn-w100" style="margin-top:8px" onclick="s2Next()">
+        Submit Karo ✅
+      </button>
+      <button onclick="goStep(1)" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--font);width:100%;padding:12px;margin-top:4px">← Wapas</button>
+    </div>
+
+    <!-- STEP 3: Wait -->
+    <div id="l-s3" class="l-step" style="text-align:center;padding-top:32px">
+      <div class="wait-spin"></div>
+      <div style="font-size:22px;font-weight:800;margin-bottom:8px">Request Bhej Di ✅</div>
+      <div id="w-name" style="font-size:18px;font-weight:700;color:var(--primary);margin-bottom:4px"></div>
+      <div id="w-info" style="font-size:13px;color:var(--muted);margin-bottom:20px"></div>
+      <div class="card" style="padding:16px;margin-bottom:20px;text-align:left">
+        <div style="font-size:13px;color:var(--text2);line-height:1.8">
+          ⏳ Admin review kar raha hai<br>
+          🔔 Approve hone pe auto-login hoga<br>
+          📱 Yeh tab khuli rakhein
+        </div>
+      </div>
+      <button class="btn btn-outline btn-w100" onclick="checkStatus()">🔄 Status Check</button>
+    </div>
+  </div>
+</div>
+
+<!-- Camera Modal -->
+<div id="cam-modal">
+  <button class="cam-close" onclick="closeCam()">✕</button>
+  <video id="cam-video" autoplay playsinline style="width:100%;max-width:480px;flex:1;object-fit:cover"></video>
+  <canvas id="cam-canvas"></canvas>
+  <button class="cam-snap" onclick="snapPhoto()" title="Capture"></button>
+  <div style="font-size:12px;color:rgba(255,255,255,.5);padding-bottom:24px">Tap white button to capture</div>
+</div>
+
+<!-- ══════════════ MAIN APP ══════════════ -->
+<div id="app" class="screen">
+  <div class="app-hdr">
+    <div class="logo">FP<span>JOB</span></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="toggleNotif()" style="background:none;border:none;cursor:pointer;
+        width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
+        justify-content:center;transition:background .15s;position:relative"
+        id="notif-btn">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="var(--text2)" stroke-width="2" stroke-linecap="round">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+        </svg>
+        <div id="notif-dot" style="position:absolute;top:5px;right:5px;width:8px;height:8px;
+          background:var(--red);border-radius:50%;border:2px solid var(--bg);display:none"></div>
+      </button>
+      <div id="hdr-pic" onclick="showPage('profile')"></div>
+    </div>
+    <!-- Language Bar -->
+    <div class="lang-bar" id="lang-bar">
+      <button class="lang-btn on" onclick="setLang('en',this)">English</button>
+      <button class="lang-btn" onclick="setLang('hi',this)">हिन्दी</button>
+      <button class="lang-btn" onclick="setLang('od',this)">ଓଡ଼ିଆ</button>
+      <button class="lang-btn" onclick="setLang('bn',this)">বাংলা</button>
+    </div>
+  </div>
+
+  <!-- HOME PAGE -->
+  <div id="pg-home" class="page on">
+    <div style="padding:16px 16px 10px">
+      <div id="greeting" style="font-size:22px;font-weight:800;margin-bottom:3px"></div>
+      <div data-i18n="network_tag" style="font-size:13px;color:var(--muted)">Flexible Packaging Industry Network 🏭</div>
+    </div>
+    <div style="display:flex;gap:10px;padding:0 16px 16px">
+      <div class="stat"><div data-i18n="stats_members" style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">MEMBERS</div>
+        <div id="st-mem" style="font-family:var(--font-head);font-size:30px;font-weight:800;color:var(--primary)">—</div></div>
+      <div class="stat"><div data-i18n="stats_jobs" style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">JOBS</div>
+        <div id="st-jobs" style="font-family:var(--font-head);font-size:30px;font-weight:800;color:var(--green)">—</div></div>
+      <div class="stat"><div data-i18n="stats_companies" style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">COMPANIES</div>
+        <div id="st-cos" style="font-family:var(--font-head);font-size:30px;font-weight:800;color:var(--gold)">—</div></div>
+    </div>
+    <div style="padding:0 16px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="sec-ttl" data-i18n="latest_jobs">🔥 Latest Jobs</div>
+        <button onclick="showPage('jobs')" style="background:none;border:none;color:var(--primary);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" data-i18n="see_all">See all →</button>
+      </div>
+      <div id="home-jobs"></div>
+    </div>
+    <div style="padding:0 16px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="sec-ttl" data-i18n="new_members">👥 New Members</div>
+        <button onclick="showPage('members')" style="background:none;border:none;color:var(--primary);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" data-i18n="see_all">See all →</button>
+      </div>
+      <div id="home-members"></div>
+    </div>
+  </div>
+
+  <!-- JOBS PAGE -->
+  <div id="pg-jobs" class="page">
+    <div style="padding:14px 16px 8px;display:flex;align-items:center;justify-content:space-between">
+      <div data-i18n="jobs_board" style="font-family:var(--font-head);font-size:22px;font-weight:800">Jobs Board 💼</div>
+    </div>
+    <!-- FIX: Added job text search -->
+    <div style="padding:0 16px 8px">
+      <div class="search-bar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="job-search" data-i18n-ph="search_jobs" placeholder="Position, company, location..." oninput="renderJobs()">
+      </div>
+    </div>
+    <div style="padding:0 16px 8px"><div class="chips" id="job-chips">
+      <button class="chip on" onclick="setJF('type','all',this)" data-i18n="chip_all">Sab</button>
+      <button class="chip" onclick="setJF('type','hiring',this)" data-i18n="chip_hiring">🏢 Hiring</button>
+      <button class="chip" onclick="setJF('type','seeking',this)" data-i18n="chip_seeking">🙋 Seeking</button>
+      <button class="chip" onclick="setJF('dept','Metallizer / DMAT',this)" data-i18n="chip_metallizer">Metallizer</button>
+      <button class="chip" onclick="setJF('dept','Slitter / Rewinder',this)" data-i18n="chip_slitter">Slitter</button>
+      <button class="chip" onclick="setJF('dept','Lamination',this)" data-i18n="chip_lamination">Lamination</button>
+      <button class="chip" onclick="setJF('dept','Mechanical Maintenance',this)" data-i18n="chip_mechanical">Mechanical</button>
+      <button class="chip" onclick="setJF('dept','Electrical / E&I',this)" data-i18n="chip_ei">E&amp;I</button>
+    </div></div>
+    <div id="jobs-list" style="padding:0 16px 80px"></div>
+  </div>
+
+  <!-- MEMBERS PAGE -->
+  <div id="pg-members" class="page">
+    <div style="padding:14px 16px 10px">
+      <div data-i18n="members_title" style="font-family:var(--font-head);font-size:22px;font-weight:800;margin-bottom:10px">Members 👥</div>
+      <div class="search-bar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="mem-search" data-i18n-ph="search_members" placeholder="Naam, company, designation..." oninput="renderMembers()">
+      </div>
+    </div>
+    <div style="padding:0 16px 8px"><div class="chips" id="mem-chips">
+      <button class="chip on" onclick="setMF('all',this)" data-i18n="chip_all">Sab</button>
+      <button class="chip" onclick="setMF('Operator',this)" data-i18n="chip_operator">Operator</button>
+      <button class="chip" onclick="setMF('Engineer',this)" data-i18n="chip_engineer">Engineer</button>
+      <button class="chip" onclick="setMF('Manager',this)" data-i18n="chip_manager">Manager</button>
+      <button class="chip" onclick="setMF('Officer',this)" data-i18n="chip_officer">Officer</button>
+      <button class="chip" onclick="setMF('HR',this)" data-i18n="chip_hr">HR</button>
+      <button class="chip" onclick="setMF('Supplier',this)" data-i18n="chip_vendor">Vendor</button>
+    </div></div>
+    <div id="members-list" style="padding:0 16px 80px"></div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div id="pg-profile" class="page">
+    <div style="padding:14px 16px 10px;font-family:var(--font-head);font-size:22px;font-weight:800" data-i18n="my_profile">My Profile</div>
+    <div id="profile-content" style="padding:0 16px 80px"></div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav id="nav">
+  <div class="nav-items">
+    <button class="nav-btn on" id="nb-home" onclick="showPage('home')">
+      <svg viewBox="0 0 24 24"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg>Home
+    </button>
+    <button class="nav-btn" id="nb-jobs" onclick="showPage('jobs')">
+      <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>Jobs
+    </button>
+    <button class="nav-btn" id="nb-members" onclick="showPage('members')">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Members
+    </button>
+    <button class="nav-btn" id="nb-profile" onclick="showPage('profile')">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile
+    </button>
+  </div>
+</nav>
+
+<!-- FAB -->
+<button id="fab" onclick="openPostJob()">＋</button>
+
+<!-- Notification Panel -->
+<div id="notif-panel">
+  <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div style="font-size:17px;font-weight:800">Notifications 🔔</div>
+    <button onclick="toggleNotif()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer">✕</button>
+  </div>
+  <div id="notif-list" style="flex:1;overflow-y:auto;padding-bottom:24px"></div>
+</div>
+
+<!-- ══════════════ FINGERPRINT SCREEN ══════════════ -->
+<div id="fp-screen">
+  <div id="fp-av" style="width:80px;height:80px;border-radius:50%;overflow:hidden;background:var(--primary);
+    display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;
+    margin-bottom:16px;border:3px solid var(--primary)"></div>
+  <div id="fp-name" style="font-size:20px;font-weight:800;margin-bottom:6px"></div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:32px">Welcome back 👋</div>
+  <div class="fp-ring" id="fp-ring" onclick="doFingerprint()">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round">
+      <path d="M12 1C8.5 1 5.5 2.8 4 5.5"/><path d="M20 5.5C18.5 2.8 15.5 1 12 1"/>
+      <path d="M4 12c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+      <path d="M7 12c0-2.8 2.2-5 5-5s5 2.2 5 5"/>
+      <path d="M12 12v.01"/><path d="M10 17c.6.6 1.3 1 2 1s1.4-.4 2-1"/>
+      <path d="M7 19.5C8.4 21 10.1 22 12 22s3.6-1 5-2.5"/>
+      <path d="M4.5 16.5C5.1 18 5.9 19.3 7 20.3"/>
+      <path d="M19.5 16.5c-.6 1.5-1.4 2.8-2.5 3.8"/>
+    </svg>
+  </div>
+  <div id="fp-status" style="font-size:14px;color:var(--muted);margin-top:16px;font-weight:600">Tap to use fingerprint</div>
+  <button onclick="fpSkip()" style="margin-top:24px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--font);padding:8px">Use password instead →</button>
+</div>
+
+<!-- ══════════════ ADMIN ══════════════ -->
+<div id="admin" class="screen">
+  <div class="adm-hdr">
+    <button onclick="showScr('app')" style="background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer;padding:0;line-height:1">←</button>
+    <div style="font-size:17px;font-weight:800;flex:1;margin-left:10px">Admin Panel 🔐</div>
+    <div style="font-size:11px;color:var(--muted)">fpjob-4e4e1</div>
+  </div>
+  <div class="adm-tabs">
+    <button class="adm-tab on" onclick="adTab('pending',this)">Pending<span id="pnd-cnt"></span></button>
+    <button class="adm-tab" onclick="adTab('members',this)">Members</button>
+    <button class="adm-tab" onclick="adTab('devices',this)">📱 Devices</button>
+    <button class="adm-tab" onclick="adTab('jobs',this)">Jobs</button>
+    <button class="adm-tab" onclick="adTab('postjob',this)">Post Job</button>
+  </div>
+  <div style="overflow-y:auto;flex:1">
+    <div id="ap-pending" class="adm-pg on"></div>
+    <!-- FIX: Moved search/filter outside the render target -->
+    <div id="ap-members" class="adm-pg">
+      <div id="adm-mem-controls" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="search-bar" style="flex:1;min-width:200px">
+          <input id="adm-mem-search" placeholder="Naam, phone, company..." oninput="renderAdminMembersAll()" style="background:transparent;border:none;outline:none;font-size:13px;color:var(--text);font-family:var(--font);flex:1">
+        </div>
+        <select id="adm-cat-filter" onchange="renderAdminMembersAll()" style="background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;color:var(--text);font-family:var(--font);font-size:13px">
+          <option value="all">All</option>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="revoked">Revoked</option>
+          <option value="pre_registered">Pre-Reg</option>
+          <option value="Operator">Operators</option>
+          <option value="Engineer">Engineers</option>
+          <option value="Manager">Managers</option>
+          <option value="Head">Heads</option>
+          <option value="Supplier">Suppliers</option>
+        </select>
+      </div>
+      <!-- FIX: Separate render target so controls aren't destroyed -->
+      <div id="adm-mem-list"></div>
+    </div>
+    <div id="ap-devices" class="adm-pg">
+      <div style="font-size:16px;font-weight:800;margin-bottom:12px">📱 Device & Login Activity</div>
+      <div id="adm-devices-list"></div>
+    </div>
+    <div id="ap-jobs" class="adm-pg"></div>
+    <div id="ap-postjob" class="adm-pg"></div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<!-- Admin Login -->
+<div id="adm-modal" class="overlay">
+  <div class="sheet" style="padding:24px 20px">
+    <div class="sheet-handle"></div>
+    <div style="font-size:18px;font-weight:800;text-align:center;margin:8px 0 20px">🔐 Admin Login</div>
+    <div class="field"><div class="inp-row"><span class="inp-ico">🔑</span>
+      <input id="adm-pass" type="password" placeholder="Admin password" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    </div></div>
+    <div id="adm-err" class="err-msg"></div>
+    <button class="btn btn-blue btn-w100" style="margin-top:10px" onclick="doAdminLogin()">Login</button>
+    <button onclick="closeOv('adm-modal')" style="width:100%;margin-top:8px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--font);padding:10px">Cancel</button>
+  </div>
+</div>
+
+<!-- Post Job -->
+<div id="pj-modal" class="overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr">
+      <div style="font-size:18px;font-weight:800">Job Post Karo 💼</div>
+      <button onclick="closeOv('pj-modal')" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div id="pj-form" style="padding:0 20px 24px"></div>
+  </div>
+</div>
+
+<!-- Job Banner Modal -->
+<div id="banner-modal" class="overlay">
+  <div class="sheet" style="max-height:95vh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr">
+      <div style="font-size:18px;font-weight:800">Job Banner 🎨</div>
+      <button onclick="closeOv('banner-modal')" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div id="banner-content" style="padding:0 16px 24px"></div>
+  </div>
+</div>
+
+<!-- Job Detail -->
+<div id="jd-modal" class="overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <button onclick="closeOv('jd-modal')" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;z-index:1;line-height:1">✕</button>
+    <div id="jd-content"></div>
+  </div>
+</div>
+
+<!-- Member Detail -->
+<div id="md-modal" class="overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <button onclick="closeOv('md-modal')" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;z-index:1;line-height:1">✕</button>
+    <div id="md-content"></div>
+  </div>
+</div>
+
+<!-- Edit Member Modal -->
+<div id="edit-modal" class="overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr">
+      <div style="font-size:18px;font-weight:800">Edit Member ✏️</div>
+      <button onclick="closeOv('edit-modal')" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div id="edit-form" style="padding:0 20px 24px"></div>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="profile-edit-modal" class="overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr">
+      <div style="font-size:18px;font-weight:800">Edit Profile ✏️</div>
+      <button onclick="closeOv('profile-edit-modal')" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div id="profile-edit-form" style="padding:0 20px 24px"></div>
+  </div>
+</div>
+
+<!-- ══════════════ FIREBASE ══════════════ -->
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getDatabase,ref,set,get,push,update,remove,onValue}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const DB_URLS=["https://fpjob-4e4e1-default-rtdb.asia-southeast1.firebasedatabase.app","https://fpjob-4e4e1-default-rtdb.firebaseio.com"];
+function initFB(i){
+  var cfg={apiKey:"AIzaSyCMXUNkwuNw6PyPNVrTT7kIw-rmVoutlkg",authDomain:"fpjob-4e4e1.firebaseapp.com",
+    databaseURL:DB_URLS[i||0],projectId:"fpjob-4e4e1",storageBucket:"fpjob-4e4e1.firebasestorage.app",
+    messagingSenderId:"493082359147",appId:"1:493082359147:web:9a2fa6a069e40378e8482e"};
+  try{
+    var app=initializeApp(cfg,'fpjob-'+(i||0));var db=getDatabase(app);var r=function(p){return ref(db,p)};
+    window.FB={
+      get:function(p){return get(r(p)).then(function(s){return s.exists()?s.val():null})},
+      set:function(p,v){return set(r(p),v)},
+      push:function(p,v){return push(r(p),v).then(function(ref){return ref.key})},
+      update:function(p,v){return update(r(p),v)},
+      remove:function(p){return remove(r(p))},
+      listen:function(p,cb){onValue(r(p),function(s){cb(s.exists()?s.val():null)})}
+    };
+    window.FB_READY=true;console.log('🔥 Firebase OK:',DB_URLS[i||0]);
+  }catch(e){console.error('Firebase error:',e);if(i===0)initFB(1);else window.FB_READY=false}
+}
+initFB(0);
+setTimeout(function(){document.dispatchEvent(new Event('fb-ready'))},200);
+setTimeout(function(){if(!window._appStarted)document.dispatchEvent(new Event('fb-ready'))},5000);
+</script>
+
+<!-- ══════════════ APP LOGIC ══════════════ -->
+<script>
+'use strict';
+
+// ── Config ──
+// FIX: Basic obfuscation — not secure but better than plaintext
+var _ap=atob('c3VuaXRhdmtzMjY=');
+var ADMIN_WA='918929394920';
+var SESS_KEY='fpjob_sess';
+var PEND_KEY='fpjob_pend';
+var CREQ_KEY='fpjob_creqs';
+var PAGE_SIZE=20; // FIX: Pagination
+
+// ════════════════════════════════════
+// MULTI-LANGUAGE SYSTEM
+// ════════════════════════════════════
+var LANG=localStorage.getItem('fpjob_lang')||'en';
+var TRANSLATIONS={
+  en:{
+    login_title:'Enter your mobile number',
+    login_sub:'India\'s #1 Flexible Packaging professionals network — Admin verified members only',
+    phone_placeholder:'10 digit number',
+    next_btn:'Next →',
+    badge_approved:'✅ You are an approved member — direct login',
+    badge_pre:'📋 Your number is in our database — Take photo + confirm',
+    badge_new:'👋 New member — Fill your details',
+    fill_details:'Fill Your Details',
+    fill_sub:'Enter correct details — admin will verify',
+    confirm_details:'Confirm Details 📋',
+    confirm_sub:'Your number is in our database! Confirm details and take photo.',
+    name_label:'Name *',name_ph:'Write full name',
+    desig_label:'Designation *',exp_label:'Total Experience *',
+    salary_label:'Current / Last Salary (Optional)',salary_ph:'e.g. 25,000/month or 4.5 LPA',
+    dept_label:'Department *',company_label:'Company *',
+    submit_btn:'Submit ✅',back_btn:'← Back',
+    request_sent:'Request Sent ✅',
+    wait_review:'⏳ Admin is reviewing',wait_auto:'🔔 Auto-login on approval',wait_tab:'📱 Keep this tab open',
+    status_check:'🔄 Check Status',
+    take_photo:'Take Photo',
+    home:'Home',jobs:'Jobs',members:'Members',profile:'Profile',
+    greeting_morning:'Good Morning ☀️',greeting_afternoon:'Good Afternoon 👋',greeting_evening:'Good Evening 🌙',
+    network_tag:'Flexible Packaging Industry Network 🏭',
+    stats_members:'MEMBERS',stats_jobs:'JOBS',stats_companies:'COMPANIES',
+    latest_jobs:'🔥 Latest Jobs',see_all:'See all →',
+    new_members:'👥 New Members',
+    jobs_board:'Jobs Board 💼',search_jobs:'Position, company, location...',
+    all:'All',hiring:'🏢 Hiring',seeking:'🙋 Seeking',
+    no_jobs:'No job posts yet',post_hint:'+ button se post karo',
+    members_title:'Members 👥',search_members:'Name, company, designation...',
+    no_members:'No members found',
+    my_profile:'My Profile',edit_profile:'✏️ Edit Profile',logout:'🚪 Logout',
+    post_job:'Post Job 💼',
+    we_hire:'🏢 We are Hiring',want_job:'🙋 Want a Job',
+    regular_job:'💼 Regular Post',walkin_job:'🚶 Walk-In Drive',
+    position_label:'Position *',custom_title:'Or Custom Title (optional)',custom_ph:'e.g. Crucible Metalizer Operator',
+    location_label:'Location *',location_ph:'City, State',
+    qual_label:'Qualification',ctc_label:'Salary/CTC',ctc_ph:'e.g. 25k–35k/mo',
+    vac_label:'No. of Vacancies',skills_label:'Machines / Skills',skills_ph:'e.g. J Kampf Slitter, BOPP Line',
+    walkin_details:'📅 WALK-IN DETAILS',venue_label:'Venue / Address *',venue_ph:'Full address of interview location',
+    date_from:'Date From *',date_to:'Date To (optional)',time_from:'Time From',time_to:'Time To',
+    contact_label:'Contact (WhatsApp/Email) *',contact_ph:'Mobile or email',
+    desc_label:'Additional Details',desc_ph:'Job details, requirements...',
+    post_btn:'✅ Post Now',
+    notifications:'Notifications 🔔',no_notifs:'No notifications',
+    admin_login:'🔐 Admin Login',admin_panel:'Admin Panel 🔐',
+    approve:'✅ Approve',reject:'❌ Reject',
+    company_other:'Other (Type name)',company_manual:'Company name (manual)',
+    chip_all:'All',chip_hiring:'🏢 Hiring',chip_seeking:'🙋 Seeking',
+    chip_metallizer:'Metallizer',chip_slitter:'Slitter',chip_lamination:'Lamination',
+    chip_mechanical:'Mechanical',chip_ei:'E&I',
+    chip_operator:'Operator',chip_engineer:'Engineer',chip_manager:'Manager',
+    chip_officer:'Officer',chip_hr:'HR',chip_vendor:'Vendor',
+    content_blocked:'⚠️ This content was blocked — inappropriate links or content not allowed',
+  },
+  hi:{
+    login_title:'अपना मोबाइल नंबर डालें',
+    login_sub:'भारत का #1 फ्लेक्सिबल पैकेजिंग प्रोफेशनल्स नेटवर्क — एडमिन वेरिफाइड',
+    phone_placeholder:'10 अंक का नंबर',
+    next_btn:'आगे बढ़ें →',
+    badge_approved:'✅ आप अप्रूव्ड मेम्बर हैं — सीधा लॉगिन होगा',
+    badge_pre:'📋 आपका नंबर डेटाबेस में है — फोटो लो + कन्फर्म करो',
+    badge_new:'👋 नया मेम्बर — अपनी डिटेल्स भरो',
+    fill_details:'अपनी डिटेल्स भरो',
+    fill_sub:'सही डिटेल्स भरो — एडमिन वेरिफाई करेगा',
+    confirm_details:'डिटेल्स कन्फर्म करो 📋',
+    confirm_sub:'आपका नंबर डेटाबेस में है! डिटेल्स कन्फर्म करो और फोटो लो।',
+    name_label:'नाम *',name_ph:'पूरा नाम लिखो',
+    desig_label:'पद *',exp_label:'कुल अनुभव *',
+    salary_label:'वर्तमान / अंतिम वेतन (वैकल्पिक)',salary_ph:'जैसे 25,000/महीना या 4.5 LPA',
+    dept_label:'विभाग *',company_label:'कंपनी *',
+    submit_btn:'सबमिट करो ✅',back_btn:'← वापस',
+    request_sent:'रिक्वेस्ट भेज दी ✅',
+    wait_review:'⏳ एडमिन रिव्यू कर रहा है',wait_auto:'🔔 अप्रूव होने पर ऑटो-लॉगिन',wait_tab:'📱 यह टैब खुली रखें',
+    status_check:'🔄 स्टेटस चेक करो',
+    take_photo:'फोटो लो',
+    home:'होम',jobs:'नौकरी',members:'सदस्य',profile:'प्रोफाइल',
+    greeting_morning:'सुप्रभात ☀️',greeting_afternoon:'नमस्कार 👋',greeting_evening:'शुभ संध्या 🌙',
+    network_tag:'फ्लेक्सिबल पैकेजिंग इंडस्ट्री नेटवर्क 🏭',
+    stats_members:'सदस्य',stats_jobs:'नौकरियां',stats_companies:'कंपनियां',
+    latest_jobs:'🔥 नई नौकरियां',see_all:'सब देखो →',
+    new_members:'👥 नए सदस्य',
+    jobs_board:'नौकरी बोर्ड 💼',search_jobs:'पद, कंपनी, लोकेशन...',
+    all:'सब',hiring:'🏢 हायरिंग',seeking:'🙋 ढूंढ रहे',
+    no_jobs:'कोई जॉब पोस्ट नहीं',post_hint:'+ बटन से पोस्ट करो',
+    members_title:'सदस्य 👥',search_members:'नाम, कंपनी, पद...',
+    no_members:'कोई सदस्य नहीं मिला',
+    my_profile:'मेरी प्रोफाइल',edit_profile:'✏️ प्रोफाइल बदलो',logout:'🚪 लॉगआउट',
+    post_job:'नौकरी पोस्ट करो 💼',
+    we_hire:'🏢 हम भर्ती कर रहे',want_job:'🙋 नौकरी चाहिए',
+    regular_job:'💼 सामान्य पोस्ट',walkin_job:'🚶 वॉक-इन ड्राइव',
+    position_label:'पद *',custom_title:'या कस्टम टाइटल (वैकल्पिक)',custom_ph:'जैसे क्रूसिबल मेटलाइज़र ऑपरेटर',
+    location_label:'लोकेशन *',location_ph:'शहर, राज्य',
+    qual_label:'योग्यता',ctc_label:'वेतन/CTC',ctc_ph:'जैसे 25k–35k/महीना',
+    vac_label:'रिक्तियों की संख्या',skills_label:'मशीनें / स्किल्स',skills_ph:'जैसे J Kampf Slitter, BOPP Line',
+    walkin_details:'📅 वॉक-इन डिटेल्स',venue_label:'स्थान / पता *',venue_ph:'इंटरव्यू का पूरा पता',
+    date_from:'तारीख से *',date_to:'तारीख तक (वैकल्पिक)',time_from:'समय से',time_to:'समय तक',
+    contact_label:'संपर्क (WhatsApp/ईमेल) *',contact_ph:'मोबाइल या ईमेल',
+    desc_label:'अन्य विवरण',desc_ph:'नौकरी की डिटेल्स, आवश्यकताएं...',
+    post_btn:'✅ पोस्ट करो',
+    notifications:'सूचनाएं 🔔',no_notifs:'कोई सूचना नहीं',
+    admin_login:'🔐 एडमिन लॉगिन',admin_panel:'एडमिन पैनल 🔐',
+    approve:'✅ अप्रूव',reject:'❌ रिजेक्ट',
+    company_other:'अन्य (नाम लिखें)',company_manual:'कंपनी का नाम (मैन्युअल)',
+    chip_all:'सभी',chip_hiring:'🏢 भर्ती',chip_seeking:'🙋 नौकरी खोज',
+    chip_metallizer:'मेटलाइज़र',chip_slitter:'स्लिटर',chip_lamination:'लेमिनेशन',
+    chip_mechanical:'मैकेनिकल',chip_ei:'इलेक्ट्रिकल',
+    chip_operator:'ऑपरेटर',chip_engineer:'इंजीनियर',chip_manager:'मैनेजर',
+    chip_officer:'अधिकारी',chip_hr:'HR',chip_vendor:'विक्रेता',
+    content_blocked:'⚠️ यह सामग्री ब्लॉक हुई — अनुचित लिंक या सामग्री अनुमत नहीं',
+  },
+  od:{
+    login_title:'ଆପଣଙ୍କ ମୋବାଇଲ ନମ୍ବର ଦିଅନ୍ତୁ',
+    login_sub:'ଭାରତର #1 ଫ୍ଲେକ୍ସିବଲ ପ୍ୟାକେଜିଂ ପ୍ରୋଫେସନାଲ ନେଟୱର୍କ — ଆଡମିନ ଭେରିଫାଏଡ',
+    phone_placeholder:'10 ଅଙ୍କ ନମ୍ବର',
+    next_btn:'ପରବର୍ତ୍ତୀ →',
+    badge_approved:'✅ ଆପଣ ଅନୁମୋଦିତ ସଦସ୍ୟ — ସିଧା ଲଗଇନ',
+    badge_pre:'📋 ଆପଣଙ୍କ ନମ୍ବର ଡାଟାବେସରେ ଅଛି — ଫଟୋ ନିଅନ୍ତୁ',
+    badge_new:'👋 ନୂଆ ସଦସ୍ୟ — ନିଜ ବିବରଣୀ ଭରନ୍ତୁ',
+    fill_details:'ନିଜ ବିବରଣୀ ଭରନ୍ତୁ',
+    fill_sub:'ସଠିକ ବିବରଣୀ ଭରନ୍ତୁ — ଆଡମିନ ଯାଞ୍ଚ କରିବେ',
+    confirm_details:'ବିବରଣୀ ନିଶ୍ଚିତ କରନ୍ତୁ 📋',
+    confirm_sub:'ଆପଣଙ୍କ ନମ୍ବର ଡାଟାବେସରେ ଅଛି! ବିବରଣୀ ନିଶ୍ଚିତ କରନ୍ତୁ ଏବଂ ଫଟୋ ନିଅନ୍ତୁ।',
+    name_label:'ନାମ *',name_ph:'ପୂରା ନାମ ଲେଖନ୍ତୁ',
+    desig_label:'ପଦବୀ *',exp_label:'ମୋଟ ଅନୁଭବ *',
+    salary_label:'ବର୍ତ୍ତମାନ / ଶେଷ ବେତନ (ଐଚ୍ଛିକ)',salary_ph:'ଯେମିତି 25,000/ମାସ',
+    dept_label:'ବିଭାଗ *',company_label:'କମ୍ପାନୀ *',
+    submit_btn:'ଦାଖଲ କରନ୍ତୁ ✅',back_btn:'← ପଛକୁ',
+    request_sent:'ଅନୁରୋଧ ପଠାଗଲା ✅',
+    wait_review:'⏳ ଆଡମିନ ସମୀକ୍ଷା କରୁଛନ୍ତି',wait_auto:'🔔 ଅନୁମୋଦନ ପରେ ଅଟୋ-ଲଗଇନ',wait_tab:'📱 ଏହି ଟ୍ୟାବ ଖୋଲା ରଖନ୍ତୁ',
+    status_check:'🔄 ଷ୍ଟାଟସ ଚେକ',
+    take_photo:'ଫଟୋ ନିଅନ୍ତୁ',
+    home:'ହୋମ',jobs:'ଚାକିରୀ',members:'ସଦସ୍ୟ',profile:'ପ୍ରୋଫାଇଲ',
+    greeting_morning:'ସୁପ୍ରଭାତ ☀️',greeting_afternoon:'ନମସ୍କାର 👋',greeting_evening:'ଶୁଭ ସନ୍ଧ୍ୟା 🌙',
+    network_tag:'ଫ୍ଲେକ୍ସିବଲ ପ୍ୟାକେଜିଂ ଇଣ୍ଡଷ୍ଟ୍ରି ନେଟୱର୍କ 🏭',
+    stats_members:'ସଦସ୍ୟ',stats_jobs:'ଚାକିରୀ',stats_companies:'କମ୍ପାନୀ',
+    latest_jobs:'🔥 ନୂଆ ଚାକିରୀ',see_all:'ସବୁ ଦେଖନ୍ତୁ →',
+    new_members:'👥 ନୂଆ ସଦସ୍ୟ',
+    jobs_board:'ଚାକିରୀ ବୋର୍ଡ 💼',search_jobs:'ପଦ, କମ୍ପାନୀ, ସ୍ଥାନ...',
+    all:'ସମସ୍ତ',hiring:'🏢 ନିଯୁକ୍ତି',seeking:'🙋 ଖୋଜୁଛନ୍ତି',
+    no_jobs:'କୌଣସି ଚାକିରୀ ନାହିଁ',post_hint:'+ ବଟନରେ ପୋଷ୍ଟ କରନ୍ତୁ',
+    members_title:'ସଦସ୍ୟ 👥',search_members:'ନାମ, କମ୍ପାନୀ, ପଦବୀ...',
+    no_members:'କୌଣସି ସଦସ୍ୟ ମିଳିଲା ନାହିଁ',
+    my_profile:'ମୋ ପ୍ରୋଫାଇଲ',edit_profile:'✏️ ପ୍ରୋଫାଇଲ ବଦଳାନ୍ତୁ',logout:'🚪 ଲଗଆଉଟ',
+    post_job:'ଚାକିରୀ ପୋଷ୍ଟ କରନ୍ତୁ 💼',
+    we_hire:'🏢 ଆମେ ନିଯୁକ୍ତି କରୁଛୁ',want_job:'🙋 ଚାକିରୀ ଚାହୁଁ',
+    regular_job:'💼 ସାଧାରଣ ପୋଷ୍ଟ',walkin_job:'🚶 ୱାକ-ଇନ ଡ୍ରାଇଭ',
+    position_label:'ପଦ *',custom_title:'କିମ୍ବା କଷ୍ଟମ ଟାଇଟଲ (ଐଚ୍ଛିକ)',
+    location_label:'ସ୍ଥାନ *',location_ph:'ସହର, ରାଜ୍ୟ',
+    qual_label:'ଯୋଗ୍ୟତା',ctc_label:'ବେତନ/CTC',
+    vac_label:'ରିକ୍ତ ସଂଖ୍ୟା',skills_label:'ମେସିନ / ଦକ୍ଷତା',
+    walkin_details:'📅 ୱାକ-ଇନ ବିବରଣୀ',venue_label:'ସ୍ଥାନ / ଠିକଣା *',venue_ph:'ସାକ୍ଷାତକାର ସ୍ଥାନର ପୂରା ଠିକଣା',
+    date_from:'ତାରିଖ ଠାରୁ *',date_to:'ତାରିଖ ପର୍ଯ୍ୟନ୍ତ',time_from:'ସମୟ ଠାରୁ',time_to:'ସମୟ ପର୍ଯ୍ୟନ୍ତ',
+    contact_label:'ସମ୍ପର୍କ (WhatsApp/ଇମେଲ) *',contact_ph:'ମୋବାଇଲ କିମ୍ବା ଇମେଲ',
+    desc_label:'ଅତିରିକ୍ତ ବିବରଣୀ',desc_ph:'ଚାକିରୀ ବିବରଣୀ, ଆବଶ୍ୟକତା...',
+    post_btn:'✅ ପୋଷ୍ଟ କରନ୍ତୁ',
+    notifications:'ସୂଚନା 🔔',no_notifs:'କୌଣସି ସୂଚନା ନାହିଁ',
+    admin_login:'🔐 ଆଡମିନ ଲଗଇନ',
+    approve:'✅ ଅନୁମୋଦନ',reject:'❌ ପ୍ରତ୍ୟାଖ୍ୟାନ',
+    company_other:'ଅନ୍ୟ (ନାମ ଲେଖନ୍ତୁ)',company_manual:'କମ୍ପାନୀ ନାମ (ମାନୁଆଲ)',
+    chip_all:'ସମସ୍ତ',chip_hiring:'🏢 ନିଯୁକ୍ତି',chip_seeking:'🙋 ଖୋଜୁଛନ୍ତି',
+    chip_metallizer:'ମେଟାଲାଇଜର',chip_slitter:'ସ୍ଲିଟର',chip_lamination:'ଲାମିନେସନ',
+    chip_mechanical:'ମେକାନିକାଲ',chip_ei:'ଇଲେକ୍ଟ୍ରିକାଲ',
+    chip_operator:'ଅପରେଟର',chip_engineer:'ଇଞ୍ଜିନିୟର',chip_manager:'ମ୍ୟାନେଜର',
+    chip_officer:'ଅଧିକାରୀ',chip_hr:'HR',chip_vendor:'ବିକ୍ରେତା',
+    content_blocked:'⚠️ ଏହି ବିଷୟବସ୍ତୁ ଅବରୋଧ ହୋଇଛି — ଅନୁଚିତ ଲିଙ୍କ ବା ବିଷୟବସ୍ତୁ ଅନୁମତି ନାହିଁ',
+  },
+  bn:{
+    login_title:'আপনার মোবাইল নম্বর দিন',
+    login_sub:'ভারতের #1 ফ্লেক্সিবল প্যাকেজিং পেশাদার নেটওয়ার্ক — অ্যাডমিন যাচাইকৃত',
+    phone_placeholder:'10 সংখ্যার নম্বর',
+    next_btn:'পরবর্তী →',
+    badge_approved:'✅ আপনি অনুমোদিত সদস্য — সরাসরি লগইন',
+    badge_pre:'📋 আপনার নম্বর ডাটাবেসে আছে — ফটো তুলুন + নিশ্চিত করুন',
+    badge_new:'👋 নতুন সদস্য — আপনার তথ্য পূরণ করুন',
+    fill_details:'আপনার তথ্য পূরণ করুন',
+    fill_sub:'সঠিক তথ্য দিন — অ্যাডমিন যাচাই করবে',
+    confirm_details:'তথ্য নিশ্চিত করুন 📋',
+    confirm_sub:'আপনার নম্বর ডাটাবেসে আছে! তথ্য নিশ্চিত করুন এবং ফটো তুলুন।',
+    name_label:'নাম *',name_ph:'পুরো নাম লিখুন',
+    desig_label:'পদবী *',exp_label:'মোট অভিজ্ঞতা *',
+    salary_label:'বর্তমান / শেষ বেতন (ঐচ্ছিক)',salary_ph:'যেমন 25,000/মাস বা 4.5 LPA',
+    dept_label:'বিভাগ *',company_label:'কোম্পানি *',
+    submit_btn:'জমা দিন ✅',back_btn:'← পেছনে',
+    request_sent:'অনুরোধ পাঠানো হয়েছে ✅',
+    wait_review:'⏳ অ্যাডমিন পর্যালোচনা করছে',wait_auto:'🔔 অনুমোদনের পর অটো-লগইন',wait_tab:'📱 এই ট্যাব খোলা রাখুন',
+    status_check:'🔄 স্ট্যাটাস চেক',
+    take_photo:'ফটো তুলুন',
+    home:'হোম',jobs:'চাকরি',members:'সদস্য',profile:'প্রোফাইল',
+    greeting_morning:'সুপ্রভাত ☀️',greeting_afternoon:'নমস্কার 👋',greeting_evening:'শুভ সন্ধ্যা 🌙',
+    network_tag:'ফ্লেক্সিবল প্যাকেজিং ইন্ডাস্ট্রি নেটওয়ার্ক 🏭',
+    stats_members:'সদস্য',stats_jobs:'চাকরি',stats_companies:'কোম্পানি',
+    latest_jobs:'🔥 নতুন চাকরি',see_all:'সব দেখুন →',
+    new_members:'👥 নতুন সদস্য',
+    jobs_board:'চাকরি বোর্ড 💼',search_jobs:'পদ, কোম্পানি, স্থান...',
+    all:'সব',hiring:'🏢 নিয়োগ',seeking:'🙋 খুঁজছি',
+    no_jobs:'কোন চাকরি পোস্ট নেই',post_hint:'+ বাটন দিয়ে পোস্ট করুন',
+    members_title:'সদস্য 👥',search_members:'নাম, কোম্পানি, পদবী...',
+    no_members:'কোন সদস্য পাওয়া যায়নি',
+    my_profile:'আমার প্রোফাইল',edit_profile:'✏️ প্রোফাইল সম্পাদনা',logout:'🚪 লগআউট',
+    post_job:'চাকরি পোস্ট করুন 💼',
+    we_hire:'🏢 আমরা নিয়োগ করছি',want_job:'🙋 চাকরি চাই',
+    regular_job:'💼 সাধারণ পোস্ট',walkin_job:'🚶 ওয়াক-ইন ড্রাইভ',
+    position_label:'পদ *',custom_title:'বা কাস্টম টাইটেল (ঐচ্ছিক)',
+    location_label:'স্থান *',location_ph:'শহর, রাজ্য',
+    qual_label:'যোগ্যতা',ctc_label:'বেতন/CTC',
+    vac_label:'শূন্যপদ সংখ্যা',skills_label:'মেশিন / দক্ষতা',
+    walkin_details:'📅 ওয়াক-ইন বিবরণ',venue_label:'স্থান / ঠিকানা *',venue_ph:'সাক্ষাৎকারের পুরো ঠিকানা',
+    date_from:'তারিখ থেকে *',date_to:'তারিখ পর্যন্ত',time_from:'সময় থেকে',time_to:'সময় পর্যন্ত',
+    contact_label:'যোগাযোগ (WhatsApp/ইমেল) *',contact_ph:'মোবাইল বা ইমেল',
+    desc_label:'অতিরিক্ত বিবরণ',desc_ph:'চাকরির বিবরণ, প্রয়োজনীয়তা...',
+    post_btn:'✅ পোস্ট করুন',
+    notifications:'বিজ্ঞপ্তি 🔔',no_notifs:'কোন বিজ্ঞপ্তি নেই',
+    admin_login:'🔐 অ্যাডমিন লগইন',
+    approve:'✅ অনুমোদন',reject:'❌ প্রত্যাখ্যান',
+    company_other:'অন্য (নাম লিখুন)',company_manual:'কোম্পানি নাম (ম্যানুয়াল)',
+    chip_all:'সব',chip_hiring:'🏢 নিয়োগ',chip_seeking:'🙋 খুঁজছি',
+    chip_metallizer:'মেটালাইজার',chip_slitter:'স্লিটার',chip_lamination:'ল্যামিনেশন',
+    chip_mechanical:'মেকানিক্যাল',chip_ei:'ইলেকট্রিক্যাল',
+    chip_operator:'অপারেটর',chip_engineer:'ইঞ্জিনিয়ার',chip_manager:'ম্যানেজার',
+    chip_officer:'কর্মকর্তা',chip_hr:'HR',chip_vendor:'বিক্রেতা',
+    content_blocked:'⚠️ এই বিষয়বস্তু ব্লক হয়েছে — অনুচিত লিঙ্ক বা বিষয়বস্তু অনুমোদিত নয়',
+  }
+};
+
+function t(key){return (TRANSLATIONS[LANG]||TRANSLATIONS.en)[key]||(TRANSLATIONS.en[key])||key}
+
+function setLang(lang,btn){
+  LANG=lang;
+  localStorage.setItem('fpjob_lang',lang);
+  // Update all lang buttons everywhere
+  document.querySelectorAll('.lang-btn').forEach(function(b){
+    var isOn=false;
+    if(b.textContent.includes('English')&&lang==='en')isOn=true;
+    if(b.textContent.includes('हिन्दी')&&lang==='hi')isOn=true;
+    if(b.textContent.includes('ଓଡ଼ିଆ')&&lang==='od')isOn=true;
+    if(b.textContent.includes('বাংলা')&&lang==='bn')isOn=true;
+    b.classList.toggle('on',isOn);
+    // Update inline styles for login lang bar
+    if(b.closest('.l-wrap')){
+      b.style.background=isOn?'rgba(10,102,194,.1)':'transparent';
+      b.style.color=isOn?'var(--primary)':'var(--muted)';
+    }
+  });
+  applyTranslations();
+  // Re-render current page if app is showing
+  var ap=document.querySelector('.page.on');
+  if(ap){
+    if(ap.id==='pg-home')renderHome();
+    if(ap.id==='pg-jobs')renderJobs();
+    if(ap.id==='pg-members')renderMembers();
+    if(ap.id==='pg-profile')renderProfile();
+  }
+  // Update nav labels
+  var navLabels=[t('home'),t('jobs'),t('members'),t('profile')];
+  document.querySelectorAll('.nav-btn').forEach(function(nb,i){
+    var txt=nb.childNodes[nb.childNodes.length-1];
+    if(txt&&txt.nodeType===3)txt.textContent=navLabels[i]||'';
+  });
+}
+window.setLang=setLang;
+
+function applyTranslations(){
+  // Universal: translate all elements with data-i18n attribute
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    var key=el.getAttribute('data-i18n');
+    var val=t(key);
+    if(val&&val!==key)el.textContent=val;
+  });
+  // Universal: translate all placeholders with data-i18n-ph
+  document.querySelectorAll('[data-i18n-ph]').forEach(function(el){
+    var key=el.getAttribute('data-i18n-ph');
+    var val=t(key);
+    if(val&&val!==key)el.placeholder=val;
+  });
+  // Login-specific elements
+  var e;
+  e=$('ph-inp');if(e)e.placeholder=t('phone_placeholder');
+  e=$('known-badge');if(e)e.textContent=t('badge_approved');
+  e=$('new-badge');if(e)e.textContent=t('badge_new');
+  e=$('pre-badge');if(e)e.textContent=t('badge_pre');
+  var rb=$('revoked-badge');if(rb)rb.textContent='🔒 '+(LANG==='hi'?'एक्सेस रद्द — दोबारा फोटो लेकर वेरिफाई करो':LANG==='od'?'ଅନୁମତି ରଦ୍ଦ — ପୁଣି ଫଟୋ ନିଅନ୍ତୁ':LANG==='bn'?'অ্যাক্সেস বাতিল — আবার ফটো তুলে যাচাই করুন':'Access revoked — Re-verify with new photo');
+  var s1btn=document.querySelector('#l-s1 .btn-blue');if(s1btn)s1btn.textContent=t('next_btn');
+  // Nav labels
+  var navKeys=['home','jobs','members','profile'];
+  document.querySelectorAll('.nav-btn').forEach(function(nb,i){
+    var txt=nb.childNodes[nb.childNodes.length-1];
+    if(txt&&txt.nodeType===3&&navKeys[i])txt.textContent=t(navKeys[i]);
+  });
+}
+
+// ── State ──
+var DB={users:{},jobs:{},notifs:{}};
+var ME=null;
+var camStream=null;
+var photoB64='';
+var curPhone='';
+var jTypeF='all',jDeptF='all',mFilter='all';
+var _jobsShown=PAGE_SIZE,_memsShown=PAGE_SIZE; // pagination counters
+
+// ── Utils ──
+var $=function(id){return document.getElementById(id)};
+// FIX: Improved escaping — also escape single quotes for safe attribute use
+var esc=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')};
+var san=function(s){return String(s||'').trim().replace(/<[^>]*>/g,'').slice(0,500)};
+var usersArr=function(){return Object.values(DB.users||{})};
+var jobsArr=function(){return Object.values(DB.jobs||{})};
+var notifsArr=function(){return Object.values(DB.notifs||{})};
+var approved=function(){return usersArr().filter(function(u){return u.status==='approved'})};
+
+function toast(msg,type){
+  var t=$('toast');t.textContent=msg;
+  t.style.background=type==='err'?'#EF4444':type==='warn'?'#F59E0B':'#22C55E';
+  t.style.display='block';clearTimeout(t._t);
+  t._t=setTimeout(function(){t.style.display='none'},3500);
+}
+function timeAgo(ts){
+  if(!ts)return '';
+  var diff=Math.floor((Date.now()-new Date(ts))/1000);
+  if(diff<60)return 'abhi';if(diff<3600)return Math.floor(diff/60)+'m';
+  if(diff<86400)return Math.floor(diff/3600)+'h';return Math.floor(diff/86400)+'d';
+}
+function fmtPhone(p){p=String(p||'');return p.length===10?'+91 '+p.slice(0,5)+' '+p.slice(5):p}
+function showErr(id,msg){var e=$(id);if(!e)return;e.textContent=msg;e.classList.add('show');setTimeout(function(){e.classList.remove('show')},4000)}
+
+// ════════════════════════════════════
+// CONTENT MODERATION
+// ════════════════════════════════════
+var BLOCKED_DOMAINS=[
+  'pornhub','xvideos','xnxx','xhamster','redtube','youporn','brazzers','onlyfans',
+  'chaturbate','cam4','livejasmin','bongacams','stripchat',
+  'bet365','1xbet','betway','dream11','rummy','teenpatti',
+  'play.google.com','apps.apple.com','apkpure','apkmirror','apk',
+  'tiktok.com','snackvideo','mxtakatak','josh','chingari',
+  't.me/joinchat','bit.ly','tinyurl','shorturl',
+  'mlm','earnmoney','workfromhome','crypto','bitcoin','forex','trading',
+  'whatsapp.com/channel','telegram.me'
+];
+var BLOCKED_WORDS=[
+  // English obscene
+  'fuck','shit','ass','dick','bitch','pussy','cock','cunt','slut','whore',
+  'porn','nude','naked','xxx','sex video','sexy video','blue film',
+  // Hindi obscene
+  'chutiya','madarchod','bhenchod','bhosdike','gaand','lund','randi','haramkhor',
+  'chut','bsdk','mc','bc',
+  // Spam patterns
+  'earn money','make money fast','free iphone','lottery winner','click here to win',
+  'join my team','mlm opportunity','network marketing join'
+];
+
+function moderateContent(text){
+  if(!text)return {ok:true,text:text};
+  var lower=text.toLowerCase().trim();
+  // Check blocked words
+  for(var i=0;i<BLOCKED_WORDS.length;i++){
+    if(lower.includes(BLOCKED_WORDS[i])){
+      return {ok:false,reason:'inappropriate_word',word:BLOCKED_WORDS[i]};
+    }
+  }
+  // Check blocked domains/links
+  var urlPattern=/(https?:\/\/[^\s]+|www\.[^\s]+|[a-z0-9-]+\.(com|in|org|net|io|app|xyz|club|top|site|online|live|stream)[^\s]*)/gi;
+  var urls=lower.match(urlPattern)||[];
+  for(var j=0;j<urls.length;j++){
+    var url=urls[j];
+    for(var k=0;k<BLOCKED_DOMAINS.length;k++){
+      if(url.includes(BLOCKED_DOMAINS[k])){
+        return {ok:false,reason:'blocked_link',domain:BLOCKED_DOMAINS[k]};
+      }
+    }
+  }
+  // Check for excessive links (spam indicator)
+  if(urls.length>3){
+    return {ok:false,reason:'too_many_links'};
+  }
+  return {ok:true,text:text};
+}
+
+// Sanitize and moderate input — returns clean text or false
+function cleanInput(text,fieldName){
+  var cleaned=san(text);
+  var result=moderateContent(cleaned);
+  if(!result.ok){
+    var msg=t('content_blocked');
+    if(result.reason==='inappropriate_word')msg='⚠️ Inappropriate content detected — please use professional language';
+    if(result.reason==='blocked_link')msg='⚠️ This type of link is not allowed — only professional/company links permitted';
+    if(result.reason==='too_many_links')msg='⚠️ Too many links — maximum 3 links allowed';
+    toast(msg,'err');
+    return false;
+  }
+  return cleaned;
+}
+
+// ── Device Info ──
+function getDeviceInfo(){
+  var ua=navigator.userAgent||'';
+  var browser='Unknown';
+  if(ua.includes('Chrome')&&!ua.includes('Edg'))browser='Chrome';
+  else if(ua.includes('Firefox'))browser='Firefox';
+  else if(ua.includes('Safari')&&!ua.includes('Chrome'))browser='Safari';
+  else if(ua.includes('Edg'))browser='Edge';
+  else if(ua.includes('Opera')||ua.includes('OPR'))browser='Opera';
+  else if(ua.includes('SamsungBrowser'))browser='Samsung';
+
+  var os='Unknown';
+  if(ua.includes('Android'))os='Android';
+  else if(ua.includes('iPhone')||ua.includes('iPad'))os='iOS';
+  else if(ua.includes('Windows'))os='Windows';
+  else if(ua.includes('Mac'))os='MacOS';
+  else if(ua.includes('Linux'))os='Linux';
+
+  var device='Desktop';
+  if(/Mobi|Android|iPhone|iPad/i.test(ua))device='Mobile';
+  if(/iPad|Tablet/i.test(ua))device='Tablet';
+
+  // Get model hint
+  var model='';
+  var m=ua.match(/\(([^)]+)\)/);
+  if(m&&m[1]){
+    var parts=m[1].split(';');
+    if(os==='Android'&&parts.length>=3)model=parts[2].trim().split(' Build')[0];
+    else if(os==='iOS')model=ua.includes('iPhone')?'iPhone':ua.includes('iPad')?'iPad':'iOS Device';
+  }
+
+  return {
+    browser:browser,os:os,device:device,model:model,
+    screen:screen.width+'x'+screen.height,
+    userAgent:ua.slice(0,200),
+    lastSeen:new Date().toISOString()
+  };
+}
+
+// Save device info to Firebase for a user
+function saveDeviceInfo(uid){
+  if(!window.FB_READY||!uid)return;
+  var info=getDeviceInfo();
+  var deviceId='d_'+Date.now().toString(36);
+  // Save under user's devices node
+  window.FB.update('users/'+uid,{
+    lastDevice:info,
+    lastLogin:new Date().toISOString()
+  }).catch(function(e){console.log('Device save error:',e)});
+}
+
+// ── Screens ──
+function showScr(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('show')});
+  $(id).classList.add('show');
+  $('nav').style.display=id==='app'?'block':'none';
+  $('fab').style.display=id==='app'?'flex':'none';
+}
+window.showScr=showScr;
+
+// ── Pages ──
+function showPage(pg){
+  ['home','jobs','members','profile'].forEach(function(p){
+    $('pg-'+p).classList.remove('on');
+    $('nb-'+p).classList.remove('on');
+  });
+  $('pg-'+pg).classList.add('on');
+  $('nb-'+pg).classList.add('on');
+  $('fab').style.display=pg==='jobs'?'flex':'none';
+  $('notif-panel').classList.remove('open');
+  // Reset pagination on page switch
+  _jobsShown=PAGE_SIZE;_memsShown=PAGE_SIZE;
+  if(pg==='home')renderHome();
+  if(pg==='jobs')renderJobs();
+  if(pg==='members')renderMembers();
+  if(pg==='profile')renderProfile();
+}
+window.showPage=showPage;
+
+function openOv(id){$(id).classList.add('open')}
+function closeOv(id){$(id).classList.remove('open')}
+window.closeOv=closeOv;
+
+// ── Login steps ──
+function goStep(n){
+  document.querySelectorAll('.l-step').forEach(function(s){s.classList.remove('on')});
+  $('l-s'+n).classList.add('on');
+}
+window.goStep=goStep;
+
+function onPhone(inp){
+  var v=inp.value.replace(/\D/g,'').slice(0,10);inp.value=v;
+  $('known-badge').style.display='none';
+  $('pre-badge').style.display='none';
+  $('new-badge').style.display='none';
+  $('revoked-badge').style.display='none';
+  if(v.length===10){
+    var au=usersArr().find(function(u){return u.phone===v&&u.status==='approved'});
+    var ru=usersArr().find(function(u){return u.phone===v&&u.status==='revoked'});
+    var pu=usersArr().find(function(u){return u.phone===v&&(u.status==='pre_registered'||u.status==='pending')});
+    if(au)$('known-badge').style.display='block';
+    else if(ru)$('revoked-badge').style.display='block';
+    else if(pu)$('pre-badge').style.display='block';
+    else $('new-badge').style.display='block';
+  }
+}
+window.onPhone=onPhone;
+
+function s1Next(){
+  var ph=$('ph-inp').value.replace(/\D/g,'');
+  if(ph.length!==10){showErr('err1','10 digit number daalo');return}
+  curPhone=ph;
+  var appr=usersArr().find(function(u){return u.phone===ph&&u.status==='approved'});
+  if(appr){ME=appr;saveSession();saveDeviceInfo(appr.id);enterApp();return}
+  // Revoked user — must re-verify with photo
+  var revoked=usersArr().find(function(u){return u.phone===ph&&u.status==='revoked'});
+  if(revoked){
+    $('l-name').value=revoked.name||'';$('l-desig').value=revoked.designation||'';
+    $('l-dept').value=revoked.department||'';$('l-co').value=revoked.company||'';
+    if(revoked.experience)$('l-exp').value=revoked.experience;
+    $('s2-sub').textContent='🔒 Access revoke hua hai. Naya photo lo aur dubara verify karo.';
+    $('s2-ttl').textContent='Re-Verify Karo 🔒';
+    photoB64=''; // Force new photo
+    $('cam-img').src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    $('cam-ph').style.display='flex';$('cam-img').style.display='none';
+    goStep(2);return;
+  }
+  var pend=usersArr().find(function(u){return u.phone===ph&&u.status==='pending'});
+  if(pend){
+    $('w-name').textContent=pend.name||ph;
+    $('w-info').textContent=fmtPhone(ph)+' · Approval pending hai';
+    goStep(3);startPoll(ph);return;
+  }
+  var pre=usersArr().find(function(u){return u.phone===ph&&u.status==='pre_registered'});
+  if(pre){
+    $('l-name').value=pre.name||'';$('l-desig').value=pre.designation||pre.category||'';
+    $('l-dept').value=pre.department||'';$('l-co').value=pre.company||'';
+    if(pre.experience)$('l-exp').value=pre.experience;
+    if(pre.salary)$('l-salary').value=pre.salary;
+    $('s2-sub').textContent='Aapka number hamare database mein hai! Details confirm karo aur photo lo.';
+    $('s2-ttl').textContent='Details Confirm Karo 📋';
+    goStep(2);return;
+  }
+  $('l-name').value='';$('l-desig').value='';$('l-dept').value='';$('l-co').value='';
+  $('s2-sub').textContent='Sahi details bharo — admin verify karega';
+  $('s2-ttl').textContent='Apni Details Bharo';
+  goStep(2);
+}
+window.s1Next=s1Next;
+
+function onCoChange(){$('other-co-wrap').style.display=$('l-co').value==='__other'?'block':'none'}
+window.onCoChange=onCoChange;
+
+// ── Vendor field toggle ──
+var brochureB64='';
+function checkVendorFields(){
+  var desig=($('l-desig')||{}).value||'';
+  var isVendor=desig.toLowerCase().includes('supplier')||desig.toLowerCase().includes('vendor')||desig.toLowerCase().includes('consultant');
+  var vf=$('vendor-fields');
+  if(vf)vf.style.display=isVendor?'block':'none';
+}
+// Attach to designation change
+document.addEventListener('DOMContentLoaded',function(){
+  var ds=$('l-desig');
+  if(ds)ds.addEventListener('change',checkVendorFields);
+});
+setTimeout(function(){
+  var ds=$('l-desig');
+  if(ds)ds.addEventListener('change',checkVendorFields);
+},500);
+
+function pickBrochure(){$('brochure-input').click()}
+window.pickBrochure=pickBrochure;
+
+function onBrochureSelect(inp){
+  var file=inp.files&&inp.files[0];
+  if(!file)return;
+  if(file.size>3*1024*1024){toast('File 3MB se chhoti honi chahiye','err');return}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    brochureB64=e.target.result;
+    var prev=$('brochure-preview');
+    if(prev){
+      if(file.type.startsWith('image/')){
+        prev.innerHTML='<img src="'+brochureB64+'" style="width:100%;max-height:300px;object-fit:contain;display:block">';
+      }else{
+        prev.innerHTML='<div style="padding:16px;text-align:center;background:var(--card2)"><div style="font-size:28px;margin-bottom:6px">📄</div><div style="font-size:13px;color:var(--text2);font-weight:600">'+esc(file.name)+'</div><div style="font-size:11px;color:var(--muted)">'+Math.round(file.size/1024)+' KB</div></div>';
+      }
+      prev.style.display='block';
+    }
+    toast('Brochure added ✅');
+  };
+  reader.readAsDataURL(file);
+}
+window.onBrochureSelect=onBrochureSelect;
+
+function getCategoryFromDesig(desig){
+  var d=(desig||'').toLowerCase();
+  if(d.includes('plant head')||d.includes('gm')||d.includes('vp')||d.includes('agm')||d.includes('dgm')||d.includes('head'))return 'Head';
+  if(d.includes('manager')||d.includes('sr. manager'))return 'Manager';
+  if(d.includes('operator')||d.includes('trainee')||d.includes('shift incharge')||d.includes('iti'))return 'Operator';
+  if(d.includes('supplier')||d.includes('vendor')||d.includes('consultant'))return 'Supplier';
+  return 'Engineer';
+}
+
+async function s2Next(){
+  var name=san($('l-name').value),desig=$('l-desig').value,
+      dept=$('l-dept').value,
+      co=$('l-co').value==='__other'?san($('l-co-other').value):$('l-co').value,
+      exp=$('l-exp').value,
+      salary=san(($('l-salary')||{}).value||'');
+  if(!photoB64){toast('Pehle photo lo 📸','warn');openCam();return}
+  if(!name){showErr('err2','Naam daalo');return}
+  if(!desig){showErr('err2','Designation chunein');return}
+  if(!exp){showErr('err2','Experience chunein — yeh mandatory hai ⭐');return}
+  if(!dept){showErr('err2','Department chunein');return}
+  if(!co){showErr('err2','Company chunein');return}
+
+  var btn=document.querySelector('#l-s2 .btn-blue');
+  btn.textContent='Saving...';btn.disabled=true;
+
+  var existingPre=usersArr().find(function(u){return u.phone===curPhone&&u.status==='pre_registered'});
+  var existingRevoked=usersArr().find(function(u){return u.phone===curPhone&&u.status==='revoked'});
+  var existingRecord=existingPre||existingRevoked;
+  var uid=existingRecord?existingRecord.id:('u_'+curPhone+'_'+Date.now());
+  var userData={
+    id:uid,phone:curPhone,name:name,designation:desig,
+    department:dept,company:co,photo:photoB64,
+    experience:exp,salary:salary,
+    status:'pending',
+    category:getCategoryFromDesig(desig),
+    registeredAt:new Date().toISOString(),
+    source:existingRevoked?'re_verification':existingPre?'pre_registered_confirmed':'new_registration',
+    lastDevice:getDeviceInfo()
+  };
+  // Add vendor-specific fields
+  var isVendor=desig.toLowerCase().includes('supplier')||desig.toLowerCase().includes('vendor')||desig.toLowerCase().includes('consultant');
+  if(isVendor){
+    userData.services=san(($('l-services')||{}).value||'');
+    userData.website=san(($('l-website')||{}).value||'');
+    if(brochureB64)userData.brochure=brochureB64;
+  }
+  DB.users[uid]=userData;
+  localStorage.setItem(PEND_KEY,curPhone);
+
+  $('w-name').textContent=name;
+  $('w-info').textContent=fmtPhone(curPhone)+' · Saving...';
+  goStep(3);
+
+  if(window.FB_READY){
+    window.FB.set('users/'+uid,userData)
+      .then(function(){
+        $('w-info').textContent=fmtPhone(curPhone)+' · Approval pending';
+        return window.FB.push('notifications',{
+          type:'new_reg',userId:uid,userName:name,userPhone:curPhone,
+          userDesig:desig,userDept:dept,userCompany:co,
+          isPreReg:!!existingPre,isReVerify:!!existingRevoked,
+          status:'unread',createdAt:new Date().toISOString()
+        });
+      })
+      .then(function(){
+        toast(existingRevoked?'🔒 Re-verify request bhej di ✅':existingPre?'Details confirm ho gayi ✅':'Request bhej di ✅');
+        startPoll(curPhone);
+      })
+      .catch(function(e){
+        $('w-info').textContent='Offline — Admin se contact karo: '+fmtPhone('8929394920');
+        toast('Network error — Admin ko WhatsApp karo','warn');
+      });
+  }else{
+    $('w-info').textContent='Offline mode — Admin se contact karo';
+    toast('Firebase offline — Admin ko WhatsApp karo','warn');
+  }
+}
+window.s2Next=s2Next;
+
+var _poll=null;
+function startPoll(ph){if(_poll)clearInterval(_poll);_poll=setInterval(function(){checkStatus(ph)},6000)}
+function checkStatus(ph){
+  ph=ph||curPhone||localStorage.getItem(PEND_KEY);
+  if(!ph)return;
+  var u=usersArr().find(function(u){return u.phone===ph});
+  if(u&&u.status==='approved'){
+    clearInterval(_poll);localStorage.removeItem(PEND_KEY);
+    ME=u;saveSession();saveDeviceInfo(u.id);toast('✅ Approved! Welcome '+u.name);enterApp();return;
+  }
+  if(u&&u.status==='rejected'){
+    clearInterval(_poll);toast('❌ Request reject hui. Admin se contact karo.','err');return;
+  }
+  if(window.FB_READY&&u&&u.id){
+    window.FB.get('users/'+u.id).then(function(fresh){
+      if(fresh&&fresh.status==='approved'){
+        clearInterval(_poll);localStorage.removeItem(PEND_KEY);
+        DB.users[u.id]=fresh;ME=fresh;saveSession();saveDeviceInfo(fresh.id);
+        toast('✅ Approved! Welcome '+fresh.name);enterApp();
+      }else if(fresh&&fresh.status==='rejected'){
+        clearInterval(_poll);toast('❌ Reject ho gaya','err');
+      }
+    }).catch(function(){});
+  }
+}
+window.checkStatus=checkStatus;
+
+// ── Camera ──
+// FIX: Reduced photo size to 200px and lower quality to save Firebase bandwidth
+function openCam(){
+  $('cam-modal').classList.add('open');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false})
+    .then(function(s){camStream=s;$('cam-video').srcObject=s;$('cam-video').play()})
+    .catch(function(){toast('Camera permission do','err');$('cam-modal').classList.remove('open')});
+}
+function closeCam(){
+  if(camStream){camStream.getTracks().forEach(function(t){t.stop()});camStream=null}
+  $('cam-modal').classList.remove('open');
+}
+function snapPhoto(){
+  var v=$('cam-video'),c=$('cam-canvas');
+  var sz=Math.min(v.videoWidth||320,v.videoHeight||320);
+  c.width=200;c.height=200;
+  c.getContext('2d').drawImage(v,(v.videoWidth-sz)/2,(v.videoHeight-sz)/2,sz,sz,0,0,200,200);
+  photoB64=c.toDataURL('image/jpeg',0.6);
+  $('cam-img').src=photoB64;$('cam-ph').style.display='none';
+  $('cam-img').style.display='block';closeCam();toast('Photo liya ✅');
+}
+window.openCam=openCam;window.closeCam=closeCam;window.snapPhoto=snapPhoto;
+
+// ── Session ──
+function saveSession(){
+  if(!ME)return;
+  try{localStorage.setItem(SESS_KEY,JSON.stringify({id:ME.id,phone:ME.phone,name:ME.name,
+    designation:ME.designation,department:ME.department,company:ME.company,
+    experience:ME.experience,salary:ME.salary,category:ME.category,
+    status:ME.status,photo:ME.photo,_at:Date.now()}))}catch(e){}
+}
+function loadSession(){
+  try{
+    var s=JSON.parse(localStorage.getItem(SESS_KEY)||'null');
+    if(!s||!s.phone||s.status!=='approved')return false;
+    if(Date.now()-s._at>30*24*3600*1000){localStorage.removeItem(SESS_KEY);return false}
+    var fresh=usersArr().find(function(u){return u.phone===s.phone&&u.status==='approved'});
+    // Check if user was revoked
+    var revoked=usersArr().find(function(u){return u.phone===s.phone&&u.status==='revoked'});
+    if(revoked){
+      localStorage.removeItem(SESS_KEY);
+      toast('🔒 Access revoked — Admin se verify karo','err');
+      return false;
+    }
+    ME=fresh||s;return !!fresh;
+  }catch(e){return false}
+}
+
+// ── Enter app ──
+function enterApp(){enterAppWithFP()}
+
+// ════════════════════════════════════
+// FINGERPRINT / BIOMETRIC LOGIN
+// ════════════════════════════════════
+var FP_KEY='fpjob_fp_enrolled';
+
+function isBiometricAvailable(){return window.PublicKeyCredential!==undefined}
+
+async function enrollFingerprint(user){
+  if(!isBiometricAvailable())return false;
+  try{
+    var challenge=new Uint8Array(32);window.crypto.getRandomValues(challenge);
+    var cred=await navigator.credentials.create({
+      publicKey:{challenge:challenge,rp:{name:'FPJob',id:location.hostname},
+        user:{id:new TextEncoder().encode(user.phone),name:user.phone,displayName:user.name},
+        pubKeyCredParams:[{alg:-7,type:'public-key'},{alg:-257,type:'public-key'}],
+        authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
+        timeout:60000}
+    });
+    if(cred){
+      localStorage.setItem(FP_KEY+'_'+user.phone,JSON.stringify({
+        credId:btoa(String.fromCharCode.apply(null,new Uint8Array(cred.rawId))),
+        enrolled:true,phone:user.phone}));
+      return true;
+    }
+  }catch(e){console.log('FP enroll skipped:',e.message)}
+  return false;
+}
+
+function isFingerprintEnrolled(phone){
+  try{var d=JSON.parse(localStorage.getItem(FP_KEY+'_'+phone)||'null');return !!(d&&d.enrolled)}
+  catch(e){return false}
+}
+
+async function verifyFingerprint(phone){
+  if(!isBiometricAvailable())return false;
+  var stored;
+  try{stored=JSON.parse(localStorage.getItem(FP_KEY+'_'+phone)||'null')}catch(e){return false}
+  if(!stored||!stored.credId)return false;
+  try{
+    var challenge=new Uint8Array(32);window.crypto.getRandomValues(challenge);
+    var credIdBytes=Uint8Array.from(atob(stored.credId),function(c){return c.charCodeAt(0)});
+    var assertion=await navigator.credentials.get({
+      publicKey:{challenge:challenge,allowCredentials:[{id:credIdBytes,type:'public-key'}],
+        userVerification:'required',timeout:60000,rpId:location.hostname}
+    });
+    return !!assertion;
+  }catch(e){console.log('FP verify failed:',e.message);return false}
+}
+
+function showFingerprintScreen(user,onSuccess){
+  var avEl=$('fp-av');
+  if(user.photo)avEl.innerHTML='<img src="'+user.photo+'" style="width:80px;height:80px;object-fit:cover">';
+  else avEl.textContent=(user.name||'?')[0].toUpperCase();
+  $('fp-name').textContent=user.name||'—';
+  $('fp-status').textContent='Tap to use fingerprint';
+  $('fp-ring').className='fp-ring';
+  $('fp-screen').classList.add('show');
+  window._fpOnSuccess=onSuccess;window._fpUser=user;
+}
+
+async function doFingerprint(){
+  var ring=$('fp-ring'),status=$('fp-status');
+  ring.className='fp-ring scanning';status.textContent='Verifying... 🔍';
+  var ok=await verifyFingerprint(window._fpUser.phone);
+  if(ok){
+    ring.className='fp-ring success';status.textContent='✅ Verified!';
+    setTimeout(function(){$('fp-screen').classList.remove('show');if(window._fpOnSuccess)window._fpOnSuccess()},600);
+  }else{ring.className='fp-ring error';status.textContent='❌ Failed — try again or use password'}
+}
+window.doFingerprint=doFingerprint;
+
+function fpSkip(){$('fp-screen').classList.remove('show');showScr('login');goStep(1)}
+window.fpSkip=fpSkip;
+
+function enterAppWithFP(){
+  var wasFirstTime=!isFingerprintEnrolled(ME.phone);
+  // Track device on every app entry
+  saveDeviceInfo(ME.id);
+  showScr('app');showPage('home');
+  renderHdrPic();startListeners();
+  var h=new Date().getHours();
+  var greetKey=h<12?'greeting_morning':h<17?'greeting_afternoon':'greeting_evening';
+  $('greeting').textContent=t(greetKey)+', '+(ME.name||'').split(' ')[0]+'!';
+  toast('Welcome, '+ME.name+' 👋');
+  if(wasFirstTime&&isBiometricAvailable())setTimeout(function(){offerFingerprintEnroll()},2000);
+}
+
+function offerFingerprintEnroll(){
+  if(!ME)return;
+  var banner=document.createElement('div');
+  banner.style.cssText='position:fixed;bottom:80px;left:12px;right:12px;background:#1A2332;border:1px solid var(--primary);border-radius:14px;padding:14px 16px;z-index:200;animation:fadeUp .3s ease;display:flex;align-items:center;gap:12px';
+  banner.innerHTML=
+    '<span style="font-size:28px">🔐</span>'+
+    '<div style="flex:1"><div style="font-size:14px;font-weight:700;margin-bottom:2px">Fingerprint Login Enable Karo?</div><div style="font-size:12px;color:var(--muted)">Next time ek tap mein login hoga</div></div>'+
+    '<button id="fp-enroll-btn" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">Enable</button>'+
+    '<button style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px">✕</button>';
+  document.body.appendChild(banner);
+  banner.querySelector('button:last-child').onclick=function(){banner.remove()};
+  banner.querySelector('#fp-enroll-btn').onclick=async function(){
+    this.textContent='Enrolling...';this.disabled=true;
+    var ok=await enrollFingerprint(ME);
+    if(ok){toast('🔐 Fingerprint set!');banner.remove()}
+    else{toast('Fingerprint nahi set ho saka','warn');banner.remove()}
+  };
+  setTimeout(function(){if(banner.parentNode)banner.remove()},15000);
+}
+
+// ── Render helpers ──
+function renderHdrPic(){
+  var el=$('hdr-pic');
+  if(ME&&ME.photo)el.innerHTML='<img src="'+ME.photo+'" style="width:34px;height:34px;object-fit:cover">';
+  else el.textContent=(ME&&ME.name||'?')[0].toUpperCase();
+}
+
+function updateStats(){
+  var a=approved();
+  $('st-mem').textContent=a.length;
+  $('st-jobs').textContent=jobsArr().length;
+  var cos={};a.forEach(function(u){if(u.company)cos[u.company]=1});
+  $('st-cos').textContent=Object.keys(cos).length;
+}
+
+function startListeners(){updateStats();renderNotifs()}
+
+// ── Home ──
+function renderHome(){
+  updateStats();
+  var el=$('home-jobs');el.innerHTML='';
+  var jobs=jobsArr().sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt)}).slice(0,5);
+  if(!jobs.length)el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">Koi job nahi abhi</div>';
+  else jobs.forEach(function(j){el.appendChild(mkJobCard(j,true))});
+
+  var mel=$('home-members');mel.innerHTML='';
+  var mems=approved().slice(-6).reverse();
+  if(!mems.length)mel.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">Koi member nahi abhi</div>';
+  else{
+    var grid=document.createElement('div');
+    grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px';
+    mems.forEach(function(m){grid.appendChild(mkMiniMem(m))});
+    mel.appendChild(grid);
+  }
+}
+
+// ── Jobs ──
+function mkJobCard(job,compact){
+  var el=document.createElement('div');el.className='j-card';
+  var isH=job.type==='hiring';var sal=job.ctc||'';var ago=timeAgo(job.createdAt);
+  var isWalkin=job.category==='walkin';
+  el.innerHTML=
+    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px">'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(job.title||job.designation||'—')+'</div>'+
+        '<div style="font-size:12px;color:var(--text2);margin-top:1px">'+esc(job.company||'—')+(job.department?' · '+esc(job.department):'')+'</div>'+
+      '</div>'+
+      '<span style="flex-shrink:0;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;'+
+        'background:'+(isWalkin?'rgba(249,115,22,.15)':isH?'var(--green-dim)':'rgba(10,102,194,.15)')+';color:'+(isWalkin?'#F97316':isH?'var(--green)':'var(--primary)')+'">'+
+        (isWalkin?'🚶 Walk-In':isH?'🏢 Hiring':'🙋 Seeking')+'</span>'+
+    '</div>'+
+    (compact?'':
+      '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px">'+
+        (job.location?'<span style="font-size:12px;color:var(--muted)">📍 '+esc(job.location)+'</span>':'')+
+        (job.experience?'<span style="font-size:12px;color:var(--muted)">🏆 '+esc(job.experience)+'</span>':'')+
+        (job.qualification?'<span style="font-size:12px;color:var(--muted)">🎓 '+esc(job.qualification)+'</span>':'')+
+        (isWalkin&&job.venue?'<span style="font-size:12px;color:#F97316;font-weight:600">📅 Walk-In</span>':'')+
+      '</div>'+
+      (sal?'<div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:8px">💰 '+esc(sal)+'</div>':'')+
+      (job.skills?'<div style="font-size:12px;color:#70B5F9;margin-bottom:10px">🔧 '+esc(job.skills)+'</div>':'')+
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border2)">'+
+        '<span style="font-size:11px;color:var(--muted)">'+esc(job.postedBy||'—')+' · '+ago+'</span>'+
+        // FIX: Use data attributes + event delegation instead of inline onclick with user data
+        (job.contact?'<button class="job-contact-btn" data-contact="'+esc(job.contact)+'" '+
+          'style="padding:6px 14px;background:var(--primary);color:#fff;border:none;border-radius:14px;'+
+          'font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)">Contact →</button>':'')+
+      '</div>'
+    );
+  el.onclick=function(e){if(!e.target.classList.contains('job-contact-btn'))openJobDetail(job)};
+  el.querySelector('.job-contact-btn')&&el.querySelector('.job-contact-btn').addEventListener('click',function(e){
+    e.stopPropagation();waContact(job.contact);
+  });
+  return el;
+}
+
+function renderJobs(){
+  var el=$('jobs-list');el.innerHTML='';
+  var list=jobsArr().sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt)});
+  // FIX: Added text search for jobs
+  var q=(($('job-search')||{}).value||'').toLowerCase();
+  if(q)list=list.filter(function(j){
+    return (j.title||'').toLowerCase().includes(q)||(j.designation||'').toLowerCase().includes(q)||
+      (j.company||'').toLowerCase().includes(q)||(j.location||'').toLowerCase().includes(q)||
+      (j.department||'').toLowerCase().includes(q)||(j.skills||'').toLowerCase().includes(q);
+  });
+  if(jTypeF!=='all')list=list.filter(function(j){return j.type===jTypeF});
+  if(jDeptF!=='all')list=list.filter(function(j){return j.department===jDeptF});
+  if(!list.length){
+    el.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:44px;margin-bottom:12px">💼</div><div style="font-size:15px;font-weight:700;color:var(--text2)">Koi job nahi mili</div></div>';
+    return;
+  }
+  // FIX: Pagination
+  var showing=list.slice(0,_jobsShown);
+  showing.forEach(function(j){el.appendChild(mkJobCard(j,false))});
+  if(list.length>_jobsShown){
+    var btn=document.createElement('button');
+    btn.className='load-more-btn';
+    btn.textContent='Load More ('+(_jobsShown)+'/'+list.length+')';
+    btn.onclick=function(){_jobsShown+=PAGE_SIZE;renderJobs()};
+    el.appendChild(btn);
+  }
+}
+
+function setJF(key,val,btn){
+  if(key==='type'){jTypeF=val;jDeptF='all'}else{jDeptF=val;jTypeF='all'}
+  document.querySelectorAll('#pg-jobs .chip').forEach(function(c){c.classList.remove('on')});
+  btn.classList.add('on');_jobsShown=PAGE_SIZE;renderJobs();
+}
+window.setJF=setJF;
+
+function waContact(c){
+  var ph=c.replace(/\D/g,'');
+  window.open(ph.length>=10?'https://wa.me/91'+ph.slice(-10):'mailto:'+c,'_blank');
+}
+window.waContact=waContact;
+
+function openJobDetail(job){
+  var el=$('jd-content');var isH=job.type==='hiring';var sal=job.ctc||'';
+  var isWalkin=job.category==='walkin';
+  var dateStr='';
+  if(isWalkin&&job.dateFrom){dateStr=fmtDate(job.dateFrom);if(job.dateTo&&job.dateTo!==job.dateFrom)dateStr+=' – '+fmtDate(job.dateTo)}
+  var timeStr='';
+  if(isWalkin&&job.timeFrom){timeStr=fmtTime(job.timeFrom);if(job.timeTo)timeStr+=' – '+fmtTime(job.timeTo)}
+  el.innerHTML=
+    '<div style="padding:16px 20px 12px;border-bottom:1px solid var(--border2)">'+
+      '<span style="padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700;'+
+        'background:'+(isWalkin?'rgba(249,115,22,.15)':isH?'var(--green-dim)':'rgba(10,102,194,.15)')+';color:'+(isWalkin?'#F97316':isH?'var(--green)':'var(--primary)')+'">'+
+        (isWalkin?'🚶 WALK-IN INTERVIEW':isH?'🏢 HIRING':'🙋 SEEKING')+'</span>'+
+      '<div style="font-size:20px;font-weight:800;margin:10px 0 4px">'+esc(job.title||job.designation||'—')+'</div>'+
+      '<div style="font-size:14px;color:var(--text2)">'+esc(job.company||'—')+(job.department?' · <b style="color:#70B5F9">'+esc(job.department)+'</b>':'')+'</div>'+
+    '</div>'+
+    // Walk-in details
+    (isWalkin?'<div style="padding:12px 20px;border-bottom:1px solid var(--border2);background:rgba(249,115,22,.05)">'+
+      '<div style="font-size:10px;color:#F97316;font-weight:800;margin-bottom:8px;letter-spacing:.5px">📅 WALK-IN DETAILS</div>'+
+      (job.venue?'<div style="font-size:14px;font-weight:600;margin-bottom:6px">📍 '+esc(job.venue)+'</div>':'')+
+      '<div style="display:flex;gap:16px;flex-wrap:wrap">'+
+        (dateStr?'<div style="font-size:13px;font-weight:700;color:var(--text)">📅 '+dateStr+'</div>':'')+
+        (timeStr?'<div style="font-size:13px;font-weight:700;color:var(--text)">🕐 '+timeStr+'</div>':'')+
+      '</div></div>':'')+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border2)">'+
+      row2('📍 LOCATION',job.location)+row2('🏆 EXPERIENCE',job.experience)+
+      row2('🎓 QUALIFICATION',job.qualification)+
+      (sal?'<div><div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:3px">💰 SALARY</div><div style="font-size:16px;font-weight:800;color:var(--green)">'+esc(sal)+'</div></div>':'')+
+    '</div>'+
+    (job.skills?'<div style="padding:12px 20px;border-bottom:1px solid var(--border2)"><div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px">🔧 MACHINES / SKILLS</div><div style="font-size:14px;color:#70B5F9;font-weight:600">'+esc(job.skills)+'</div></div>':'')+
+    (job.description?'<div style="padding:12px 20px;border-bottom:1px solid var(--border2)"><div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px">📝 DETAILS</div><div style="font-size:14px;line-height:1.7;white-space:pre-wrap">'+esc(job.description)+'</div></div>':'')+
+    (job.contact?
+      '<div style="padding:14px 20px">'+
+        '<div style="font-size:13px;font-weight:700;margin-bottom:10px">📞 '+esc(job.contact)+'</div>'+
+        '<button id="jd-contact-btn" style="width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:24px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:8px;box-shadow:0 4px 16px var(--primary-glow)">💬 Contact Karo</button>'+
+        '<button id="jd-share-btn" style="width:100%;padding:12px;background:transparent;color:var(--primary);border:1.5px solid var(--primary);border-radius:24px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">📤 Share Job</button>'+
+      '</div>':'');
+  openOv('jd-modal');
+  window._viewingJob=job;
+  setTimeout(function(){
+    var cb=$('jd-contact-btn');if(cb)cb.addEventListener('click',function(){waContact(job.contact)});
+    var sb=$('jd-share-btn');if(sb)sb.addEventListener('click',function(){shareJob(window._viewingJob)});
+  },0);
+}
+function row2(label,val){return val?'<div><div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:3px">'+label+'</div><div style="font-size:14px;font-weight:600">'+esc(val)+'</div></div>':''}
+
+function shareJob(job){
+  var isWalkin=job.category==='walkin';
+  var t=(isWalkin?'🚶 WALK-IN INTERVIEW':'💼 '+(job.type==='hiring'?'JOB VACANCY':'NAUKRI CHAHIYE'))+'\n\n📋 '+(job.title||job.designation)+
+    (job.company?'\n🏢 '+job.company:'')+(job.department?'\n🏭 '+job.department:'')+
+    (job.location?'\n📍 '+job.location:'')+(job.experience?'\n🏆 '+job.experience:'')+
+    (job.ctc?'\n💰 '+job.ctc:'')+
+    (isWalkin&&job.venue?'\n\n📅 Walk-In Details:\n📍 '+job.venue:'')+(isWalkin&&job.dateFrom?'\n📅 '+fmtDate(job.dateFrom)+(job.dateTo&&job.dateTo!==job.dateFrom?' – '+fmtDate(job.dateTo):''):'')+
+    (isWalkin&&job.timeFrom?'\n🕐 '+fmtTime(job.timeFrom)+(job.timeTo?' – '+fmtTime(job.timeTo):''):'')+
+    (job.contact?'\n\n📞 '+job.contact:'')+
+    '\n\nFPJob: https://fpjob.vkstech.com';
+  if(navigator.share)navigator.share({title:'FPJob',text:t}).catch(function(){});
+  else navigator.clipboard.writeText(t).then(function(){toast('📋 Copied!')});
+}
+window.shareJob=shareJob;
+
+// ── Post Job ──
+function openPostJob(){buildPJForm('pj-form');openOv('pj-modal')}
+window.openPostJob=openPostJob;
+
+var _pjPositionCount=1;
+
+function buildPJForm(targetId){
+  var el=$(targetId);if(!el)return;
+  _pjPositionCount=1;
+  el.innerHTML=
+    // Step 1: Hiring or Seeking
+    '<div style="margin-bottom:14px">'+
+      '<div style="display:flex;gap:8px">'+
+        '<button class="pjt-btn pjt-active" data-type="hiring" style="flex:1;background:var(--green-dim);color:var(--green);border:1.5px solid rgba(34,197,94,.3);border-radius:20px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">🏢 Hum Hire Kar Rahe</button>'+
+        '<button class="pjt-btn" data-type="seeking" style="flex:1;background:var(--card2);color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">🙋 Job Chahiye</button>'+
+      '</div>'+
+    '</div>'+
+    '<input type="hidden" class="pj-type-inp" value="hiring">'+
+    '<input type="hidden" class="pj-cat-inp" value="job">'+
+    // Sub-toggle: Regular/Walk-in (only when hiring)
+    '<div class="hire-sub-toggle" style="margin-bottom:14px">'+
+      '<div style="display:flex;gap:8px">'+
+        '<button class="pjcat-btn pjcat-active" data-cat="job" style="flex:1;background:rgba(10,102,194,.15);color:var(--primary);border:1.5px solid rgba(10,102,194,.4);border-radius:16px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">💼 Regular Job</button>'+
+        '<button class="pjcat-btn" data-cat="walkin" style="flex:1;background:var(--card2);color:var(--muted);border:1px solid var(--border);border-radius:16px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">🚶 Walk-In Drive</button>'+
+      '</div>'+
+    '</div>'+
+    // ═══ REGULAR JOB FORM ═══
+    '<div class="form-regular">'+
+      '<div class="field"><label>COMPANY *</label>'+
+        '<div style="display:flex;gap:10px;align-items:center">'+
+          '<div class="inp-row" style="flex:1"><input class="pj-co-inp" type="text" placeholder="Company name" value="'+esc(ME?ME.company:'')+'"></div>'+
+          '<div class="co-logo-prev" style="width:44px;height:44px;border-radius:10px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0"></div>'+
+        '</div></div>'+
+      fld('pj-desig-'+targetId,'select','POSITION / DESIGNATION *','',
+        ['','Trainee / GET','Operator','Sr. Operator','Shift Incharge','ITI Technician',
+         'Maintenance Fitter','Maintenance Electrician','Instrument Technician',
+         'Jr. Officer','Officer','Sr. Officer','Engineer / Executive','Shift Engineer',
+         'Sr. Engineer','Asst. Manager','Manager','Sr. Manager','AGM / DGM','GM / VP',
+         'Plant Head','HR / Admin','QC / QA','R&D','Sales / Marketing'])+
+      fld('pj-title-'+targetId,'text','OR CUSTOM TITLE','e.g. Crucible Metalizer Operator')+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        fld('pj-dept-'+targetId,'select','DEPARTMENT *','',
+          ['','Metallizer / DMAT','BOPP Production','BOPET Production','CPP Production',
+           'Slitter / Rewinder','Lamination','Coating','Printing / Flexo','Extrusion',
+           'Mechanical Maintenance','Electrical / E&I','Instrumentation','Quality / QC',
+           'R&D / Lab','HR / Admin','Sales / Marketing','Stores / Purchase'])+
+        fld('pj-loc-'+targetId,'text','LOCATION *','City, State')+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        fld('pj-exp-'+targetId,'select','EXPERIENCE','',
+          ['','Fresher','0-1 Year','1-2 Years','2-3 Years','3-5 Years','5-7 Years','7-10 Years','10-15 Years','15+ Years'])+
+        fld('pj-qual-'+targetId,'select','QUALIFICATION','',
+          ['','8th/10th','12th Pass','ITI','Diploma','B.Sc/CIPET','B.E/B.Tech','M.Sc/M.Tech','MBA'])+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        fld('pj-ctc-'+targetId,'text','SALARY/CTC','e.g. 25k-35k/mo')+
+        fld('pj-vac-'+targetId,'number','VACANCIES','1')+
+      '</div>'+
+      fld('pj-skills-'+targetId,'text','MACHINES / SKILLS','e.g. J Kampf Slitter, BOPP Line')+
+      fld('pj-contact-'+targetId,'tel','CONTACT (WhatsApp/Email) *','Mobile or email')+
+      fld('pj-desc-'+targetId,'textarea','ADDITIONAL DETAILS','Requirements, timings, etc.')+
+      '<button class="btn btn-blue btn-w100 pj-reg-submit">✅ Post Job</button>'+
+    '</div>'+
+    // ═══ WALK-IN DRIVE FORM ═══
+    '<div class="form-walkin" style="display:none">'+
+      '<div class="field"><label>COMPANY NAME *</label>'+
+        '<div style="display:flex;gap:10px;align-items:center">'+
+          '<div class="inp-row" style="flex:1"><input class="pj-wco-inp" type="text" placeholder="Company name" value="'+esc(ME?ME.company:'')+'"></div>'+
+          '<div class="wco-logo-prev" style="width:44px;height:44px;border-radius:10px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0"></div>'+
+        '</div></div>'+
+      fld('pj-wvenue-'+targetId,'text','VENUE / FULL ADDRESS *','Plot No, Sector, City, State - PIN')+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        fld('pj-wdf-'+targetId,'date','DATE FROM *','')+
+        fld('pj-wdt-'+targetId,'date','DATE TO','')+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        fld('pj-wtf-'+targetId,'time','TIME FROM','')+
+        fld('pj-wtt-'+targetId,'time','TIME TO','')+
+      '</div>'+
+      // Multi-position section
+      '<div style="border:1.5px solid var(--primary);border-radius:12px;padding:14px;margin-bottom:14px;background:rgba(10,102,194,.05)">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
+          '<div style="font-size:12px;font-weight:800;color:var(--primary);letter-spacing:.5px">💼 OPEN POSITIONS</div>'+
+          '<div class="pos-count-badge" style="font-size:11px;color:var(--muted)"></div>'+
+        '</div>'+
+        '<div class="walkin-positions"></div>'+
+        '<button type="button" class="btn btn-outline add-pos-btn" style="width:100%;margin-top:8px;padding:10px;font-size:13px">＋ Add Another Position</button>'+
+      '</div>'+
+      fld('pj-wcontact-'+targetId,'tel','CONTACT (WhatsApp/Email) *','Mobile or email')+
+      fld('pj-wdesc-'+targetId,'textarea','ADDITIONAL INFO','Docs to bring, dress code, etc.')+
+      '<button class="btn btn-blue btn-w100 pj-walkin-submit">✅ Post Walk-In Drive</button>'+
+    '</div>'+
+    // ═══ SEEKING FORM ═══
+    '<div class="form-seeking" style="display:none">'+
+      fld('pj-sname-'+targetId,'text','YOUR NAME *','',null,ME?ME.name:'')+
+      fld('pj-sdesig-'+targetId,'select','CURRENT DESIGNATION','',
+        ['','Operator','Sr. Operator','Shift Incharge','ITI Technician','Maintenance Fitter',
+         'Maintenance Electrician','Engineer / Executive','Sr. Engineer','Asst. Manager',
+         'Manager','Sr. Manager','AGM / DGM','Plant Head','HR / Admin','QC / QA','R&D'])+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        fld('pj-sdept-'+targetId,'select','DEPARTMENT','',
+          ['','Metallizer / DMAT','BOPP Production','BOPET Production','CPP Production',
+           'Slitter / Rewinder','Lamination','Coating','Printing / Flexo','Extrusion',
+           'Mechanical Maintenance','Electrical / E&I','Instrumentation','Quality / QC',
+           'R&D / Lab','HR / Admin','Sales / Marketing','Stores / Purchase'])+
+        fld('pj-sexp-'+targetId,'select','EXPERIENCE','',
+          ['','Fresher','0-1 Year','1-2 Years','2-3 Years','3-5 Years','5-7 Years','7-10 Years','10-15 Years','15+ Years'])+
+      '</div>'+
+      fld('pj-sloc-'+targetId,'text','PREFERRED LOCATION','City, State')+
+      fld('pj-scontact-'+targetId,'tel','CONTACT (WhatsApp/Email) *','Mobile or email')+
+      '<button class="btn btn-blue btn-w100 pj-seek-submit">✅ Post</button>'+
+    '</div>';
+
+  // Add first walk-in position row
+  addWalkinPosition(el);
+
+  // Company logo previews
+  function setupLogo(inpSel,prevSel){
+    var inp=el.querySelector(inpSel);var prev=el.querySelector(prevSel);
+    if(!inp||!prev)return;
+    function upd(){
+      var co=inp.value.trim();
+      if(co.length>1){
+        var url=getCompanyLogoUrl(co);
+        prev.innerHTML='<img src="'+url+'" style="width:36px;height:36px;object-fit:contain" onerror="this.parentElement.textContent=\''+esc((co[0]||'?').toUpperCase())+'\'">';
+      }else prev.innerHTML='';
+    }
+    inp.addEventListener('input',upd);inp.addEventListener('change',upd);upd();
+  }
+  setupLogo('.pj-co-inp','.co-logo-prev');
+  setupLogo('.pj-wco-inp','.wco-logo-prev');
+
+  // Type toggle
+  el.querySelectorAll('.pjt-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var tp=this.dataset.type;
+      el.querySelector('.pj-type-inp').value=tp;
+      el.querySelectorAll('.pjt-btn').forEach(function(b){
+        b.style.cssText='flex:1;border-radius:20px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--card2);color:var(--muted);border:1px solid var(--border)';
+      });
+      this.style.cssText='flex:1;border-radius:20px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);'+(tp==='hiring'?'background:var(--green-dim);color:var(--green);border:1.5px solid rgba(34,197,94,.3)':'background:rgba(10,102,194,.15);color:var(--primary);border:1.5px solid rgba(10,102,194,.3)');
+      var sub=el.querySelector('.hire-sub-toggle');
+      var fr=el.querySelector('.form-regular');
+      var fw=el.querySelector('.form-walkin');
+      var fs=el.querySelector('.form-seeking');
+      if(tp==='hiring'){
+        sub.style.display='block';
+        el.querySelector('.pj-cat-inp').value='job';
+        fr.style.display='block';fw.style.display='none';fs.style.display='none';
+        el.querySelectorAll('.pjcat-btn').forEach(function(b,i){
+          b.style.cssText='flex:1;border-radius:16px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);'+(i===0?'background:rgba(10,102,194,.15);color:var(--primary);border:1.5px solid rgba(10,102,194,.4)':'background:var(--card2);color:var(--muted);border:1px solid var(--border)');
+        });
+      }else{
+        sub.style.display='none';fr.style.display='none';fw.style.display='none';fs.style.display='block';
+      }
+    });
+  });
+
+  // Category toggle
+  el.querySelectorAll('.pjcat-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var ct=this.dataset.cat;
+      el.querySelector('.pj-cat-inp').value=ct;
+      el.querySelectorAll('.pjcat-btn').forEach(function(b){
+        b.style.cssText='flex:1;border-radius:16px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--card2);color:var(--muted);border:1px solid var(--border)';
+      });
+      this.style.cssText='flex:1;border-radius:16px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);'+(ct==='walkin'?'background:rgba(249,115,22,.15);color:#F97316;border:1.5px solid rgba(249,115,22,.4)':'background:rgba(10,102,194,.15);color:var(--primary);border:1.5px solid rgba(10,102,194,.4)');
+      el.querySelector('.form-regular').style.display=ct==='job'?'block':'none';
+      el.querySelector('.form-walkin').style.display=ct==='walkin'?'block':'none';
+    });
+  });
+
+  // Add position button
+  var addBtn=el.querySelector('.add-pos-btn');
+  if(addBtn)addBtn.addEventListener('click',function(){addWalkinPosition(el)});
+
+  // Submit handlers
+  var rb=el.querySelector('.pj-reg-submit');if(rb)rb.addEventListener('click',function(){submitRegularJob(targetId,el)});
+  var wb=el.querySelector('.pj-walkin-submit');if(wb)wb.addEventListener('click',function(){submitWalkinJob(targetId,el)});
+  var sb=el.querySelector('.pj-seek-submit');if(sb)sb.addEventListener('click',function(){submitSeekingJob(targetId,el)});
+}
+
+function addWalkinPosition(el){
+  var container=el.querySelector('.walkin-positions');if(!container)return;
+  var n=_pjPositionCount++;
+  // Auto-copy exp from last position
+  var prevExp='';
+  var lastExpInp=container.querySelector('.wp-row:last-child .wp-exp');
+  if(lastExpInp)prevExp=lastExpInp.value;
+  var row=document.createElement('div');
+  row.className='wp-row';
+  row.style.cssText='background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:12px;margin-bottom:8px';
+  row.innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+      '<span style="font-size:12px;font-weight:800;color:var(--text2)">Position #'+n+'</span>'+
+      (n>1?'<button class="wp-rm" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 4px;line-height:1">✕</button>':'')+
+    '</div>'+
+    '<div class="field" style="margin-bottom:8px"><label style="font-size:10px">POSITION NAME *</label><div class="inp-row" style="padding:0 10px"><input class="wp-name" type="text" placeholder="e.g. Operator - Metalliser" style="padding:10px 0;font-size:13px"></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'+
+      '<div class="field" style="margin-bottom:0"><label style="font-size:10px">OPENINGS</label><div class="inp-row" style="padding:0 10px"><input class="wp-count" type="number" value="1" min="1" style="padding:10px 0;font-size:13px"></div></div>'+
+      '<div class="field" style="margin-bottom:0"><label style="font-size:10px">QUALIFICATION</label><div class="inp-row" style="padding:0 6px"><select class="wp-qual" style="padding:10px 0;font-size:11px"><option value="">--</option><option>8th/10th</option><option>12th</option><option>ITI</option><option>Diploma</option><option>B.Sc</option><option>B.E/B.Tech</option><option>PGD-PPT</option><option>Graduation</option></select></div></div>'+
+      '<div class="field" style="margin-bottom:0"><label style="font-size:10px">EXPERIENCE</label><div class="inp-row" style="padding:0 10px"><input class="wp-exp" type="text" placeholder="4-10 yrs" value="'+esc(prevExp)+'" style="padding:10px 0;font-size:13px"></div></div>'+
+    '</div>';
+  container.appendChild(row);
+  // Remove
+  var rm=row.querySelector('.wp-rm');
+  if(rm)rm.addEventListener('click',function(){row.remove();updatePosCount(el)});
+  // Auto-copy exp to next
+  var expInp=row.querySelector('.wp-exp');
+  if(expInp)expInp.addEventListener('change',function(){
+    var v=this.value;var found=false;
+    container.querySelectorAll('.wp-row').forEach(function(r){
+      if(found){var e=r.querySelector('.wp-exp');if(e&&!e.value)e.value=v}
+      if(r===row)found=true;
+    });
+  });
+  updatePosCount(el);
+}
+
+function updatePosCount(el){
+  var badge=el.querySelector('.pos-count-badge');
+  var rows=el.querySelectorAll('.wp-row');
+  if(badge)badge.textContent=rows.length+' position'+(rows.length>1?'s':'');
+}
+
+// ── Submit: Regular Job ──
+async function submitRegularJob(tid,el){
+  var gv=function(s){var e=$(s+'-'+tid);return e?e.value:''};
+  var co=san(el.querySelector('.pj-co-inp').value);
+  var desig=gv('pj-desig');var title=san(gv('pj-title'))||desig;
+  var dept=gv('pj-dept');var loc=san(gv('pj-loc'));
+  var exp=gv('pj-exp');var qual=gv('pj-qual');
+  var ctc=san(gv('pj-ctc'));var vac=parseInt(gv('pj-vac'))||1;
+  var skills=san(gv('pj-skills'));var contact=san(gv('pj-contact'));var desc=san(gv('pj-desc'));
+  if(!co){toast('Company daalo','err');return}
+  if(!title){toast('Position daalo','err');return}
+  if(!contact){toast('Contact daalo','err');return}
+  // Content moderation
+  var checkFields=[title,co,loc,skills,desc,contact].join(' ');
+  var mod=moderateContent(checkFields);
+  if(!mod.ok){toast(t('content_blocked'),'err');return}
+  var job={type:'hiring',category:'job',title:title,designation:desig,department:dept,company:co,
+    location:loc,experience:exp,qualification:qual,ctc:ctc,skills:skills,contact:contact,
+    description:desc,vacancies:vac,
+    postedBy:ME?ME.name:'Admin',postedByPhone:ME?ME.phone:'',createdAt:new Date().toISOString()};
+  try{
+    if(window.FB_READY)await window.FB.push('jobs',job);else DB.jobs['j_'+Date.now()]=job;
+    toast('✅ Job post ho gayi!');if(tid==='pj-form')closeOv('pj-modal');
+    setTimeout(function(){showJobBanner(job)},400);
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+// ── Submit: Walk-In Drive ──
+async function submitWalkinJob(tid,el){
+  var gv=function(s){var e=$(s+'-'+tid);return e?e.value:''};
+  var co=san(el.querySelector('.pj-wco-inp').value);
+  var venue=san(gv('pj-wvenue'));var df=gv('pj-wdf');var dt=gv('pj-wdt');
+  var tf=gv('pj-wtf');var tt=gv('pj-wtt');
+  var contact=san(gv('pj-wcontact'));var desc=san(gv('pj-wdesc'));
+  if(!co){toast('Company daalo','err');return}
+  if(!venue){toast('Venue daalo','err');return}
+  if(!df){toast('Date daalo','err');return}
+  var positions=[];
+  el.querySelectorAll('.wp-row').forEach(function(r){
+    var pn=san((r.querySelector('.wp-name')||{}).value||'');
+    var pc=parseInt((r.querySelector('.wp-count')||{}).value)||1;
+    var pq=(r.querySelector('.wp-qual')||{}).value||'';
+    var pe=san((r.querySelector('.wp-exp')||{}).value||'');
+    if(pn)positions.push({name:pn,count:pc,qualification:pq,experience:pe});
+  });
+  if(!positions.length){toast('Kam se kam 1 position add karo','err');return}
+  if(!contact){toast('Contact daalo','err');return}
+  // Content moderation
+  var allText=[co,venue,contact,desc].concat(positions.map(function(p){return p.name})).join(' ');
+  var mod=moderateContent(allText);
+  if(!mod.ok){toast(t('content_blocked'),'err');return}
+  var totalVac=0;positions.forEach(function(p){totalVac+=p.count});
+  var titleStr=positions.length===1?positions[0].name:positions.length+' Positions';
+  var job={type:'hiring',category:'walkin',title:titleStr,company:co,
+    venue:venue,dateFrom:df,dateTo:dt,timeFrom:tf,timeTo:tt,
+    positions:positions,vacancies:totalVac,contact:contact,description:desc,
+    department:positions[0].name,experience:positions[0].experience,qualification:positions[0].qualification,
+    postedBy:ME?ME.name:'Admin',postedByPhone:ME?ME.phone:'',createdAt:new Date().toISOString()};
+  try{
+    if(window.FB_READY)await window.FB.push('jobs',job);else DB.jobs['j_'+Date.now()]=job;
+    toast('✅ Walk-In Drive posted!');if(tid==='pj-form')closeOv('pj-modal');
+    setTimeout(function(){showJobBanner(job)},400);
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+// ── Submit: Seeking ──
+async function submitSeekingJob(tid,el){
+  var gv=function(s){var e=$(s+'-'+tid);return e?e.value:''};
+  var nm=san(gv('pj-sname'));var desig=gv('pj-sdesig');
+  var dept=gv('pj-sdept');var exp=gv('pj-sexp');
+  var loc=san(gv('pj-sloc'));var contact=san(gv('pj-scontact'));
+  if(!nm){toast('Naam daalo','err');return}
+  if(!contact){toast('Contact daalo','err');return}
+  // Content moderation
+  var mod=moderateContent([nm,loc,contact].join(' '));
+  if(!mod.ok){toast(t('content_blocked'),'err');return}
+  var job={type:'seeking',category:'job',title:desig||'Looking for Job',company:nm,
+    department:dept,experience:exp,location:loc,contact:contact,
+    postedBy:ME?ME.name:'Admin',postedByPhone:ME?ME.phone:'',createdAt:new Date().toISOString()};
+  try{
+    if(window.FB_READY)await window.FB.push('jobs',job);else DB.jobs['j_'+Date.now()]=job;
+    toast('✅ Posted!');if(tid==='pj-form')closeOv('pj-modal');
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+function fld(id,type,label,ph,opts,val){
+  var inner='';
+  if(type==='select')
+    inner='<select id="'+id+'" style="flex:1;background:transparent;border:none;outline:none;padding:12px 0;font-size:14px;color:var(--text);font-family:var(--font)">'+(opts||[]).map(function(o){return '<option'+(o===''?' value=""':'')+'>'+esc(o)+'</option>'}).join('')+'</select>';
+  else if(type==='textarea')
+    inner='<textarea id="'+id+'" placeholder="'+esc(ph||'')+'" rows="3" style="flex:1;background:transparent;border:none;outline:none;padding:12px 0;font-size:14px;color:var(--text);font-family:var(--font);resize:none;width:100%"></textarea>';
+  else
+    inner='<input id="'+id+'" type="'+type+'" placeholder="'+esc(ph||'')+'" value="'+esc(val||'')+'" style="flex:1;background:transparent;border:none;outline:none;padding:12px 0;font-size:14px;color:var(--text);font-family:var(--font)">';
+  return '<div class="field"><label>'+label+'</label><div class="inp-row">'+inner+'</div></div>';
+}
+// ════════════════════════════════════
+// COMPANY LOGO FETCHING
+// ════════════════════════════════════
+var LOGO_CACHE={};
+var COMPANY_DOMAINS={
+  'Uflex Ltd':'uflex.com','SRF Limited':'srf.com','Jindal Poly Films Ltd':'jindalpolyfilms.com',
+  'Cosmo Films Ltd':'cosmofilms.com','Polyplex Corporation Ltd':'polyplex.com',
+  'JPFL Films Pvt Ltd':'jindalpolyfilms.com','Toppan Speciality Films':'toppan.com',
+  'Ester Filmtech Ltd':'esterindustries.com','Aerolam Industries':'aerolam.com',
+  'GLS Films':'glsfilms.com','Taghleef Industries':'ti-films.com',
+  'Max Specialty Films':'maxspecialityfilms.com','Garware Hi-Tech Films':'garwarehitechfilms.com',
+  'Vacmet India Ltd':'vacmetindia.com','Huhtamaki India':'huhtamaki.com',
+  'Constantia Flexibles':'cflex.com','Essel Propack':'esselpropack.com',
+  'Jhaveri Flexo India Pvt Ltd':'jhaveriflexo.com','BOBST India':'bobst.com',
+  'Pearl Polymers':'pearlpolymers.com','Nahar Poly Films':'nahar.com',
+  'Alpine Pack Pvt Ltd':'alpinepack.com','SKF India':'skf.com','Leybold India':'leybold.com'
+};
+
+function getCompanyLogoUrl(companyName){
+  if(!companyName)return '';
+  var domain=COMPANY_DOMAINS[companyName];
+  if(!domain){
+    // Try to guess domain from company name
+    var clean=companyName.replace(/\s*(Pvt|Ltd|Limited|India|Industries|Films|Corporation)\s*/gi,'').trim();
+    domain=clean.toLowerCase().replace(/\s+/g,'')+'.com';
+  }
+  return 'https://logo.clearbit.com/'+domain+'?size=200';
+}
+
+function loadLogoImage(company,callback){
+  var url=getCompanyLogoUrl(company);
+  if(!url){callback(null);return}
+  if(LOGO_CACHE[url]!==undefined){callback(LOGO_CACHE[url]);return}
+  var img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=function(){LOGO_CACHE[url]=img;callback(img)};
+  img.onerror=function(){LOGO_CACHE[url]=null;callback(null)};
+  img.src=url;
+}
+
+// ════════════════════════════════════
+// JOB BANNER GENERATOR (Professional Style)
+// ════════════════════════════════════
+function fmtDate(d){if(!d)return '';var dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}
+function fmtTime(t){if(!t)return '';var parts=t.split(':');var h=parseInt(parts[0]);return (h>12?h-12:h||12)+':'+(parts[1]||'00')+' '+(h>=12?'PM':'AM')}
+
+function showJobBanner(job){
+  var co=job.company||'FPJob';
+  var isWalkin=job.category==='walkin';
+  var colors={'Uflex':'#E63946','GLS':'#2D6A4F','JPFL':'#1A6B9A','Jindal':'#6D28D9',
+    'SRF':'#5B21B6','Cosmo':'#457B9D','Aerolam':'#0D9488','default':'#1E40AF'};
+  var coKey=Object.keys(colors).find(function(k){return co.toLowerCase().includes(k.toLowerCase())});
+  var accent=coKey?colors[coKey]:colors.default;
+  var accentLight=accent+'18';
+
+  // Date/time strings
+  var dateStr='';
+  if(isWalkin&&job.dateFrom){
+    dateStr=fmtDate(job.dateFrom);
+    if(job.dateTo&&job.dateTo!==job.dateFrom)dateStr+=' – '+fmtDate(job.dateTo);
+  }
+  var timeStr='';
+  if(isWalkin&&job.timeFrom){
+    timeStr=fmtTime(job.timeFrom);
+    if(job.timeTo)timeStr+=' – '+fmtTime(job.timeTo);
+  }
+
+  var logoUrl=getCompanyLogoUrl(co);
+
+  var bannerHTML=
+  '<div id="job-banner" style="width:480px;min-height:640px;background:linear-gradient(160deg,#FAFBFF 0%,#EEF0FF 40%,#F3E8FF 100%);border-radius:0;overflow:hidden;position:relative;font-family:Poppins,DM Sans,sans-serif;color:#1A1A2E">'+
+    // Decorative shapes
+    '<div style="position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:'+accent+'12"></div>'+
+    '<div style="position:absolute;bottom:-40px;left:-40px;width:160px;height:160px;border-radius:50%;background:'+accent+'10"></div>'+
+    '<div style="position:absolute;bottom:80px;right:-20px;width:100px;height:100px;border-radius:50%;background:'+accent+'08"></div>'+
+
+    // Header with logo
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:28px 28px 0;position:relative;z-index:1">'+
+      '<div>'+
+        '<div style="font-size:28px;font-weight:400;color:#555;line-height:1.2">We Are</div>'+
+        '<div style="font-size:52px;font-weight:900;color:'+accent+';line-height:1;margin-bottom:4px">Hiring!</div>'+
+        (isWalkin?'<div style="font-size:14px;font-weight:700;color:#666;letter-spacing:.5px">Walk-In Interview</div>':
+         '<div style="font-size:14px;font-weight:700;color:#666;letter-spacing:.5px">'+(job.type==='hiring'?'Job Opportunity':'Seeking Position')+'</div>')+
+      '</div>'+
+      '<div id="banner-logo-area" style="width:80px;height:80px;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #E5E7EB;box-shadow:0 2px 8px rgba(0,0,0,.06)">'+
+        (logoUrl?'<img src="'+logoUrl+'" style="max-width:68px;max-height:68px;object-fit:contain" crossorigin="anonymous" onerror="this.parentElement.innerHTML=\'<div style=font-size:28px;font-weight:900;color:'+accent.replace('#','%23')+'>'+esc((co[0]||'F').toUpperCase())+'</div>\'">':
+         '<div style="font-size:28px;font-weight:900;color:'+accent+'">'+(co[0]||'F').toUpperCase()+'</div>')+
+      '</div>'+
+    '</div>'+
+
+    // Company name
+    '<div style="padding:12px 28px 16px;position:relative;z-index:1">'+
+      '<div style="font-size:18px;font-weight:800;color:#1A1A2E">'+esc(co)+'</div>'+
+      (job.department?'<div style="font-size:12px;color:#666;font-weight:500">'+esc(job.department)+'</div>':'')+
+    '</div>'+
+
+    // Walk-in venue & schedule
+    (isWalkin?
+    '<div style="margin:0 20px 16px;background:#fff;border-radius:12px;padding:14px 16px;border:1px solid #E5E7EB;position:relative;z-index:1">'+
+      (job.venue?'<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px"><span style="font-size:16px">📍</span><div style="font-size:12px;color:#444;line-height:1.5;font-weight:500">'+esc(job.venue)+'</div></div>':'')+
+      '<div style="display:flex;gap:16px;flex-wrap:wrap">'+
+        (dateStr?'<div style="display:flex;align-items:center;gap:6px;background:#F8F9FA;padding:6px 12px;border-radius:8px;border:1px solid #E5E7EB"><span style="font-size:14px">📅</span><span style="font-size:13px;font-weight:700;color:#333">'+dateStr+'</span></div>':'')+
+        (timeStr?'<div style="display:flex;align-items:center;gap:6px;background:#F8F9FA;padding:6px 12px;border-radius:8px;border:1px solid #E5E7EB"><span style="font-size:14px">🕐</span><span style="font-size:13px;font-weight:700;color:#333">'+timeStr+'</span></div>':'')+
+      '</div>'+
+    '</div>':'')
+
+    // Position section header
+    +'<div style="padding:0 28px 10px;position:relative;z-index:1">'+
+      '<div style="font-size:16px;font-weight:800;color:'+accent+'">💼 '+(parseInt(job.vacancies)>1?'Open Positions':'Position')+'</div>'+
+    '</div>'+
+
+    // Position card(s) — supports multi-position walk-in
+    '<div style="margin:0 20px 16px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #E5E7EB;position:relative;z-index:1">'+
+      (job.positions&&job.positions.length>0?
+        // Multi-position table
+        '<div style="padding:12px 16px;font-size:13px;font-weight:800;color:'+accent+';border-bottom:1px solid #F0F0F0">💼 Open Positions</div>'+
+        job.positions.map(function(p,i){
+          return '<div style="padding:12px 16px;border-bottom:1px solid #F0F0F0;display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;align-items:center">'+
+            '<div><div style="font-size:13px;font-weight:700;color:'+accent+'">'+esc(p.name)+'</div>'+
+              (p.count>1?'<div style="font-size:10px;color:#888">'+p.count+' openings</div>':'')+
+            '</div>'+
+            '<div style="font-size:11px;color:#555">🏆 '+esc(p.experience||'—')+'</div>'+
+            '<div style="font-size:11px;color:#555">🎓 '+esc(p.qualification||'—')+'</div>'+
+          '</div>';
+        }).join(''):
+        // Single position
+        '<div style="padding:16px;border-bottom:1px solid #F0F0F0">'+
+          '<div style="font-size:16px;font-weight:800;color:'+accent+'">'+esc(job.title||job.designation||'—')+'</div>'+
+          (job.vacancies&&parseInt(job.vacancies)>1?'<div style="font-size:11px;color:#888;font-weight:600;margin-top:2px">'+job.vacancies+' Vacancies</div>':'')+
+        '</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #F0F0F0">'+
+          (job.experience?'<div style="padding:12px 16px;border-right:1px solid #F0F0F0;border-bottom:1px solid #F0F0F0"><div style="font-size:10px;color:#999;font-weight:700;margin-bottom:3px">EXPERIENCE</div><div style="font-size:13px;font-weight:700;color:#333">🏆 '+esc(job.experience)+'</div></div>':'')+
+          (job.qualification?'<div style="padding:12px 16px;border-bottom:1px solid #F0F0F0"><div style="font-size:10px;color:#999;font-weight:700;margin-bottom:3px">QUALIFICATION</div><div style="font-size:13px;font-weight:700;color:#333">🎓 '+esc(job.qualification)+'</div></div>':'')+
+          (job.ctc?'<div style="padding:12px 16px;border-right:1px solid #F0F0F0"><div style="font-size:10px;color:#999;font-weight:700;margin-bottom:3px">SALARY / CTC</div><div style="font-size:14px;font-weight:800;color:#16A34A">💰 '+esc(job.ctc)+'</div></div>':'')+
+          (job.location?'<div style="padding:12px 16px"><div style="font-size:10px;color:#999;font-weight:700;margin-bottom:3px">LOCATION</div><div style="font-size:13px;font-weight:700;color:#333">📍 '+esc(job.location)+'</div></div>':'')+
+        '</div>'
+      )+
+      '</div>'+
+      (job.skills?'<div style="padding:12px 16px;border-top:1px solid #F0F0F0"><div style="font-size:10px;color:#999;font-weight:700;margin-bottom:3px">MACHINES / SKILLS</div><div style="font-size:12px;font-weight:600;color:'+accent+'">🔧 '+esc(job.skills)+'</div></div>':'')+
+    '</div>'+
+
+    // Contact bar
+    '<div style="margin:0 20px 16px;background:'+accent+';border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1">'+
+      '<div><div style="font-size:10px;color:rgba(255,255,255,.7);font-weight:700;margin-bottom:2px">CONTACT / APPLY</div>'+
+      '<div style="font-size:15px;font-weight:800;color:#fff">'+esc(job.contact||'—')+'</div></div>'+
+      '<div style="background:rgba(255,255,255,.2);border-radius:10px;padding:8px 14px"><div style="font-size:12px;color:#fff;font-weight:700">Apply Now →</div></div>'+
+    '</div>'+
+
+    // Footer
+    '<div style="padding:8px 28px 16px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1">'+
+      '<div style="font-size:10px;color:#AAA">Posted by '+esc(job.postedBy||'Admin')+'</div>'+
+      '<div style="display:flex;align-items:center;gap:6px">'+
+        '<div style="font-family:Barlow Condensed,sans-serif;font-size:14px;font-weight:800;color:#CCC;letter-spacing:1px">FP<span style="color:#F97316">JOB</span></div>'+
+        '<div style="font-size:8px;color:#CCC">fpjob.vkstech.com</div>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+
+  var el=$('banner-content');
+  el.innerHTML=bannerHTML+
+    '<div style="display:flex;gap:8px;margin-top:12px">'+
+      '<button id="bn-share" class="btn btn-blue" style="flex:1">📤 Share</button>'+
+      '<button id="bn-dl" class="btn btn-outline" style="flex:1">📥 Save as Image</button></div>'+
+    '<div style="text-align:center;margin-top:8px;font-size:11px;color:var(--muted)">Company logo auto-fetched from web</div>';
+  openOv('banner-modal');
+  setTimeout(function(){
+    var sb=$('bn-share');if(sb)sb.addEventListener('click',function(){shareJob(job)});
+    var db=$('bn-dl');if(db)db.addEventListener('click',function(){saveBannerImage()});
+  },0);
+}
+
+function saveBannerImage(){
+  var el=document.getElementById('job-banner');if(!el)return;
+  var btn=$('bn-dl');
+  if(btn){btn.textContent='Generating...';btn.disabled=true}
+  // Use html2canvas to convert banner to image
+  if(typeof html2canvas!=='undefined'){
+    html2canvas(el,{
+      scale:2,
+      useCORS:true,
+      allowTaint:true,
+      backgroundColor:'#FAFBFF',
+      logging:false
+    }).then(function(canvas){
+      var link=document.createElement('a');
+      link.download='FPJob_'+((el.querySelector('div')||{}).textContent||'banner').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30)+'.png';
+      link.href=canvas.toDataURL('image/png');
+      link.click();
+      toast('📥 Banner saved!');
+      if(btn){btn.textContent='📥 Save as Image';btn.disabled=false}
+    }).catch(function(e){
+      console.error('html2canvas error:',e);
+      toast('Screenshot le kar share karein 📸','warn');
+      if(btn){btn.textContent='📥 Save as Image';btn.disabled=false}
+    });
+  }else{
+    toast('Screenshot le kar share karein 📸','warn');
+    if(btn){btn.textContent='📥 Save as Image';btn.disabled=false}
+  }
+}
+
+// ── Members ──
+var _groupView=true;
+var MEM_GROUPS=[
+  {key:'Head',label:'👔 Plant Heads & Leadership',color:'#F59E0B',bg:'rgba(245,158,11,.08)',border:'rgba(245,158,11,.25)'},
+  {key:'Manager',label:'📊 Managers',color:'#8B5CF6',bg:'rgba(139,92,246,.08)',border:'rgba(139,92,246,.25)'},
+  {key:'Supervisor',label:'🔧 Supervisors & Incharges',color:'#06B6D4',bg:'rgba(6,182,212,.08)',border:'rgba(6,182,212,.25)'},
+  {key:'Engineer',label:'⚙️ Engineers & Officers',color:'#0A66C2',bg:'rgba(10,102,194,.08)',border:'rgba(10,102,194,.25)'},
+  {key:'Operator',label:'🏭 Operators & Technicians',color:'#22C55E',bg:'rgba(34,197,94,.08)',border:'rgba(34,197,94,.25)'},
+  {key:'Supplier',label:'🏪 Suppliers & Vendors',color:'#FB923C',bg:'rgba(251,146,60,.12)',border:'rgba(251,146,60,.3)'},
+];
+
+function getEffectiveCategory(m){
+  if(m.category&&m.category!=='Engineer')return m.category;
+  var d=(m.designation||'').toLowerCase();
+  if(d.includes('plant head')||d.includes('agm')||d.includes('dgm')||d.includes('gm')||d.includes('vp')||d.includes('hod')||d.includes('head'))return 'Head';
+  if(d.includes('manager'))return 'Manager';
+  if(d.includes('supervisor')||d.includes('shift incharge')||d.includes('shift in-charge')||d.includes('incharge'))return 'Supervisor';
+  if(d.includes('operator')||d.includes('trainee')||d.includes('iti ')||d.includes('fitter')||d.includes('helper'))return 'Operator';
+  if(d.includes('supplier')||d.includes('vendor')||d.includes('consultant'))return 'Supplier';
+  return 'Engineer';
+}
+
+function matchCat(u,f){
+  var d=(u.designation||'').toLowerCase();var cat=getEffectiveCategory(u);
+  if(f==='Operator')return cat==='Operator';
+  if(f==='Engineer')return cat==='Engineer'||cat==='Supervisor';
+  if(f==='Manager')return cat==='Manager'||cat==='Head';
+  if(f==='Officer')return d.includes('officer');
+  if(f==='HR')return d.includes('hr')||d.includes('admin');
+  if(f==='Supplier')return cat==='Supplier';
+  return true;
+}
+
+function mkMemberCard(m){
+  var c=document.createElement('div');c.className='m-card';
+  var ini=(m.name||'?').split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase();
+  var isV=getEffectiveCategory(m)==='Supplier';
+  c.innerHTML=
+    '<div class="av" style="width:48px;height:48px;font-size:16px;'+(isV?'border:2px solid #FB923C':'')+'">'+
+      (m.photo?'<img src="'+m.photo+'" style="width:48px;height:48px;object-fit:cover" loading="lazy">':ini)+'</div>'+
+    '<div style="flex:1;min-width:0">'+
+      '<div style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(m.name||'—')+
+        (isV?' <span style="font-size:9px;padding:1px 6px;border-radius:6px;background:rgba(251,146,60,.15);color:#FB923C;font-weight:700;vertical-align:middle">🏪 VENDOR</span>':'')+'</div>'+
+      '<div style="font-size:12px;color:var(--text2)">'+esc(m.designation||'—')+'</div>'+
+      '<div style="font-size:12px;color:var(--muted)">'+esc(m.company||'—')+'</div>'+
+      '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">'+
+        (m.experience?'<span style="font-size:10px;padding:2px 7px;border-radius:9px;background:rgba(34,197,94,.1);color:var(--green);font-weight:700">🏆 '+esc(m.experience)+'</span>':'')+
+        (m.department?'<span style="font-size:10px;padding:2px 7px;border-radius:9px;background:var(--card2);color:var(--muted);font-weight:600">'+esc(m.department)+'</span>':'')+
+        (isV&&m.services?'<span style="font-size:10px;padding:2px 7px;border-radius:9px;background:rgba(251,146,60,.1);color:#FB923C;font-weight:600">📦 '+esc(m.services.length>40?m.services.slice(0,40)+'...':m.services)+'</span>':'')+
+        (isV&&m.website?'<span style="font-size:10px;padding:2px 7px;border-radius:9px;background:rgba(10,102,194,.1);color:var(--primary);font-weight:600">🌐 Website</span>':'')+
+        (isV&&m.brochure?'<span style="font-size:10px;padding:2px 7px;border-radius:9px;background:rgba(139,92,246,.1);color:#8B5CF6;font-weight:600">📎 Brochure</span>':'')+
+      '</div>'+
+    '</div>';
+  c.onclick=function(){openMemberDetail(m)};
+  return c;
+}
+
+function renderMembers(){
+  var el=$('members-list');el.innerHTML='';
+  var q=(($('mem-search')||{}).value||'').toLowerCase();
+  var list=approved();
+  if(mFilter!=='all')list=list.filter(function(u){return matchCat(u,mFilter)});
+  if(q)list=list.filter(function(u){
+    return (u.name||'').toLowerCase().includes(q)||(u.company||'').toLowerCase().includes(q)||
+      (u.designation||'').toLowerCase().includes(q)||(u.department||'').toLowerCase().includes(q)||
+      (u.services||'').toLowerCase().includes(q);
+  });
+  if(!list.length){
+    el.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:44px;margin-bottom:12px">👥</div><div style="font-size:15px;font-weight:700;color:var(--text2)">Koi member nahi mila</div></div>';
+    return;
+  }
+  if(_groupView&&mFilter==='all'&&!q){
+    var buckets={};MEM_GROUPS.forEach(function(g){buckets[g.key]=[]});
+    list.forEach(function(m){var cat=getEffectiveCategory(m);if(buckets[cat])buckets[cat].push(m);else buckets['Engineer'].push(m)});
+    var total=list.length;
+    var sumEl=document.createElement('div');
+    sumEl.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:var(--card2);border-radius:10px;border:1px solid var(--border2)';
+    sumEl.innerHTML='<div style="font-size:11px;color:var(--muted);font-weight:700;width:100%;margin-bottom:4px">👥 '+total+' Approved Members</div>'+
+      MEM_GROUPS.map(function(g){var cnt=(buckets[g.key]||[]).length;if(!cnt)return '';return '<div style="font-size:11px;font-weight:700;color:'+g.color+'">'+g.label.split(' ')[0]+' '+cnt+'</div>'}).join('');
+    el.appendChild(sumEl);
+
+    MEM_GROUPS.forEach(function(grp){
+      var members=buckets[grp.key];if(!members||!members.length)return;
+      var hdr=document.createElement('div');
+      hdr.style.cssText='background:'+grp.bg+';border:1px solid '+grp.border+';border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;';
+      hdr.innerHTML='<div style="display:flex;align-items:center;gap:10px"><div style="font-size:16px;font-weight:800;color:'+grp.color+'">'+grp.label+'</div><div style="background:'+grp.color+';color:#fff;font-size:11px;font-weight:800;padding:2px 9px;border-radius:12px">'+members.length+'</div></div><span class="grp-arrow" style="color:'+grp.color+';font-size:18px;transition:transform .2s">▼</span>';
+      el.appendChild(hdr);
+      var container=document.createElement('div');
+      container.style.cssText='margin-bottom:14px';
+      members.forEach(function(m){container.appendChild(mkMemberCard(m))});
+      el.appendChild(container);
+      var isOpen=true;
+      hdr.onclick=function(){
+        isOpen=!isOpen;container.style.display=isOpen?'block':'none';
+        hdr.querySelector('.grp-arrow').style.transform=isOpen?'rotate(0deg)':'rotate(-90deg)';
+      };
+    });
+    return;
+  }
+  // Flat list with pagination
+  var showing=list.slice(0,_memsShown);
+  showing.forEach(function(m){el.appendChild(mkMemberCard(m))});
+  if(list.length>_memsShown){
+    var btn=document.createElement('button');btn.className='load-more-btn';
+    btn.textContent='Load More ('+_memsShown+'/'+list.length+')';
+    btn.onclick=function(){_memsShown+=PAGE_SIZE;renderMembers()};
+    el.appendChild(btn);
+  }
+}
+window.renderMembers=renderMembers;
+
+function setMF(f,btn){
+  mFilter=f;_memsShown=PAGE_SIZE;
+  document.querySelectorAll('#mem-chips .chip').forEach(function(c){c.classList.remove('on')});
+  btn.classList.add('on');renderMembers();
+}
+window.setMF=setMF;
+
+function mkMiniMem(m){
+  var c=document.createElement('div');
+  c.style.cssText='background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:border-color .15s';
+  var ini=(m.name||'?').split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase();
+  c.innerHTML=
+    '<div class="av" style="width:44px;height:44px;margin:0 auto 7px;font-size:15px">'+
+      (m.photo?'<img src="'+m.photo+'" style="width:44px;height:44px;object-fit:cover" loading="lazy">':ini)+'</div>'+
+    '<div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc((m.name||'—').split(' ')[0])+'</div>'+
+    '<div style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(m.designation||'—')+'</div>';
+  c.onclick=function(){openMemberDetail(m)};return c;
+}
+
+function dRow(ico,label,val){return val?'<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border2)"><span style="font-size:18px">'+ico+'</span><div><div style="font-size:10px;color:var(--muted);font-weight:700">'+label.toUpperCase()+'</div><div style="font-size:14px;font-weight:600">'+esc(val)+'</div></div></div>':''}
+
+function openMemberDetail(m){
+  window._viewingMember=m;
+  var el=$('md-content');
+  var ini=(m.name||'?').split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase();
+  var isSelf=!!(ME&&ME.phone===m.phone);
+  var sentReqs=JSON.parse(localStorage.getItem(CREQ_KEY)||'{}');
+  var alreadySent=!!sentReqs[m.phone];
+  var granted=!!sentReqs[m.phone+'_granted'];
+
+  function lockedRow(ico,label,val,hint){
+    if(!val)return '';
+    if(isSelf||granted)return dRow(ico,label,val);
+    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border2)">'+
+      '<span style="font-size:18px">'+ico+'</span><div style="flex:1">'+
+      '<div style="font-size:10px;color:var(--muted);font-weight:700">'+label.toUpperCase()+'</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:2px">'+
+      '<span style="font-size:14px;letter-spacing:3px;color:var(--muted)">&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;</span>'+
+      '<span style="font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(239,68,68,.1);color:var(--red);font-weight:700">🔒 Private</span></div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+esc(hint)+'</div></div></div>';
+  }
+
+  var showWABtn=isSelf||granted;
+  var showReqBtn=!isSelf&&!granted&&!alreadySent;
+
+  el.innerHTML=
+    '<div style="padding:20px;text-align:center;border-bottom:1px solid var(--border2)">'+
+      '<div class="av" style="width:80px;height:80px;margin:0 auto 12px;font-size:26px;border:3px solid var(--primary)">'+
+        (m.photo?'<img src="'+m.photo+'" style="width:80px;height:80px;object-fit:cover">':ini)+'</div>'+
+      '<div style="font-size:20px;font-weight:800">'+esc(m.name||'')+'</div>'+
+      '<div style="font-size:14px;color:var(--primary);margin-top:4px">'+esc(m.designation||'')+'</div>'+
+      (m.experience?'<div style="font-size:12px;color:var(--green);margin-top:3px;font-weight:700">🏆 '+esc(m.experience)+'</div>':'')+
+    '</div>'+
+    '<div style="padding:14px 20px">'+dRow('🏢','Company',m.company)+dRow('🏭','Department',m.department)+'</div>'+
+    // Vendor/Supplier details section
+    (function(){
+      var isV=getEffectiveCategory(m)==='Supplier';
+      if(!isV)return '';
+      var html='<div style="padding:0 20px 14px;border-top:1px dashed rgba(251,146,60,.3)">'+
+        '<div style="font-size:10px;color:#FB923C;font-weight:700;padding:10px 0 6px;letter-spacing:.8px">🏪 VENDOR DETAILS</div>';
+      if(m.services)html+=dRow('📦','Services / Products',m.services);
+      if(m.website)html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border2)"><span style="font-size:18px">🌐</span><div><div style="font-size:10px;color:var(--muted);font-weight:700">WEBSITE</div><a href="'+(m.website.startsWith('http')?esc(m.website):'https://'+esc(m.website))+'" target="_blank" rel="noopener" style="font-size:14px;font-weight:600;color:var(--primary);text-decoration:none">'+esc(m.website)+' ↗</a></div></div>';
+      if(m.brochure){
+        html+='<div style="margin-top:10px"><div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:6px">📎 BROCHURE / BUSINESS CARD</div>';
+        if(m.brochure.startsWith('data:image/')){
+          html+='<div style="border-radius:10px;overflow:hidden;border:1px solid var(--border)"><img src="'+m.brochure+'" style="width:100%;max-height:400px;object-fit:contain;display:block;cursor:pointer" onclick="window.open(this.src,\'_blank\')"></div>';
+          html+='<div style="font-size:11px;color:var(--muted);margin-top:4px;text-align:center">Tap image to view full size</div>';
+        }else{
+          html+='<a href="'+esc(m.brochure)+'" target="_blank" style="display:block;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;text-align:center;color:var(--primary);font-weight:700;text-decoration:none;font-size:13px">📄 View Brochure / Business Card ↗</a>';
+        }
+        html+='</div>';
+      }
+      html+='</div>';
+      return html;
+    })()+
+    '<div style="padding:0 20px;border-top:1px dashed var(--border2)">'+
+      '<div style="font-size:10px;color:var(--muted);font-weight:700;padding:10px 0 4px;letter-spacing:.8px">PRIVATE INFORMATION</div>'+
+      lockedRow('📱','Phone Number',fmtPhone(m.phone),'Request karein dekhne ke liye')+
+      lockedRow('💰','CTC / Salary',m.salary||'','Request karein dekhne ke liye')+
+    '</div>'+
+    '<div style="padding:14px 20px 24px">'+
+      (showWABtn?'<button id="md-wa-btn" style="width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:24px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:8px">💬 WhatsApp Karo</button>':'')+
+      (showReqBtn?'<button id="md-req-btn" style="width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:24px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 4px 16px var(--primary-glow)">🔓 Contact Details Maango</button>':'')+
+      (!isSelf&&!granted&&alreadySent?'<div style="text-align:center;padding:14px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:16px"><div style="font-size:14px;font-weight:700;color:#F59E0B">⏳ Request Bheji Ja Chuki Hai</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Admin / User approve karega</div></div>':'')+
+    '</div>';
+
+  setTimeout(function(){
+    var wb=$('md-wa-btn');if(wb)wb.addEventListener('click',function(){window.open('https://wa.me/91'+m.phone,'_blank')});
+    var rb=$('md-req-btn');if(rb)rb.addEventListener('click',function(){sendContactRequest(window._viewingMember)});
+  },0);
+  openOv('md-modal');
+}
+
+async function sendContactRequest(target){
+  if(!ME){toast('Pehle login karo','err');return}
+  var reqData={type:'contact_request',fromId:ME.id||ME.phone,fromName:ME.name,fromPhone:ME.phone,
+    fromDesig:ME.designation||'',fromCompany:ME.company||'',
+    toId:target.id||target.phone,toName:target.name,toPhone:target.phone,
+    toDesig:target.designation||'',toCompany:target.company||'',
+    status:'pending',createdAt:new Date().toISOString()};
+  try{
+    if(window.FB_READY){
+      await window.FB.push('notifications',{...reqData,userId:target.phone,
+        message:ME.name+' ('+(ME.designation||'Member')+') aapka contact details dekhna chahta hai',status:'unread'});
+      await window.FB.push('notifications',{...reqData,userId:'admin',
+        message:'Contact Request: '+ME.name+' → '+target.name,status:'unread'});
+    }
+    var sentReqs=JSON.parse(localStorage.getItem(CREQ_KEY)||'{}');
+    sentReqs[target.phone]={sentAt:new Date().toISOString(),targetName:target.name};
+    localStorage.setItem(CREQ_KEY,JSON.stringify(sentReqs));
+    toast('✅ Request send ho gayi! Admin approve karega');
+    openMemberDetail(target);
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+window.sendContactRequest=sendContactRequest;
+
+async function approveContactReq(fromPhone,toPhone,toName){
+  if(!window.FB_READY){toast('Firebase offline','err');return}
+  try{
+    await window.FB.push('notifications',{type:'contact_granted',userId:fromPhone,toPhone:toPhone,toName:toName,
+      message:'✅ '+toName+' ka contact details allow ho gaya! Members mein dekho.',status:'unread',createdAt:new Date().toISOString()});
+    toast('✅ Contact access granted!');
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+window.approveContactReq=approveContactReq;
+
+async function denyContactReq(fromPhone,toName){
+  if(!window.FB_READY)return;
+  await window.FB.push('notifications',{type:'contact_denied',userId:fromPhone,
+    message:'❌ '+toName+' ka contact request deny ho gaya.',status:'unread',createdAt:new Date().toISOString()});
+  toast('Request denied');
+}
+window.denyContactReq=denyContactReq;
+
+// ── Profile ──
+// FIX: Added profile editing capability
+function renderProfile(){
+  if(!ME)return;
+  var el=$('profile-content');
+  var ini=(ME.name||'?').split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase();
+  el.innerHTML=
+    '<div style="text-align:center;padding:24px 0 20px;margin-bottom:14px;border-bottom:1px solid var(--border2)">'+
+      '<div class="av" style="width:88px;height:88px;margin:0 auto 12px;font-size:28px;border:3px solid var(--primary)">'+
+        (ME.photo?'<img src="'+ME.photo+'" style="width:88px;height:88px;object-fit:cover">':ini)+'</div>'+
+      '<div style="font-size:22px;font-weight:800">'+esc(ME.name||'—')+'</div>'+
+      '<div style="font-size:14px;color:var(--primary);margin-top:4px">'+esc(ME.designation||'—')+'</div>'+
+    '</div>'+
+    '<div class="card" style="overflow:hidden;margin-bottom:16px">'+
+      dRow('📱','Phone',fmtPhone(ME.phone))+
+      dRow('🏭','Department',ME.department)+
+      dRow('🏢','Company',ME.company)+
+      dRow('🏆','Experience',ME.experience||'Not set')+
+      (ME.salary?dRow('💰','Salary',ME.salary):'')+
+    '</div>'+
+    // Vendor section in profile
+    (function(){
+      var isV=getEffectiveCategory(ME)==='Supplier';
+      if(!isV)return '';
+      var html='<div class="card" style="overflow:hidden;margin-bottom:16px;border-color:rgba(251,146,60,.3)">'+
+        '<div style="padding:10px 14px;background:rgba(251,146,60,.08);border-bottom:1px solid rgba(251,146,60,.2)">'+
+          '<div style="font-size:11px;font-weight:800;color:#FB923C;letter-spacing:.5px">🏪 VENDOR PROFILE</div>'+
+        '</div>';
+      html+=dRow('📦','Services / Products',ME.services||'Not set');
+      if(ME.website)html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border2)"><span style="font-size:18px">🌐</span><div><div style="font-size:10px;color:var(--muted);font-weight:700">WEBSITE</div><a href="'+(ME.website.startsWith('http')?esc(ME.website):'https://'+esc(ME.website))+'" target="_blank" rel="noopener" style="font-size:14px;font-weight:600;color:var(--primary);text-decoration:none">'+esc(ME.website)+' ↗</a></div></div>';
+      else html+=dRow('🌐','Website','Not set');
+      if(ME.brochure){
+        html+='<div style="padding:10px 14px"><div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:6px">📎 BROCHURE / BUSINESS CARD</div>';
+        if(ME.brochure.startsWith('data:image/'))
+          html+='<div style="border-radius:8px;overflow:hidden;border:1px solid var(--border)"><img src="'+ME.brochure+'" style="width:100%;max-height:300px;object-fit:contain;display:block"></div>';
+        else html+='<div style="padding:10px;background:var(--card2);border-radius:8px;text-align:center;color:var(--primary);font-weight:600;font-size:13px">📄 Brochure uploaded</div>';
+        html+='</div>';
+      }else{
+        html+=dRow('📎','Brochure','Not uploaded yet');
+      }
+      html+='</div>';
+      return html;
+    })()+
+    '<button id="prof-edit-btn" class="btn btn-outline btn-w100" style="margin-bottom:10px">✏️ Profile Edit Karo</button>'+
+    '<button id="prof-logout-btn" style="width:100%;padding:14px;background:var(--red-dim);color:var(--red);border:1.5px solid rgba(239,68,68,.3);border-radius:24px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:12px">🚪 Logout</button>'+
+    '<div style="text-align:center;font-size:11px;color:var(--muted)">FPJob v3.1 · Flexible Packaging Network 🏭</div>';
+
+  setTimeout(function(){
+    $('prof-edit-btn').addEventListener('click',function(){openProfileEdit()});
+    $('prof-logout-btn').addEventListener('click',function(){doLogout()});
+  },0);
+}
+
+function openProfileEdit(){
+  if(!ME)return;
+  var el=$('profile-edit-form');
+  el.innerHTML=
+    fld('pe-name','text','Naam','',[],ME.name||'')+
+    fld('pe-desig','select','Designation','',
+      ['','Trainee / GET','Operator','Sr. Operator','Shift Incharge','ITI Technician',
+       'Maintenance Fitter','Maintenance Electrician','Instrument Technician',
+       'Jr. Officer','Officer','Sr. Officer','Engineer / Executive','Shift Engineer',
+       'Sr. Engineer','Asst. Manager','Manager','Sr. Manager','AGM / DGM','GM / VP',
+       'Plant Head','HR / Admin','QC / QA','R&D','Sales / Marketing','Supplier / Vendor','Consultant'])+
+    fld('pe-dept','select','Department','',
+      ['','Metallizer / DMAT','BOPP Production','BOPET Production','CPP Production',
+       'Slitter / Rewinder','Lamination','Coating / Extrusion Coating','Printing / Flexo',
+       'Extrusion','Mechanical Maintenance','Electrical / E&I','Instrumentation',
+       'Quality / QC','R&D / Lab','Projects','Stores / Purchase','HR / Admin',
+       'Sales / Marketing','Dispatch / Logistics','IT'])+
+    fld('pe-co','text','Company','',[],ME.company||'')+
+    fld('pe-exp','select','Experience','',
+      ['','Fresher (0 Years)','Less than 1 Year','1 Year','2 Years','3 Years','4 Years','5 Years',
+       '6 Years','7 Years','8 Years','9 Years','10 Years','11–12 Years','13–15 Years','16–20 Years','20+ Years'])+
+    fld('pe-salary','text','Salary','',[],ME.salary||'')+
+    // Vendor fields in profile edit
+    '<div id="pe-vendor-fields" style="display:none;border:1.5px solid rgba(251,146,60,.3);border-radius:12px;padding:14px;margin-bottom:14px;background:rgba(251,146,60,.05)">'+
+      '<div style="font-size:12px;font-weight:800;color:#FB923C;margin-bottom:10px;letter-spacing:.5px">🏪 VENDOR DETAILS</div>'+
+      fld('pe-services','text','Services / Products','',[],ME.services||'')+
+      fld('pe-website','url','Website','',[],ME.website||'')+
+      '<div class="field"><label>Brochure / Business Card</label>'+
+        '<div id="pe-brochure-prev" style="margin-bottom:8px;display:none;border-radius:10px;overflow:hidden;border:1px solid var(--border)"></div>'+
+        '<button type="button" id="pe-brochure-btn" style="width:100%;padding:12px;background:var(--card2);border:1.5px dashed rgba(251,146,60,.4);border-radius:10px;color:#FB923C;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">📎 '+(ME.brochure?'Change Brochure':'Upload Brochure')+'</button>'+
+        '<input type="file" id="pe-brochure-input" accept="image/*,.pdf" style="display:none">'+
+      '</div>'+
+    '</div>'+
+    '<button id="pe-save-btn" class="btn btn-blue btn-w100">💾 Save</button>';
+
+  var peBrochureB64=ME.brochure||'';
+
+  // Set select values and show vendor fields
+  setTimeout(function(){
+    if(ME.designation){var ds=$('pe-desig');if(ds)ds.value=ME.designation}
+    if(ME.department){var dp=$('pe-dept');if(dp)dp.value=ME.department}
+    if(ME.experience){var ex=$('pe-exp');if(ex)ex.value=ME.experience}
+    // Show vendor fields if vendor
+    var isV=getEffectiveCategory(ME)==='Supplier';
+    var vf=$('pe-vendor-fields');if(vf)vf.style.display=isV?'block':'none';
+    // Toggle vendor fields on designation change
+    var desigSel=$('pe-desig');
+    if(desigSel)desigSel.addEventListener('change',function(){
+      var d=this.value.toLowerCase();
+      var show=d.includes('supplier')||d.includes('vendor')||d.includes('consultant');
+      if(vf)vf.style.display=show?'block':'none';
+    });
+    // Show existing brochure preview
+    if(ME.brochure&&ME.brochure.startsWith('data:image/')){
+      var prev=$('pe-brochure-prev');
+      if(prev){prev.innerHTML='<img src="'+ME.brochure+'" style="width:100%;max-height:200px;object-fit:contain;display:block">';prev.style.display='block'}
+    }
+    // Brochure upload
+    var bBtn=$('pe-brochure-btn');var bInp=$('pe-brochure-input');
+    if(bBtn&&bInp){
+      bBtn.addEventListener('click',function(){bInp.click()});
+      bInp.addEventListener('change',function(){
+        var file=this.files&&this.files[0];if(!file)return;
+        if(file.size>3*1024*1024){toast('File 3MB se chhoti honi chahiye','err');return}
+        var reader=new FileReader();
+        reader.onload=function(e){
+          peBrochureB64=e.target.result;
+          var prev=$('pe-brochure-prev');
+          if(prev&&file.type.startsWith('image/')){
+            prev.innerHTML='<img src="'+peBrochureB64+'" style="width:100%;max-height:200px;object-fit:contain;display:block">';
+            prev.style.display='block';
+          }
+          bBtn.textContent='📎 Brochure selected ✅';
+          toast('Brochure ready ✅');
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    $('pe-save-btn').addEventListener('click',function(){saveProfileEdit(peBrochureB64)});
+  },0);
+  openOv('profile-edit-modal');
+}
+
+async function saveProfileEdit(peBrochureB64){
+  var name=san($('pe-name').value);
+  if(!name){toast('Naam daalo','err');return}
+  var desig=$('pe-desig').value;
+  var updates={name:name,designation:desig,department:$('pe-dept').value,
+    company:san($('pe-co').value),experience:$('pe-exp').value,salary:san($('pe-salary').value),
+    category:getCategoryFromDesig(desig),
+    updatedAt:new Date().toISOString()};
+  // Vendor fields
+  var isV=desig.toLowerCase().includes('supplier')||desig.toLowerCase().includes('vendor')||desig.toLowerCase().includes('consultant');
+  if(isV){
+    updates.services=san(($('pe-services')||{}).value||'');
+    updates.website=san(($('pe-website')||{}).value||'');
+    if(peBrochureB64)updates.brochure=peBrochureB64;
+  }
+  try{
+    if(window.FB_READY&&ME.id)await window.FB.update('users/'+ME.id,updates);
+    Object.assign(ME,updates);saveSession();
+    toast('Profile updated ✅');closeOv('profile-edit-modal');renderProfile();renderHdrPic();
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+function doLogout(){
+  if(!confirm('Logout karna chahte hain?'))return;
+  ME=null;localStorage.removeItem(SESS_KEY);localStorage.removeItem(PEND_KEY);
+  $('nav').style.display='none';$('fab').style.display='none';
+  showScr('login');goStep(1);
+  $('ph-inp').value='';photoB64='';curPhone='';
+  $('cam-img').src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  $('cam-ph').style.display='flex';$('cam-img').style.display='none';
+  $('known-badge').style.display='none';$('new-badge').style.display='none';
+  toast('Logout ho gaye ✅');
+}
+
+// ── Notifications ──
+function toggleNotif(){
+  $('notif-panel').classList.toggle('open');
+  if($('notif-panel').classList.contains('open'))$('notif-dot').style.display='none';
+}
+window.toggleNotif=toggleNotif;
+
+function renderNotifs(){
+  var el=$('notif-list');
+  window._pendingReqs=window._pendingReqs||{};
+  var list=notifsArr().filter(function(n){
+    if(!ME)return false;
+    if(n.userId==='admin')return true;
+    return n.userId===ME.phone||n.userPhone===ME.phone||n.toPhone===ME.phone;
+  }).sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt)}).slice(0,50);
+  if(!list.length){
+    el.innerHTML='<div style="padding:32px 16px;text-align:center;color:var(--muted)">Koi notification nahi</div>';
+    return;
+  }
+  var html='';
+  list.forEach(function(n){
+    var ico=n.type==='approved'?'✅':n.type==='rejected'?'❌':n.type==='new_reg'?'👤':n.type==='contact_request'?'🔓':n.type==='contact_granted'?'🎉':'📢';
+    var msg=esc(n.message||(n.type==='new_reg'?'New member: '+(n.userName||''):'Notification'));
+    var extra='';
+    if(n.type==='contact_request'&&(n.userId==='admin'||n.toPhone===(ME&&ME.phone))){
+      var rk='rq_'+(n.createdAt||'').replace(/\D/g,'').slice(0,14);
+      window._pendingReqs[rk]={fromPhone:n.fromPhone,toPhone:n.toPhone,toName:n.toName,fromName:n.fromName};
+      extra='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">'+
+        '<button class="cr-btn" data-k="'+rk+'" data-action="allow" style="padding:6px 14px;background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,.3);border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)">✅ Allow</button>'+
+        '<button class="cr-btn" data-k="'+rk+'" data-action="deny" style="padding:6px 14px;background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)">❌ Deny</button>'+
+        '<div style="font-size:11px;color:var(--muted);padding:6px 0">'+esc(n.fromName||'')+' → '+esc(n.toName||'')+'</div></div>';
+    }
+    html+='<div style="padding:14px 16px;border-bottom:1px solid var(--border2)"><div style="display:flex;gap:10px"><span style="font-size:22px">'+ico+'</span>'+
+      '<div style="flex:1"><div style="font-size:14px;font-weight:600">'+msg+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+timeAgo(n.createdAt)+'</div>'+extra+'</div></div></div>';
+  });
+  el.innerHTML=html;
+  el.querySelectorAll('.cr-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var k=this.dataset.k,action=this.dataset.action;
+      var r=(window._pendingReqs||{})[k];if(!r)return;
+      if(action==='allow')approveContactReq(r.fromPhone,r.toPhone,r.toName);
+      else denyContactReq(r.fromPhone,r.toName);
+    });
+  });
+}
+
+// ── Admin ──
+function showAdminLogin(){openOv('adm-modal');setTimeout(function(){$('adm-pass').focus()},100)}
+window.showAdminLogin=showAdminLogin;
+
+function doAdminLogin(){
+  if($('adm-pass').value===_ap){
+    closeOv('adm-modal');$('adm-pass').value='';
+    showScr('admin');startListeners();
+    renderAdminPending();toast('Admin panel ✅');
+  }else{showErr('adm-err','Galat password ❌')}
+}
+window.doAdminLogin=doAdminLogin;
+
+function adTab(id,btn){
+  document.querySelectorAll('.adm-tab').forEach(function(t){t.classList.remove('on')});
+  btn.classList.add('on');
+  document.querySelectorAll('.adm-pg').forEach(function(p){p.classList.remove('on')});
+  $('ap-'+id).classList.add('on');
+  if(id==='pending')renderAdminPending();
+  if(id==='members')renderAdminMembersAll();
+  if(id==='devices')renderAdminDevices();
+  if(id==='jobs')renderAdminJobs();
+  if(id==='postjob')renderAdminPostJob();
+}
+window.adTab=adTab;
+
+// ── Admin Devices Tab ──
+function renderAdminDevices(){
+  var el=$('adm-devices-list');el.innerHTML='';
+  var list=usersArr().filter(function(u){return u.status==='approved'&&u.lastDevice}).sort(function(a,b){
+    return new Date(b.lastLogin||0)-new Date(a.lastLogin||0);
+  });
+  if(!list.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">📱</div><div>Koi device data nahi</div></div>';
+    return;
+  }
+  list.forEach(function(u){
+    var dev=u.lastDevice||{};
+    var icon=dev.device==='Mobile'?'📱':dev.device==='Tablet'?'📲':'💻';
+    var ini=(u.name||'?').split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase();
+    var ago='';
+    if(u.lastLogin){
+      var diffH=Math.floor((Date.now()-new Date(u.lastLogin))/3600000);
+      ago=diffH<1?'Active now':diffH<24?diffH+'h ago':Math.floor(diffH/24)+'d ago';
+    }
+    var isOnline=u.lastLogin&&(Date.now()-new Date(u.lastLogin))<600000; // 10 min
+    var c=document.createElement('div');c.className='p-card';c.style.marginBottom='8px';
+    c.innerHTML=
+      '<div style="display:flex;gap:12px;align-items:flex-start">'+
+        '<div class="av" style="width:44px;height:44px;font-size:15px;flex-shrink:0;position:relative">'+
+          (u.photo?'<img src="'+u.photo+'" style="width:44px;height:44px;object-fit:cover">':ini)+
+          (isOnline?'<div style="position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:var(--green);border:2px solid var(--card)"></div>':'')+
+        '</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:14px;font-weight:700">'+esc(u.name||'—')+
+            (isOnline?' <span style="font-size:10px;color:var(--green);font-weight:700">● Online</span>':'')+
+          '</div>'+
+          '<div style="font-size:12px;color:var(--text2)">'+esc(u.designation||'—')+' · '+esc(u.company||'—')+'</div>'+
+          // Device info card
+          '<div style="margin-top:6px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 10px">'+
+            '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'+
+              '<span style="font-size:16px">'+icon+'</span>'+
+              '<span style="font-size:13px;font-weight:700;color:var(--text)">'+esc(dev.browser||'Unknown')+' · '+esc(dev.os||'Unknown')+'</span>'+
+            '</div>'+
+            (dev.model?'<div style="font-size:11px;color:#70B5F9;font-weight:600">📋 Model: '+esc(dev.model)+'</div>':'')+
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px">🖥️ Screen: '+esc(dev.screen||'—')+'</div>'+
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px">🕐 Last seen: '+ago+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<button class="btn revoke-dev-btn" style="padding:6px 12px;font-size:11px;background:rgba(249,115,22,.15);color:#F97316;border:1.5px solid rgba(249,115,22,.3);flex-shrink:0;border-radius:12px" data-uid="'+esc(u.id||u.phone)+'" data-name="'+esc(u.name||'')+'">🔒 Revoke</button>'+
+      '</div>';
+    el.appendChild(c);
+  });
+  el.querySelectorAll('.revoke-dev-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){revokeUser(this.dataset.uid,this.dataset.name)});
+  });
+}
+
+function renderAdminPending(){
+  var el=$('ap-pending');el.innerHTML='';
+  var list=usersArr().filter(function(u){return u.status==='pending'});
+  $('pnd-cnt').innerHTML=list.length?'<span class="badge-count">'+list.length+'</span>':'';
+  if(!list.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">✅</div><div style="font-size:15px;font-weight:700">Koi pending request nahi</div></div>';
+    return;
+  }
+  // FIX: Use event delegation instead of inline onclick with user data
+  list.forEach(function(u){
+    var c=document.createElement('div');c.className='p-card';
+    var ini=(u.name||'?').split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase();
+    var isReverify=u.source==='re_verification';
+    var dev=u.lastDevice||{};
+    var devStr='';
+    if(dev.browser||dev.os){
+      var icon=dev.device==='Mobile'?'📱':dev.device==='Tablet'?'📲':'💻';
+      devStr='<div style="font-size:10px;color:var(--muted);margin-top:3px">'+icon+' '+esc(dev.browser||'')+' · '+esc(dev.os||'')+(dev.model?' · '+esc(dev.model):'')+' · '+esc(dev.screen||'')+'</div>';
+    }
+    c.innerHTML=
+      '<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px">'+
+        '<div class="av" style="width:52px;height:52px;font-size:17px;flex-shrink:0">'+
+          (u.photo?'<img src="'+u.photo+'" style="width:52px;height:52px;object-fit:cover">':ini)+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:16px;font-weight:800">'+esc(u.name||'—')+
+            (isReverify?' <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:rgba(249,115,22,.15);color:#F97316;font-weight:700">🔒 Re-Verify</span>':'')+
+          '</div>'+
+          '<div style="font-size:13px;color:var(--primary)">'+fmtPhone(u.phone||'')+'</div>'+
+          '<div style="font-size:12px;color:var(--text2);margin-top:2px">'+esc(u.designation||'—')+' · '+esc(u.department||'—')+'</div>'+
+          '<div style="font-size:12px;color:var(--muted)">'+esc(u.company||'—')+'</div>'+
+          (u.experience?'<div style="font-size:11px;color:var(--green);margin-top:2px">🏆 '+esc(u.experience)+'</div>':'')+
+          devStr+
+        '</div></div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<button class="btn btn-green adm-act" data-uid="'+esc(u.id)+'" data-status="approved" data-phone="'+esc(u.phone)+'" data-name="'+esc(u.name)+'">✅ Approve</button>'+
+        '<button class="btn btn-red adm-act" data-uid="'+esc(u.id)+'" data-status="rejected" data-phone="'+esc(u.phone)+'" data-name="'+esc(u.name)+'">❌ Reject</button>'+
+        '<button class="btn btn-wa adm-wa" data-phone="'+esc(u.phone)+'">💬 WA</button></div>';
+    el.appendChild(c);
+  });
+  el.querySelectorAll('.adm-act').forEach(function(btn){
+    btn.addEventListener('click',function(){adminAction(this.dataset.uid,this.dataset.status,this.dataset.phone,this.dataset.name)});
+  });
+  el.querySelectorAll('.adm-wa').forEach(function(btn){
+    btn.addEventListener('click',function(){window.open('https://wa.me/91'+this.dataset.phone,'_blank')});
+  });
+}
+
+async function adminAction(uid,status,phone,name){
+  if(!window.FB_READY){toast('Firebase nahi connected','err');return}
+  try{
+    await window.FB.update('users/'+uid,{status:status});
+    var waMsg=status==='approved'
+      ?'🎉 *FPJob — Aap Approve Ho Gaye!*\n\nNameste '+name+',\n\nFPJob network mein aapko approve kar diya gaya hai!\n\n📱 Login karein:\nhttps://fpjob.vkstech.com\n\n*Flexible Packaging Industry Network 🏭*'
+      :'❌ *FPJob — Request Reject*\n\nNameste '+name+',\n\nAbhi approve nahi ho saka. Query ke liye reply karein.\n\nhttps://fpjob.vkstech.com';
+    window.open('https://wa.me/91'+phone+'?text='+encodeURIComponent(waMsg),'_blank');
+    await window.FB.push('notifications',{
+      type:status,userPhone:phone,userName:name,
+      message:status==='approved'?'✅ Aapki request approve ho gayi! Welcome to FPJob.':'❌ Aapki request reject hui.',
+      status:'unread',createdAt:new Date().toISOString()
+    });
+    toast(name+' — '+status+' ✅');
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+// FIX: renderAdminMembersAll now renders into #adm-mem-list, not #ap-members
+function renderAdminMembersAll(){
+  var el=$('adm-mem-list');el.innerHTML='';
+  var allUsers=usersArr().sort(function(a,b){
+    var order={approved:0,pending:1,pre_registered:2,rejected:3};
+    return (order[a.status]||9)-(order[b.status]||9);
+  });
+  var q=(($('adm-mem-search')||{}).value||'').toLowerCase();
+  if(q)allUsers=allUsers.filter(function(u){return (u.name||'').toLowerCase().includes(q)||(u.phone||'').includes(q)||(u.company||'').toLowerCase().includes(q)});
+  var catF=(($('adm-cat-filter')||{}).value||'all');
+  if(catF!=='all')allUsers=allUsers.filter(function(u){return u.category===catF||u.status===catF});
+  if(!allUsers.length){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">Koi user nahi</div>';return}
+
+  var counts={approved:0,pending:0,pre_registered:0,rejected:0,revoked:0};
+  usersArr().forEach(function(u){if(counts[u.status]!==undefined)counts[u.status]++});
+  el.insertAdjacentHTML('beforeend',
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+
+      '<div style="padding:8px 14px;border-radius:20px;background:var(--green-dim);color:var(--green);font-size:12px;font-weight:700">✅ Approved: '+counts.approved+'</div>'+
+      '<div style="padding:8px 14px;border-radius:20px;background:rgba(245,158,11,.1);color:var(--gold);font-size:12px;font-weight:700">⏳ Pending: '+counts.pending+'</div>'+
+      (counts.revoked?'<div style="padding:8px 14px;border-radius:20px;background:rgba(249,115,22,.1);color:#F97316;font-size:12px;font-weight:700">🔒 Revoked: '+counts.revoked+'</div>':'')+
+      '<div id="pre-reg-toggle" style="padding:8px 14px;border-radius:20px;background:rgba(10,102,194,.1);color:var(--primary);font-size:12px;font-weight:700;cursor:pointer">📋 Pre-reg: '+counts.pre_registered+' (click to show)</div></div>');
+
+  $('pre-reg-toggle').addEventListener('click',function(){_showPreReg=!_showPreReg;renderAdminMembersAll()});
+
+  if(!window._showPreReg)allUsers=allUsers.filter(function(u){return u.status!=='pre_registered'});
+
+  allUsers.forEach(function(u){
+    var c=document.createElement('div');c.className='p-card';c.style.marginBottom='8px';
+    var ini=(u.name||'?').split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase();
+    var statusColor=u.status==='approved'?'var(--green)':u.status==='pending'?'var(--gold)':u.status==='pre_registered'?'var(--primary)':u.status==='revoked'?'#F97316':'var(--red)';
+    var statusLabel=u.status==='approved'?'✅':u.status==='pending'?'⏳':u.status==='pre_registered'?'📋':u.status==='revoked'?'🔒':'❌';
+    // Device info
+    var dev=u.lastDevice||{};
+    var devStr='';
+    if(dev.browser||dev.os){
+      var icon=dev.device==='Mobile'?'📱':dev.device==='Tablet'?'📲':'💻';
+      devStr='<div style="font-size:10px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">'+
+        '<span>'+icon+'</span>'+
+        '<span style="color:var(--text2)">'+esc(dev.browser||'')+' · '+esc(dev.os||'')+'</span>'+
+        (dev.model?'<span style="color:#70B5F9">'+esc(dev.model)+'</span>':'')+
+        '<span style="color:var(--muted)">'+esc(dev.screen||'')+'</span>'+
+      '</div>';
+    }
+    var lastLoginStr='';
+    if(u.lastLogin){
+      var loginDate=new Date(u.lastLogin);
+      var now=new Date();
+      var diffH=Math.floor((now-loginDate)/3600000);
+      var ago=diffH<1?'abhi':diffH<24?diffH+'h ago':Math.floor(diffH/24)+'d ago';
+      lastLoginStr='<div style="font-size:10px;color:var(--muted);margin-top:2px">🕐 Last login: '+ago+' ('+loginDate.toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+')</div>';
+    }
+    c.innerHTML=
+      '<div style="display:flex;gap:10px;align-items:flex-start">'+
+        '<div class="av" style="width:44px;height:44px;font-size:15px;flex-shrink:0">'+
+          (u.photo?'<img src="'+u.photo+'" style="width:44px;height:44px;object-fit:cover">':ini)+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:14px;font-weight:700">'+esc(u.name||'—')+
+            ' <span style="font-size:11px;color:'+statusColor+'">'+statusLabel+' '+u.status+'</span></div>'+
+          '<div style="font-size:12px;color:var(--text2)">'+fmtPhone(u.phone||'')+'</div>'+
+          '<div style="font-size:11px;color:var(--muted)">'+esc(u.designation||u.category||'—')+' · '+esc(u.company||'—')+'</div>'+
+          devStr+lastLoginStr+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+
+        '<button class="btn btn-outline edit-user-btn" style="padding:6px 12px;font-size:11px" data-uid="'+esc(u.id||u.phone)+'">✏️ Edit</button>'+
+        (u.status==='approved'?'<button class="btn revoke-btn" style="padding:6px 12px;font-size:11px;background:rgba(249,115,22,.15);color:#F97316;border:1.5px solid rgba(249,115,22,.3)" data-uid="'+esc(u.id||u.phone)+'" data-name="'+esc(u.name||'')+'">🔒 Revoke</button>':'')+
+        (u.status==='revoked'?'<button class="btn btn-green reapprove-btn" style="padding:6px 12px;font-size:11px" data-uid="'+esc(u.id||u.phone)+'" data-name="'+esc(u.name||'')+'" data-phone="'+esc(u.phone||'')+'">✅ Re-Approve</button>':'')+
+        '<button class="btn btn-red del-user-btn" style="padding:6px 12px;font-size:11px" data-uid="'+esc(u.id||u.phone)+'" data-name="'+esc(u.name||'')+'">🗑️</button>'+
+        '<button class="btn btn-wa wa-user-btn" style="padding:6px 12px;font-size:11px" data-phone="'+esc(u.phone||'')+'">💬 WA</button>'+
+      '</div>';
+    el.appendChild(c);
+  });
+  // Event listeners
+  el.querySelectorAll('.edit-user-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var uid=this.dataset.uid;
+      var u=usersArr().find(function(x){return (x.id||x.phone)===uid});
+      if(u)openEditUser(u);
+    });
+  });
+  el.querySelectorAll('.del-user-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      removeUser(this.dataset.uid,this.dataset.name);
+    });
+  });
+  el.querySelectorAll('.wa-user-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      if(this.dataset.phone)window.open('https://wa.me/91'+this.dataset.phone,'_blank');
+    });
+  });
+  el.querySelectorAll('.revoke-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      revokeUser(this.dataset.uid,this.dataset.name);
+    });
+  });
+  el.querySelectorAll('.reapprove-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      reapproveUser(this.dataset.uid,this.dataset.name,this.dataset.phone);
+    });
+  });
+}
+window.renderAdminMembersAll=renderAdminMembersAll;
+
+var _showPreReg=false;
+
+// ── Edit User (Admin) ──
+// FIX: Now saves experience field
+function openEditUser(u){
+  var el=$('edit-form');
+  el.innerHTML=
+    '<input type="hidden" id="edit-uid" value="'+esc(u.id)+'">'+
+    fld('edit-name','text','Naam','',[],u.name||'')+
+    fld('edit-desig','select','Designation','',
+      ['','Trainee / GET','Operator','Sr. Operator','Shift Incharge','ITI Technician',
+       'Maintenance Fitter','Maintenance Electrician','Instrument Technician',
+       'Jr. Officer','Officer','Sr. Officer','Engineer / Executive','Shift Engineer',
+       'Sr. Engineer','Asst. Manager','Manager','Sr. Manager','AGM / DGM','GM / VP',
+       'Plant Head','HR / Admin','QC / QA','R&D','Sales / Marketing','Supplier / Vendor','Consultant'])+
+    fld('edit-dept','select','Department','',
+      ['','Metallizer / DMAT','BOPP Production','BOPET Production','CPP Production',
+       'Slitter / Rewinder','Lamination','Coating / Extrusion Coating','Printing / Flexo',
+       'Extrusion','Mechanical Maintenance','Electrical / E&I','Instrumentation',
+       'Quality / QC','R&D / Lab','Projects','Stores / Purchase','HR / Admin',
+       'Sales / Marketing','Dispatch / Logistics','IT'])+
+    fld('edit-co','text','Company','',[],u.company||'')+
+    fld('edit-exp','select','Experience','',
+      ['','Fresher (0 Years)','Less than 1 Year','1 Year','2 Years','3 Years','4 Years','5 Years',
+       '6 Years','7 Years','8 Years','9 Years','10 Years','11–12 Years','13–15 Years','16–20 Years','20+ Years'])+
+    fld('edit-cat','select','Category','',['Operator','Engineer','Manager','Head','Supplier'])+
+    fld('edit-status','select','Status','',['pre_registered','pending','approved','revoked','rejected'])+
+    '<button id="edit-save-btn" class="btn btn-blue btn-w100">💾 Save Changes</button>'+
+    '<button id="edit-remove-btn" class="btn btn-red btn-w100" style="margin-top:8px">🗑️ Remove User</button>';
+
+  setTimeout(function(){
+    if(u.designation)$('edit-desig').value=u.designation;
+    if(u.department)$('edit-dept').value=u.department;
+    if(u.experience)$('edit-exp').value=u.experience;
+    if(u.category)$('edit-cat').value=u.category;
+    if(u.status)$('edit-status').value=u.status;
+    $('edit-save-btn').addEventListener('click',saveEditUser);
+    $('edit-remove-btn').addEventListener('click',function(){confirmRemoveEdit()});
+  },0);
+  openOv('edit-modal');
+}
+
+async function saveEditUser(){
+  var uid=$('edit-uid').value;
+  var name=san($('edit-name').value);
+  if(!name){toast('Naam daalo','err');return}
+  try{
+    if(window.FB_READY)await window.FB.update('users/'+uid,{
+      name:name,designation:$('edit-desig').value,department:$('edit-dept').value,
+      company:san($('edit-co').value),experience:$('edit-exp').value, // FIX: Now saves experience
+      category:$('edit-cat').value,status:$('edit-status').value,
+      updatedAt:new Date().toISOString()
+    });
+    toast('✅ Saved!');closeOv('edit-modal');
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+function confirmRemoveEdit(){
+  var uid=$('edit-uid').value;var name=$('edit-name').value;
+  if(!uid)return;
+  removeUser(uid,name).then(function(){closeOv('edit-modal')}).catch(function(){});
+}
+
+async function removeUser(uid,name){
+  if(!confirm('Remove '+name+'? Yeh action undo nahi hoga!'))return;
+  try{
+    if(window.FB_READY)await window.FB.remove('users/'+uid);
+    toast(name+' removed ✅');
+    renderAdminMembersAll();
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+window.removeUser=removeUser;
+
+// ── Revoke Authorization ──
+async function revokeUser(uid,name){
+  if(!confirm('🔒 Revoke '+name+'?\n\nUser ko dubara photo le kar verify karna hoga.'))return;
+  try{
+    if(window.FB_READY){
+      await window.FB.update('users/'+uid,{
+        status:'revoked',
+        revokedAt:new Date().toISOString(),
+        photo:'' // Clear photo so they must take new one
+      });
+      await window.FB.push('notifications',{
+        type:'revoked',
+        userPhone:usersArr().find(function(u){return (u.id||u.phone)===uid})?
+          usersArr().find(function(u){return (u.id||u.phone)===uid}).phone:'',
+        userName:name,
+        message:'🔒 '+name+' ka access revoke kiya gaya. Dubara verify karna hoga.',
+        status:'unread',
+        createdAt:new Date().toISOString()
+      });
+    }
+    toast('🔒 '+name+' revoked — Re-login pe photo lena hoga');
+    renderAdminMembersAll();
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+window.revokeUser=revokeUser;
+
+async function reapproveUser(uid,name,phone){
+  if(!confirm('✅ Re-approve '+name+'?'))return;
+  try{
+    if(window.FB_READY){
+      await window.FB.update('users/'+uid,{status:'approved',reapprovedAt:new Date().toISOString()});
+      // Notify user
+      var waMsg='🎉 *FPJob — Access Restored!*\n\nNameste '+name+',\n\nAapka access dubara approve ho gaya hai!\n\n📱 Login karein: https://fpjob.vkstech.com';
+      window.open('https://wa.me/91'+phone+'?text='+encodeURIComponent(waMsg),'_blank');
+      await window.FB.push('notifications',{
+        type:'approved',userPhone:phone,userName:name,
+        message:'✅ '+name+' ka access restore ho gaya!',
+        status:'unread',createdAt:new Date().toISOString()
+      });
+    }
+    toast('✅ '+name+' re-approved!');
+    renderAdminMembersAll();
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+window.reapproveUser=reapproveUser;
+
+function renderAdminJobs(){
+  var el=$('ap-jobs');el.innerHTML='';
+  var list=jobsArr().sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt)});
+  if(!list.length){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">Koi job nahi</div>';return}
+  list.forEach(function(j){
+    var key=Object.keys(DB.jobs)[Object.values(DB.jobs).indexOf(j)];
+    var c=document.createElement('div');c.className='p-card';
+    c.innerHTML=
+      '<div style="margin-bottom:8px">'+
+        '<div style="font-size:15px;font-weight:700">'+esc(j.title||j.designation||'—')+'</div>'+
+        '<div style="font-size:12px;color:var(--text2)">'+esc(j.company||'—')+' · '+esc(j.department||'—')+' · '+esc(j.location||'—')+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:3px">'+esc(j.postedBy||'—')+' · '+timeAgo(j.createdAt)+'</div>'+
+      '</div>'+
+      '<button class="btn btn-red del-job-btn" data-key="'+esc(key)+'" data-title="'+esc(j.title||j.designation||'')+'">🗑️ Delete</button>';
+    el.appendChild(c);
+  });
+  el.querySelectorAll('.del-job-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){deleteJob(this.dataset.key,this.dataset.title)});
+  });
+}
+
+async function deleteJob(key,title){
+  if(!confirm('Delete "'+title+'"?'))return;
+  try{await window.FB.remove('jobs/'+key);toast('Job deleted ✅')}
+  catch(e){toast('Error','err')}
+}
+
+// FIX: Admin post job uses its own form container instead of cloning
+function renderAdminPostJob(){
+  var el=$('ap-postjob');
+  el.innerHTML='<div style="font-size:16px;font-weight:800;margin-bottom:14px">Admin se Job Post Karo</div><div id="admin-pj-form"></div>';
+  buildPJForm('admin-pj-form');
+}
+
+// ── INIT ──
+var _appStarted=false;var _fbReady=false;
+
+function tryStart(){
+  if(_appStarted)return;_appStarted=true;
+  // Apply saved language
+  var savedLang=localStorage.getItem('fpjob_lang')||'en';
+  LANG=savedLang;
+  applyTranslations();
+  // Sync language buttons
+  document.querySelectorAll('.lang-btn').forEach(function(b){
+    var isOn=false;
+    if(b.textContent.includes('English')&&savedLang==='en')isOn=true;
+    if(b.textContent.includes('हिन्दी')&&savedLang==='hi')isOn=true;
+    if(b.textContent.includes('ଓଡ଼ିଆ')&&savedLang==='od')isOn=true;
+    if(b.textContent.includes('বাংলা')&&savedLang==='bn')isOn=true;
+    b.classList.toggle('on',isOn);
+    if(b.closest('.l-wrap')){
+      b.style.background=isOn?'rgba(10,102,194,.1)':'transparent';
+      b.style.color=isOn?'var(--primary)':'var(--muted)';
+    }
+  });
+  setTimeout(function(){
+    var splash=$('splash');if(splash)splash.classList.remove('show');
+    if(_fbReady)startListeners();
+    if(loadSession()){
+      if(isBiometricAvailable()&&isFingerprintEnrolled(ME.phone)){
+        showFingerprintScreen(ME,function(){enterApp()});
+      }else{enterApp()}
+      return;
+    }
+    var pp=localStorage.getItem(PEND_KEY);
+    if(pp){
+      curPhone=pp;
+      var u=usersArr().find(function(u){return u.phone===pp});
+      $('w-name').textContent=u?u.name:pp;$('w-info').textContent=fmtPhone(pp);
+      showScr('login');goStep(3);startPoll(pp);return;
+    }
+    showScr('login');goStep(1);
+  },1200);
+}
+
+function onFbReady(){
+  if(_fbReady)return;_fbReady=true;
+  window.FB.listen('users',function(data){
+    DB.users=data||{};
+    if(!_appStarted)tryStart();
+    else{
+      // Auto-kick if current user was revoked
+      if(ME&&ME.phone){
+        var freshMe=usersArr().find(function(u){return u.phone===ME.phone});
+        if(freshMe&&freshMe.status==='revoked'){
+          ME=null;localStorage.removeItem(SESS_KEY);
+          toast('🔒 Access revoked by admin — Re-verify karo','err');
+          showScr('login');goStep(1);
+          $('ph-inp').value='';photoB64='';curPhone='';
+          return;
+        }
+      }
+      updateStats();
+      var ap=document.querySelector('.page.on');
+      if(ap){
+        if(ap.id==='pg-members')renderMembers();
+        if(ap.id==='pg-home')renderHome();
+      }
+      if(_poll){var ph=localStorage.getItem(PEND_KEY)||curPhone;if(ph)checkStatus(ph)}
+    }
+  });
+  window.FB.listen('jobs',function(data){
+    DB.jobs=data||{};
+    var ap=document.querySelector('.page.on');
+    if(ap&&ap.id==='pg-jobs')renderJobs();
+    if(ap&&ap.id==='pg-home')renderHome();
+  });
+  window.FB.listen('notifications',function(data){
+    DB.notifs=data||{};
+    if(ME){
+      // FIX: Check for granted contact requests and persist them
+      notifsArr().filter(function(n){return n.type==='contact_granted'&&n.userId===ME.phone})
+        .forEach(function(n){
+          if(n.toPhone){
+            var sr=JSON.parse(localStorage.getItem(CREQ_KEY)||'{}');
+            if(!sr[n.toPhone+'_granted']){
+              sr[n.toPhone+'_granted']=true;
+              localStorage.setItem(CREQ_KEY,JSON.stringify(sr));
+            }
+          }
+        });
+      var unread=notifsArr().filter(function(n){
+        return n.status==='unread'&&(n.userId===ME.phone||n.userPhone===ME.phone);
+      });
+      if(unread.length)$('notif-dot').style.display='block';
+    }
+    renderNotifs();
+  });
+}
+
+document.addEventListener('fb-ready',function(){
+  if(window.FB_READY)onFbReady();
+  if(!_appStarted)tryStart();
+});
+
+document.addEventListener('DOMContentLoaded',function(){
+  setTimeout(function(){if(!_appStarted)tryStart()},6000);
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(function(){});
+  setTimeout(function(){
+    if(!_fbReady){console.warn('Firebase timeout — offline mode');window.FB_READY=false}
+    if(!_appStarted)tryStart();
+  },3500);
+  if(window.FB_READY&&!_appStarted){onFbReady();tryStart()}
+});
+
+if(document.readyState!=='loading'&&!_appStarted){
+  setTimeout(function(){if(!_appStarted)tryStart()},100);
+}
+</script>
+</body>
+</html>
