@@ -1,51 +1,93 @@
-// FPJob Service Worker v5 — Force fresh
-const CACHE = 'fpjob-v5';
-const ASSETS = [
+// FPJob Service Worker v39
+// Network-first strategy with offline fallback
+var CACHE_NAME = 'fpjob-v39';
+var ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/icon-72.png',
+  '/icon-96.png',
+  '/icon-128.png',
+  '/icon-144.png',
+  '/icon-152.png',
   '/icon-192.png',
+  '/icon-384.png',
   '/icon-512.png'
 ];
 
-self.addEventListener('install', e => {
-  self.skipWaiting(); // Force activate immediately
+// Install: cache core assets
+self.addEventListener('install', function(e) {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS).catch(()=>{}))
+    caches.open(CACHE_NAME).then(function(cache) {
+      return cache.addAll(ASSETS).catch(function(err){
+        console.warn('SW: Some assets failed to cache:', err);
+      });
+    })
+  );
+  self.skipWaiting();
+});
+
+// Activate: clean old caches
+self.addEventListener('activate', function(e) {
+  e.waitUntil(
+    caches.keys().then(function(names) {
+      return Promise.all(
+        names.filter(function(n) { return n !== CACHE_NAME; })
+             .map(function(n) {
+               console.log('SW: Removing old cache:', n);
+               return caches.delete(n);
+             })
+      );
+    }).then(function(){ return self.clients.claim(); })
   );
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    // Delete ALL old caches
-    caches.keys().then(keys =>
-      Promise.all(keys.map(k => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-  // Tell all open pages to reload
-  self.clients.matchAll({type:'window'}).then(clients =>
-    clients.forEach(c => c.navigate(c.url))
-  );
-});
-
-self.addEventListener('fetch', e => {
-  const url = e.request.url;
-  // Always fetch fresh from network — never serve stale
-  if (
-    url.includes('firestore.googleapis.com') ||
-    url.includes('firebase') ||
-    url.includes('googleapis.com') ||
-    e.request.method !== 'GET'
-  ) return;
-
-  // Network first — ALWAYS get latest version
-  e.respondWith(
-    fetch(e.request)
-      .then(r => {
-        if(r.ok) caches.open(CACHE).then(c => c.put(e.request, r.clone()));
-        return r;
+// Fetch: network-first for HTML, cache-first for static assets
+self.addEventListener('fetch', function(e) {
+  // Don't cache API calls or external resources
+  var url = new URL(e.request.url);
+  if (url.hostname !== self.location.hostname) return;
+  if (url.pathname.indexOf('/api/') === 0) return;
+  if (url.pathname.indexOf('firebaseio.com') !== -1) return;
+  if (url.pathname.indexOf('firebasedatabase.app') !== -1) return;
+  if (url.pathname.indexOf('firebasestorage') !== -1) return;
+  
+  // HTML: network-first (always get fresh)
+  if (e.request.mode === 'navigate' || (e.request.headers.get('accept') || '').indexOf('text/html') !== -1) {
+    e.respondWith(
+      fetch(e.request).then(function(res) {
+        // Update cache with fresh copy
+        var copy = res.clone();
+        caches.open(CACHE_NAME).then(function(cache) { cache.put(e.request, copy); });
+        return res;
+      }).catch(function() {
+        // Offline: serve cached version
+        return caches.match(e.request).then(function(cached) {
+          return cached || caches.match('/');
+        });
       })
-      .catch(() => caches.match(e.request).then(c => c || caches.match('/index.html')))
+    );
+    return;
+  }
+  
+  // Static assets: cache-first
+  e.respondWith(
+    caches.match(e.request).then(function(cached) {
+      if (cached) return cached;
+      return fetch(e.request).then(function(res) {
+        if (res && res.status === 200 && res.type === 'basic') {
+          var copy = res.clone();
+          caches.open(CACHE_NAME).then(function(cache) { cache.put(e.request, copy); });
+        }
+        return res;
+      });
+    })
   );
+});
+
+// Listen for skip-waiting message
+self.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

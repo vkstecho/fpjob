@@ -1,27 +1,48 @@
 {
-  "name": "FPJob – Packaging Industry Network",
+  "name": "FPJob - Flexible Packaging Industry Network",
   "short_name": "FPJob",
-  "description": "Flexible Packaging Industry Jobs & Professional Network",
+  "description": "India's #1 Job Portal for Flexible Packaging Industry - Find Jobs, Post Vacancies, Connect with Professionals",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
-  "background_color": "#0A0A12",
-  "theme_color": "#FF6B35",
-  "orientation": "portrait-primary",
-  "lang": "hi",
-  "categories": ["business", "productivity"],
+  "orientation": "portrait",
+  "background_color": "#FAFAF7",
+  "theme_color": "#0A0E1A",
+  "categories": ["business", "social", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "id": "com.vkstech.fpjob",
   "icons": [
-    { "src": "/icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any" },
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {"src": "icon-72.png", "sizes": "72x72", "type": "image/png", "purpose": "any"},
+    {"src": "icon-96.png", "sizes": "96x96", "type": "image/png", "purpose": "any"},
+    {"src": "icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any"},
+    {"src": "icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any"},
+    {"src": "icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any"},
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
   ],
   "screenshots": [
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow" }
+    {"src": "screenshot-1.png", "sizes": "1080x1920", "type": "image/png", "label": "Jobs Board with live openings"},
+    {"src": "screenshot-2.png", "sizes": "1080x1920", "type": "image/png", "label": "Industry Network - 2500+ members"},
+    {"src": "screenshot-3.png", "sizes": "1080x1920", "type": "image/png", "label": "Banner Studio for job posts"},
+    {"src": "screenshot-4.png", "sizes": "1080x1920", "type": "image/png", "label": "Built-in Resume Builder"}
   ],
   "shortcuts": [
-    { "name": "Jobs Dekho", "url": "/", "icons": [{"src": "/icon-96.png", "sizes": "96x96"}] }
-  ]
+    {
+      "name": "View Jobs",
+      "short_name": "Jobs",
+      "description": "Browse latest job openings",
+      "url": "/?page=jobs",
+      "icons": [{"src": "icon-192.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "View Members",
+      "short_name": "Members",
+      "description": "Browse industry network",
+      "url": "/?page=members",
+      "icons": [{"src": "icon-192.png", "sizes": "192x192"}]
+    }
+  ],
+  "prefer_related_applications": false
 }
