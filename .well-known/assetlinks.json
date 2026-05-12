@@ -3,6 +3,9 @@
       "target": {
         "namespace": "android_app",
         "package_name": "com.vkstech.fpjob",
-        "sha256_cert_fingerprints": ["57:61:0A:34:47:B0:DE:D6:60:C4:44:A9:49:F8:5D:AB:12:61:12:94:14:39:D9:CF:C9:DE:B3:DA:E6:0F:2D:E4"]
+        "sha256_cert_fingerprints": [
+          "57:61:0A:34:47:B0:DE:D6:60:C4:44:A9:49:F8:5D:AB:12:61:12:94:14:39:D9:CF:C9:DE:B3:DA:E6:0F:2D:E4",
+          "8F:6D:BE:DE:24:47:02:F9:55:53:BF:A2:BB:8D:CE:1A:2E:9E:D2:F8:C6:6D:39:BD:2D:2F:FC:5E:FA:D6:E3:79"
+        ]
       }
     }]
