@@ -49,7 +49,7 @@ if('serviceWorker' in navigator){
   --shadow-md:0 4px 12px rgba(15,23,42,.06),0 2px 4px rgba(15,23,42,.04);
   --shadow-lg:0 20px 40px rgba(15,23,42,.10),0 4px 8px rgba(15,23,42,.05);
 }
-html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);overflow:hidden;font-size:16px}
+html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);overflow:hidden;font-size:17px}
 /* ── Screens ── */
 .screen{display:none!important;position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;flex-direction:column}
 .screen.show{display:flex!important}
@@ -65,33 +65,33 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 .fadeUp{animation:fadeUp .25s ease forwards}
 /* ── Buttons ── */
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;
-  font-family:var(--font);font-weight:700;border-radius:8px;transition:all .15s;outline:none;
-  -webkit-appearance:none;letter-spacing:.2px}
-.btn-blue{background:var(--ink);color:#fff;padding:14px 28px;font-size:14px;
-  box-shadow:var(--shadow-md);letter-spacing:.3px}
+  font-family:var(--font);font-weight:700;border-radius:10px;transition:all .15s;outline:none;
+  -webkit-appearance:none;min-height:52px}
+.btn-blue{background:var(--ink);color:#fff;padding:14px 28px;font-size:16px;
+  box-shadow:var(--shadow-md)}
 .btn-blue:active{opacity:.9;transform:translateY(1px)}
 .btn-blue:hover{background:var(--primary)}
-.btn-green{background:var(--green);color:#fff;padding:12px 20px;font-size:14px}
-.btn-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(185,28,28,.2);padding:10px 18px;font-size:13px}
-.btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--ink);padding:12px 24px;font-size:14px;font-weight:700}
+.btn-green{background:var(--green);color:#fff;padding:12px 20px;font-size:16px}
+.btn-red{background:var(--red-dim);color:var(--red);border:1.5px solid rgba(185,28,28,.25);padding:12px 18px;font-size:15px}
+.btn-outline{background:transparent;color:var(--ink);border:2px solid var(--ink);padding:12px 24px;font-size:16px;font-weight:700}
 .btn-outline:hover{background:var(--ink);color:#fff}
-.btn-wa{background:rgba(37,211,102,.12);color:#16833F;border:1px solid rgba(37,211,102,.3);padding:10px 18px;font-size:13px;font-weight:700}
+.btn-wa{background:rgba(37,211,102,.12);color:#16833F;border:1.5px solid rgba(37,211,102,.35);padding:12px 18px;font-size:15px;font-weight:700}
 .btn-w100{width:100%}
-.btn-accent{background:var(--accent);color:#fff;padding:14px 28px;font-size:14px;box-shadow:var(--shadow-md);font-weight:800;letter-spacing:.3px;border-radius:8px}
+.btn-accent{background:var(--accent);color:#fff;padding:14px 28px;font-size:16px;box-shadow:var(--shadow-md);font-weight:800;border-radius:10px}
 .btn-accent:active{opacity:.9;transform:translateY(1px)}
 /* ── Inputs ── */
-.field{margin-bottom:14px}
-.field label{display:block;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--muted);
-  letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.field{margin-bottom:16px}
+.field label{display:block;font-family:var(--font);font-size:14px;font-weight:700;color:var(--text2);
+  margin-bottom:7px}
 .inp-row{display:flex;align-items:center;background:var(--card);
-  border:1.5px solid var(--border);border-radius:8px;padding:0 14px;
-  transition:all .2s;gap:10px}
+  border:2px solid var(--border);border-radius:10px;padding:0 14px;
+  transition:all .2s;gap:10px;min-height:52px}
 .inp-row:focus-within{border-color:var(--ink);box-shadow:0 0 0 3px rgba(10,14,26,.06)}
 .inp-row input,.inp-row select,.inp-row textarea{
-  background:transparent;border:none;outline:none;padding:13px 0;
-  font-size:15px;color:var(--text);font-family:var(--font);flex:1;width:100%;min-width:0}
+  background:transparent;border:none;outline:none;padding:14px 0;
+  font-size:17px;color:var(--text);font-family:var(--font);flex:1;width:100%;min-width:0}
 .inp-row select option{background:#fff;color:var(--text)}
-.inp-ico{font-size:16px;flex-shrink:0;line-height:1;opacity:.7}
+.inp-ico{font-size:18px;flex-shrink:0;line-height:1;opacity:.8}
 /* ── Cards ── */
 .card{background:var(--card);border:1px solid var(--border2);border-radius:10px;box-shadow:var(--shadow-sm)}
 /* ── Bottom Sheet Modal ── */
@@ -109,14 +109,14 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
   backdrop-filter:blur(20px);border-top:1px solid var(--border);
   display:none;z-index:100;padding-bottom:env(safe-area-inset-bottom,0)}
 .nav-items{display:flex;max-width:500px;margin:0 auto}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
-  padding:10px 4px 12px;cursor:pointer;color:var(--muted);font-size:10px;font-weight:700;
-  letter-spacing:.6px;border:none;background:transparent;font-family:var(--font);
-  transition:color .15s;position:relative;text-transform:uppercase}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:11px 4px 12px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:700;
+  border:none;background:transparent;font-family:var(--font);
+  transition:color .15s;position:relative;min-height:56px}
 .nav-btn.on{color:var(--ink)}
 .nav-btn.on::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
-  width:24px;height:3px;background:var(--accent);border-radius:0 0 2px 2px}
-.nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;
+  width:28px;height:3px;background:var(--accent);border-radius:0 0 2px 2px}
+.nav-btn svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round}
 /* ── FAB ── */
 #fab{position:fixed;bottom:72px;right:16px;width:56px;height:56px;border-radius:16px;
@@ -143,20 +143,19 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 /* ── Filter chips ── */
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex-shrink:0;padding:7px 14px;border-radius:6px;font-size:13px;font-weight:700;
-  cursor:pointer;border:1.5px solid var(--border);background:#fff;
-  color:var(--text2);font-family:var(--font);transition:all .15s;white-space:nowrap;
-  letter-spacing:.2px}
+.chip{flex-shrink:0;padding:11px 18px;border-radius:20px;font-size:15px;font-weight:700;
+  cursor:pointer;border:2px solid var(--border);background:#fff;min-height:44px;
+  color:var(--text2);font-family:var(--font);transition:all .15s;white-space:nowrap}
 .chip:hover{border-color:var(--ink)}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 /* ── Section title ── */
-.sec-ttl{font-family:var(--font-head);font-size:24px;font-weight:900;letter-spacing:-.3px;color:var(--ink)}
-.sec-eyebrow{font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--accent);
-  letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.sec-ttl{font-family:var(--font-head);font-size:26px;font-weight:900;letter-spacing:-.3px;color:var(--ink)}
+.sec-eyebrow{font-family:var(--font);font-size:13px;font-weight:700;color:var(--accent);
+  margin-bottom:4px}
 /* ── Member card ── */
-.m-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;
-  padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;
-  margin-bottom:8px;transition:all .15s;box-shadow:var(--shadow-sm)}
+.m-card{background:var(--card);border:1.5px solid var(--border2);border-radius:12px;
+  padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;
+  margin-bottom:10px;transition:all .15s;box-shadow:var(--shadow-sm)}
 .m-card:hover{border-color:var(--ink);transform:translateY(-1px);box-shadow:var(--shadow-md)}
 /* ── Job card ── */
 .j-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;
@@ -218,12 +217,6 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 
 /* ════ SPLASH ════ */
 #splash{background:var(--bg);align-items:center;justify-content:center;min-height:100vh;gap:0;position:relative;overflow:hidden}
-#splash::before{content:'';position:absolute;inset:0;background-image:
-  linear-gradient(to right,rgba(10,14,26,.025) 1px,transparent 1px),
-  linear-gradient(to bottom,rgba(10,14,26,.025) 1px,transparent 1px);
-  background-size:32px 32px;pointer-events:none}
-#splash::after{content:'';position:absolute;top:-120px;right:-120px;width:280px;height:280px;
-  background:radial-gradient(circle,rgba(232,93,4,.08) 0%,transparent 70%);pointer-events:none}
 .s-bracket{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--muted);
   letter-spacing:2px;margin-bottom:20px;position:relative;z-index:1}
 .s-bracket::before{content:'[ ';color:var(--accent)}.s-bracket::after{content:' ]';color:var(--accent)}
@@ -251,10 +244,6 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 /* CRITICAL: Override .screen.show flex display - login uses block flow for proper scroll */
 #login.screen.show{display:block!important;position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 #login{background:var(--bg)}
-#login::before{content:'';position:absolute;top:0;left:0;right:0;height:220px;
-  background-image:linear-gradient(to right,rgba(10,14,26,.025) 1px,transparent 1px),
-    linear-gradient(to bottom,rgba(10,14,26,.025) 1px,transparent 1px);
-  background-size:32px 32px;pointer-events:none;z-index:0}
 .l-wrap{width:100%;max-width:420px;padding:36px 22px 120px;position:relative;z-index:1;margin:0 auto;min-height:100vh}
 .l-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:32px}
 .l-logo{width:46px;height:46px;background:var(--ink);
@@ -278,13 +267,13 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
   border-right:1px solid var(--border);flex-shrink:0;background:var(--card2)}
 #ph-inp{flex:1;background:transparent;border:none;outline:none;padding:14px 14px;
   font-size:20px;font-weight:700;color:var(--text);letter-spacing:1.5px;font-family:var(--font-mono)}
-.otp-box{width:48px;height:58px;border:1.5px solid var(--border);border-radius:8px;background:#fff;
-  color:var(--ink);font-family:var(--font-mono);font-size:24px;font-weight:800;text-align:center;outline:none;
+.otp-box{width:50px;height:62px;border:2px solid var(--border);border-radius:10px;background:#fff;
+  color:var(--ink);font-family:var(--font-mono);font-size:26px;font-weight:800;text-align:center;outline:none;
   transition:all .2s}
 .otp-box:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(10,14,26,.08)}
 .otp-box.filled{border-color:var(--green);background:var(--green-dim)}
-.known-badge{padding:12px 14px;border-radius:8px;font-size:13px;font-weight:600;
-  margin-bottom:14px;display:none;animation:fadeUp .2s ease;border:1px solid}
+.known-badge{padding:14px 16px;border-radius:10px;font-size:15px;font-weight:600;line-height:1.4;
+  margin-bottom:14px;display:none;animation:fadeUp .2s ease;border:1.5px solid}
 .known-badge.green{background:var(--green-dim);color:var(--green);border-color:rgba(21,128,61,.25)}
 .known-badge.gold{background:var(--accent-dim);color:var(--accent);border-color:rgba(232,93,4,.25)}
 /* Camera */
@@ -688,23 +677,22 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
   <div id="pg-home" class="page on">
     <!-- Hero greeting strip -->
     <div style="padding:20px 16px 16px;position:relative">
-      <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:2px;margin-bottom:6px;text-transform:uppercase">◆ GOOD TO SEE YOU</div>
-      <div id="greeting" style="font-family:var(--font-head);font-size:32px;font-weight:900;margin-bottom:4px;line-height:1.1;color:var(--ink);letter-spacing:-.5px"></div>
+      <div id="greeting" style="font-family:var(--font-head);font-size:34px;font-weight:900;margin-bottom:4px;line-height:1.1;color:var(--ink);letter-spacing:-.5px"></div>
       <div data-i18n="network_tag" style="font-size:13px;color:var(--muted);font-weight:500">Flexible Packaging Industry Network</div>
     </div>
     
     <!-- Stats grid with editorial style -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px 20px">
       <div class="stat">
-        <div data-i18n="stats_members" style="font-family:var(--font-mono);font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1.5px;margin-bottom:6px;text-transform:uppercase">Members</div>
+        <div data-i18n="stats_members" style="font-family:var(--font);font-size:12px;color:var(--text2);font-weight:700;margin-bottom:6px">Members</div>
         <div id="st-mem" style="font-family:var(--font-head);font-size:34px;font-weight:900;color:var(--ink);line-height:1;letter-spacing:-1px">—</div>
       </div>
       <div class="stat">
-        <div data-i18n="stats_jobs" style="font-family:var(--font-mono);font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1.5px;margin-bottom:6px;text-transform:uppercase">Open Jobs</div>
+        <div data-i18n="stats_jobs" style="font-family:var(--font);font-size:12px;color:var(--text2);font-weight:700;margin-bottom:6px">Open Jobs</div>
         <div id="st-jobs" style="font-family:var(--font-head);font-size:34px;font-weight:900;color:var(--ink);line-height:1;letter-spacing:-1px">—</div>
       </div>
       <div class="stat">
-        <div data-i18n="stats_companies" style="font-family:var(--font-mono);font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1.5px;margin-bottom:6px;text-transform:uppercase">Companies</div>
+        <div data-i18n="stats_companies" style="font-family:var(--font);font-size:12px;color:var(--text2);font-weight:700;margin-bottom:6px">Companies</div>
         <div id="st-cos" style="font-family:var(--font-head);font-size:34px;font-weight:900;color:var(--ink);line-height:1;letter-spacing:-1px">—</div>
       </div>
     </div>
@@ -2589,8 +2577,8 @@ function mkJobCard(job,compact){
   el.innerHTML=
     // Top row: badge + time
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
-      '<div style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:'+badgeColor+';letter-spacing:1.5px">◆ '+badgeText+'</div>'+
-      '<div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:.5px">'+ago.toUpperCase()+'</div>'+
+      '<div style="font-family:var(--font);font-size:13px;font-weight:800;color:'+badgeColor+'">'+badgeText+'</div>'+
+      '<div style="font-family:var(--font);font-size:12px;color:var(--muted)">'+ago+'</div>'+
     '</div>'+
     // Main content row
     '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">'+
@@ -2598,8 +2586,8 @@ function mkJobCard(job,compact){
       '<div style="width:44px;height:44px;border-radius:8px;background:'+badgeColor+';color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:900;font-size:15px;flex-shrink:0;letter-spacing:.5px">'+esc(coInitial)+'</div>'+
       // Title + company
       '<div style="flex:1;min-width:0">'+
-        '<div style="font-family:var(--font-head);font-size:19px;font-weight:800;color:var(--ink);letter-spacing:-.2px;line-height:1.2;margin-bottom:3px">'+esc(job.title||job.designation||'—')+'</div>'+
-        '<div style="font-size:13px;color:var(--text2);font-weight:600">'+esc(job.company||'—')+(job.department?' <span style="color:var(--muted)">· '+esc(job.department)+'</span>':'')+'</div>'+
+        '<div style="font-family:var(--font-head);font-size:21px;font-weight:800;color:var(--ink);letter-spacing:-.2px;line-height:1.25;margin-bottom:4px">'+esc(job.title||job.designation||'—')+'</div>'+
+        '<div style="font-size:15px;color:var(--text2);font-weight:600">'+esc(job.company||'—')+(job.department?' <span style="color:var(--muted)">· '+esc(job.department)+'</span>':'')+'</div>'+
       '</div>'+
     '</div>'+
     (compact?'':
@@ -3847,11 +3835,11 @@ function mkMemberCard(m){
     '<div class="av" style="width:52px;height:52px;font-size:16px;border-radius:10px;'+(isV?'background:var(--accent)':'')+'">'+
       (m.photo?'<img src="'+m.photo+'" style="width:52px;height:52px;object-fit:cover" loading="lazy">':ini)+'</div>'+
     '<div style="flex:1;min-width:0">'+
-      '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">'+
-        '<span style="font-size:15px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(m.name||'—')+'</span>'+
-        (isV?'<span style="font-family:var(--font-mono);font-size:9px;padding:2px 7px;border-radius:3px;background:var(--accent);color:#fff;font-weight:700;letter-spacing:.5px">VENDOR</span>':'')+
+      '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">'+
+        '<span style="font-size:17px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(m.name||'—')+'</span>'+
+        (isV?'<span style="font-family:var(--font);font-size:11px;padding:2px 8px;border-radius:5px;background:var(--accent);color:#fff;font-weight:700">Vendor</span>':'')+
       '</div>'+
-      '<div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:3px">'+esc(m.designation||'—')+(m.company?' <span style="color:var(--muted)">· '+esc(m.company)+'</span>':'')+'</div>'+
+      '<div style="font-size:14px;color:var(--text2);font-weight:600;margin-bottom:4px">'+esc(m.designation||'—')+(m.company?' <span style="color:var(--muted)">· '+esc(m.company)+'</span>':'')+'</div>'+
       '<div style="display:flex;gap:5px;flex-wrap:wrap">'+
         (m.experience?'<span style="font-family:var(--font-mono);font-size:9px;padding:2px 6px;border-radius:3px;background:var(--green-dim);color:var(--green);font-weight:700;letter-spacing:.4px">🏆 '+esc(m.experience).toUpperCase()+'</span>':'')+
         (m.department?'<span style="font-family:var(--font-mono);font-size:9px;padding:2px 6px;border-radius:3px;background:var(--card2);color:var(--text2);font-weight:700;letter-spacing:.4px">'+esc(m.department).toUpperCase()+'</span>':'')+
@@ -3886,8 +3874,8 @@ function renderMembers(){
     sumEl.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:var(--ink);border-radius:8px;align-items:center;position:relative;overflow:hidden';
     sumEl.innerHTML=
       '<div style="position:absolute;top:-30px;right:-30px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(232,93,4,.25) 0%,transparent 70%);pointer-events:none"></div>'+
-      '<div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);font-weight:700;width:100%;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px;position:relative;z-index:1">◆ '+total+' APPROVED MEMBERS</div>'+
-      MEM_GROUPS.map(function(g){var cnt=(buckets[g.key]||[]).length;if(!cnt)return '';return '<div style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:#fff;position:relative;z-index:1;letter-spacing:.5px"><span style="color:var(--muted);text-transform:uppercase;font-size:10px">'+g.label.split(' ')[0]+'</span> '+cnt+'</div>'}).join('<span style="color:rgba(255,255,255,.3);position:relative;z-index:1">·</span>');
+      '<div style="font-family:var(--font);font-size:13px;color:var(--accent);font-weight:700;width:100%;margin-bottom:2px;position:relative;z-index:1">'+total+' Approved Members</div>'+
+      MEM_GROUPS.map(function(g){var cnt=(buckets[g.key]||[]).length;if(!cnt)return '';return '<div style="font-family:var(--font);font-size:13px;font-weight:700;color:#fff;position:relative;z-index:1"><span style="color:var(--muted);font-size:12px">'+g.label.split(' ')[0]+'</span> '+cnt+'</div>'}).join('<span style="color:rgba(255,255,255,.3);position:relative;z-index:1">·</span>');
     el.appendChild(sumEl);
 
     MEM_GROUPS.forEach(function(grp){
@@ -3937,7 +3925,7 @@ function mkMiniMem(m){
     '<div class="av" style="width:44px;height:44px;margin:0 auto 8px;font-size:14px;border-radius:8px">'+
       (m.photo?'<img src="'+m.photo+'" style="width:44px;height:44px;object-fit:cover" loading="lazy">':ini)+'</div>'+
     '<div style="font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)">'+esc((m.name||'—').split(' ')[0])+'</div>'+
-    '<div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;letter-spacing:.5px;text-transform:uppercase">'+esc(m.designation||'—')+'</div>';
+    '<div style="font-family:var(--font);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">'+esc(m.designation||'—')+'</div>';
   c.onclick=function(){openMemberDetail(m)};return c;
 }
 
