@@ -401,8 +401,8 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
       <div class="l-ttl" data-i18n="login_title">Mobile number daalo</div>
       <div class="l-sub" data-i18n="login_sub">India ka #1 Flexible Packaging professionals network — Admin verified members only</div>
       <div class="phone-row">
-        <div class="ph-pre">+91</div>
-        <input id="ph-inp" type="tel" inputmode="numeric" maxlength="10"
+        <div class="ph-pre" id="ph-pre-tag">+91</div>
+        <input id="ph-inp" type="text" autocapitalize="off" autocorrect="off" spellcheck="false"
           placeholder="10 digit number" oninput="onPhone(this)">
       </div>
       <div id="known-badge" class="known-badge green">✅ Aap approved member hain — seedha login ho jayega</div>
@@ -424,7 +424,6 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
       </div>
       <div style="text-align:center;margin-top:20px">
         <button id="pwa-install-login" onclick="installPWA()" style="display:none;width:100%;padding:14px;background:linear-gradient(135deg,#F97316,#EA580C);color:#fff;border:none;border-radius:16px;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);margin-bottom:10px;box-shadow:0 4px 16px rgba(249,115,22,.3)" data-i18n="install_app">📲 Install App</button>
-        <button onclick="showAdminLogin()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);padding:8px">🔐 Admin Login</button>
       </div>
     </div>
 
@@ -894,44 +893,6 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 </div>
 
 <!-- ══ MODALS ══ -->
-<!-- Admin Login (Phone OTP) -->
-<div id="adm-modal" class="overlay">
-  <div class="sheet" style="padding:24px 20px;max-width:420px">
-    <div class="sheet-handle"></div>
-    <div style="font-size:20px;font-weight:800;text-align:center;margin:8px 0 6px">🔐 Admin Login</div>
-    <div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:20px">Phone OTP verification</div>
-
-    <!-- STEP 1: Phone -->
-    <div id="adm-step-phone">
-      <div class="field">
-        <label style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.6px;text-transform:uppercase">Admin Phone Number</label>
-        <div class="phone-row" style="margin-top:6px">
-          <div class="ph-pre">+91</div>
-          <input id="adm-phone" type="tel" inputmode="numeric" maxlength="10" placeholder="10 digit number" onkeydown="if(event.key==='Enter')admSendOTP()">
-        </div>
-      </div>
-      <div id="adm-err" class="err-msg"></div>
-      <button class="btn btn-blue btn-w100" style="margin-top:10px" onclick="admSendOTP()">📲 Send OTP</button>
-      <button onclick="closeOv('adm-modal')" style="width:100%;margin-top:8px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--font);padding:10px">Cancel</button>
-    </div>
-
-    <!-- STEP 2: OTP -->
-    <div id="adm-step-otp" style="display:none">
-      <div style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:16px">OTP sent to <span id="adm-phone-display" style="font-weight:700;color:var(--text)"></span></div>
-      <div style="display:flex;gap:8px;justify-content:center;margin:0 0 16px">
-        <input id="adm-otp-1" class="otp-box" type="tel" inputmode="numeric" maxlength="1" oninput="admOtpNext(this,2)" onfocus="this.select()">
-        <input id="adm-otp-2" class="otp-box" type="tel" inputmode="numeric" maxlength="1" oninput="admOtpNext(this,3)" onfocus="this.select()">
-        <input id="adm-otp-3" class="otp-box" type="tel" inputmode="numeric" maxlength="1" oninput="admOtpNext(this,4)" onfocus="this.select()">
-        <input id="adm-otp-4" class="otp-box" type="tel" inputmode="numeric" maxlength="1" oninput="admOtpNext(this,5)" onfocus="this.select()">
-        <input id="adm-otp-5" class="otp-box" type="tel" inputmode="numeric" maxlength="1" oninput="admOtpNext(this,6)" onfocus="this.select()">
-        <input id="adm-otp-6" class="otp-box" type="tel" inputmode="numeric" maxlength="1" oninput="admOtpNext(this,0)" onfocus="this.select()">
-      </div>
-      <div id="adm-err2" class="err-msg"></div>
-      <button class="btn btn-blue btn-w100" style="margin-top:10px" onclick="admVerifyOTP()">✅ Verify & Login</button>
-      <button onclick="admBackToPhone()" style="width:100%;margin-top:8px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--font);padding:10px">← Number badlo</button>
-    </div>
-  </div>
-</div>
 
 <!-- reCAPTCHA for Firebase Phone Auth (invisible) -->
 <div id="recaptcha-container"></div>
@@ -1035,8 +996,9 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getDatabase,ref,set,get,push,update,remove,onValue}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import{getAuth,RecaptchaVerifier,signInWithPhoneNumber}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import{getAuth,RecaptchaVerifier,signInWithPhoneNumber,signInWithCustomToken}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import{getStorage,ref as sRef,uploadBytes,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+import{getFunctions,httpsCallable}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 const DB_URLS=["https://fpjob26-default-rtdb.asia-southeast1.firebasedatabase.app","https://fpjob26-default-rtdb.firebaseio.com"];
 function initFB(i){
   var cfg={apiKey:"AIzaSyDWVgkBEXfD1nmgHvccO7-im2jEPXsoMbM",authDomain:"fpjob26.firebaseapp.com",
@@ -1055,6 +1017,8 @@ function initFB(i){
     // Firebase Phone Auth
     window.FB_AUTH=getAuth(app);
     window.FB_AUTH.languageCode='hi';
+    // Firebase Functions (used for admin email-OTP 2nd factor)
+    window.FB_FUNCS=getFunctions(app,'asia-south1');
     // Firebase Storage for resume uploads
     window.FB_STORAGE=getStorage(app);
     window.FB_uploadFile=async function(path,file,onProgress){
@@ -1079,6 +1043,8 @@ initFB(0);
 // Expose Auth functions globally
 window.FB_RecaptchaVerifier=RecaptchaVerifier;
 window.FB_signInWithPhoneNumber=signInWithPhoneNumber;
+window.FB_signInWithCustomToken=signInWithCustomToken;
+window.FB_httpsCallable=httpsCallable;
 setTimeout(function(){document.dispatchEvent(new Event('fb-ready'))},200);
 setTimeout(function(){if(!window._appStarted)document.dispatchEvent(new Event('fb-ready'))},5000);
 </script>
@@ -1092,7 +1058,6 @@ console.log('[FPJob] Script loading... v42');
 // FIX: Basic obfuscation — not secure but better than plaintext
 // Admin auth via hash comparison (more secure than base64)
 var _apH='a3f2c8d9e1b4'; // hash prefix check
-function _verifyAdmin(p){var h=0;for(var i=0;i<p.length;i++){h=((h<<5)-h)+p.charCodeAt(i);h|=0}return p===atob('c3VuaXRhdmtzMjY=')}
 
 // ═══ ROLE HELPERS ═══
 var MAX_MANAGERS = 6;
@@ -1101,7 +1066,7 @@ function isManager(){return ME&&ME.role==='manager'}
 function canManage(){return isAdmin()||isManager()}
 function getManagerCount(){return usersArr().filter(function(u){return u.role==='manager'&&u.status==='approved'}).length}
 window.isAdmin=isAdmin;window.isManager=isManager;window.canManage=canManage;
-var ADMIN_WA='918929397949';
+var ADMIN_WA='918929394920';
 var WA_GROUP_LINK='https://chat.whatsapp.com/YOUR_GROUP_INVITE_CODE'; // Change this to your actual group link
 var SESS_KEY='fpjob_sess';
 var FB_REST_URL='https://fpjob26-default-rtdb.asia-southeast1.firebasedatabase.app';
@@ -1718,18 +1683,23 @@ function goStep(n){
   document.querySelectorAll('.l-step').forEach(function(s){s.classList.remove('on')});
   var id='l-s'+n; // works for 1, 15, 2, 3
   $(id).classList.add('on');
+  if(n===1||n==='1')_loginMode='user';
   if(n===15||n==='15'){setTimeout(function(){$('otp-1').focus()},200)}
 }
 window.goStep=goStep;
 
 function onPhone(inp){
-  var v=inp.value.replace(/\D/g,'').slice(0,10);inp.value=v;
+  var v=inp.value;
   $('known-badge').style.display='none';
   $('pre-badge').style.display='none';
   $('new-badge').style.display='none';
   $('revoked-badge').style.display='none';
   $('removed-badge').style.display='none';
+  if(v.indexOf('@')!==-1){$('ph-pre-tag').style.display='none';return} // typing an email (admin path)
+  $('ph-pre-tag').style.display='';
+  v=v.replace(/\D/g,'').slice(0,10);inp.value=v;
   if(v.length===10){
+    if(v===ADMIN_PHONE)return; // admin number — no member badge needed
     var au=usersArr().find(function(u){return u.phone===v&&u.status==='approved'});
     var ru=usersArr().find(function(u){return u.phone===v&&u.status==='revoked'});
     var rm=usersArr().find(function(u){return u.phone===v&&u.status==='removed'});
@@ -1799,12 +1769,24 @@ function s1Next(){
   _loginAttempts++;
   if(_loginAttempts>5){_loginLockUntil=Date.now()+300000;_loginAttempts=0;
     toast('⏳ Too many attempts. Wait 5 min','err');return;}
-  var ph=$('ph-inp').value.replace(/\D/g,'');
+
+  var raw=($('ph-inp').value||'').trim();
+
+  // Admin email — typed in the SAME box, in place of a phone number
+  if(raw.indexOf('@')!==-1){
+    var email=raw.toLowerCase();
+    if(email!==ADMIN_EMAIL){showErr('err1','❌ Yeh email registered nahi hai');return}
+    sendAdminEmailOtp(email);
+    return;
+  }
+
+  var ph=raw.replace(/\D/g,'');
   if(ph.length!==10){showErr('err1',t('err_phone')||'10 digit number daalo');return}
   // Block removed users
   var removedUser=usersArr().find(function(u){return u.phone===ph&&u.status==='removed'});
   if(removedUser){toast('🚫 Account removed — Admin se contact karo approval ke liye','err');return}
   curPhone=ph;
+  _loginMode=(ph===ADMIN_PHONE)?'admin-phone':'user';
 
   // Check OTP rate limit (max 3 OTPs per phone per hour)
   var otpKey='otp_'+ph;
@@ -1901,9 +1883,18 @@ async function verifyOTP(){
   btn.textContent='⏳ Verifying...';btn.disabled=true;
 
   try{
+    if(_loginMode==='admin-email'){
+      await verifyAdminEmailOtpAndSignIn(code);
+      return;
+    }
     if(!_otpConfirmation){toast('OTP session expired — dubara bhejo','err');goStep(1);return}
     await _otpConfirmation.confirm(code);
     toast('✅ Phone verified!');
+
+    if(_loginMode==='admin-phone'){
+      await grantAdminByPhone();
+      return;
+    }
 
     // OTP verified — now route based on user type
     var ph=curPhone;
@@ -1968,6 +1959,7 @@ async function verifyOTP(){
     var msg='❌ Wrong OTP — dubara check karo';
     if(e.code==='auth/code-expired')msg='⏳ OTP expire ho gaya — Resend karo';
     if(e.code==='auth/invalid-verification-code')msg='❌ Galat OTP — sahi code daalo';
+    if(!e.code&&e.message)msg='❌ '+e.message;
     showErr('err-otp',msg);
     // Clear OTP boxes
     for(var i=1;i<=6;i++){$('otp-'+i).value='';$('otp-'+i).classList.remove('filled')}
@@ -1996,6 +1988,7 @@ function startResendTimer(){
 }
 
 function resendOTP(){
+  if(_loginMode==='admin-email'){sendAdminEmailOtp(ADMIN_EMAIL);return}
   if(!curPhone)return;
   // FIX: Properly clear reCAPTCHA before retry
   if(window._recaptchaVerifier){try{window._recaptchaVerifier.clear()}catch(x){}}
@@ -5223,120 +5216,70 @@ function openManagementPanel(){
 window.openManagementPanel=openManagementPanel;
 
 // ── Admin ──
-// ── Admin Login (Phone OTP) ──
-var ADMIN_PHONES=['8929397949']; // Whitelist - only these phones can become admin
-var _admOtpConfirmation=null;
+// ── Unified Admin Login ──
+// Same box as normal login. Enter the admin PHONE -> normal SMS OTP -> instantly admin.
+// Enter the admin EMAIL in the same box, in place of a phone number -> email OTP -> instantly admin.
+// No separate "Admin Login" button/screen — s1Next()/onPhone() (defined earlier) route into this.
+var ADMIN_PHONE='8929394920';               // 10-digit, no +91 — must match Cloud Functions ADMIN_PHONE
+var ADMIN_EMAIL='fpjob.vkstech@gmail.com';  // must exactly match Cloud Functions ADMIN_EMAIL
+var _loginMode='user'; // 'user' | 'admin-phone' | 'admin-email' — read by verifyOTP()
 
-function showAdminLogin(){
-  // Reset modal to phone step
-  $('adm-step-phone').style.display='block';
-  $('adm-step-otp').style.display='none';
-  $('adm-phone').value='';
-  for(var i=1;i<=6;i++){var b=$('adm-otp-'+i);if(b){b.value='';b.classList.remove('filled')}}
-  showErr('adm-err','');showErr('adm-err2','');
-  openOv('adm-modal');
-  setTimeout(function(){$('adm-phone').focus()},100);
-}
-window.showAdminLogin=showAdminLogin;
-
-async function admSendOTP(){
-  var phone=($('adm-phone').value||'').replace(/\D/g,'');
-  if(phone.length!==10){showErr('adm-err','10 digit number daalo');return}
-  if(ADMIN_PHONES.indexOf(phone)===-1){showErr('adm-err','❌ Yeh number admin nahi hai');return}
-
-  var btn=$('adm-step-phone').querySelector('.btn-blue');
+async function sendAdminEmailOtp(email){
+  var btn=$('l-s1').querySelector('.btn-blue');
   var origText=btn.textContent;
-  btn.textContent='⏳ Sending OTP...';btn.disabled=true;
-
+  btn.textContent='📧 Sending code...';btn.disabled=true;
   try{
-    if(!window.FB_AUTH){showErr('adm-err','Firebase loading... wait');btn.textContent=origText;btn.disabled=false;return}
-    initRecaptcha();
-    if(!window._recaptchaVerifier){showErr('adm-err','Security check failed. Page reload karo');btn.textContent=origText;btn.disabled=false;return}
-
-    var fullPhone='+91'+phone;
-    _admOtpConfirmation=await window.FB_signInWithPhoneNumber(window.FB_AUTH,fullPhone,window._recaptchaVerifier);
-
-    // Switch to OTP step
-    $('adm-phone-display').textContent='+91 '+phone.slice(0,2)+'****'+phone.slice(6);
-    $('adm-step-phone').style.display='none';
-    $('adm-step-otp').style.display='block';
-    showErr('adm-err','');
-    setTimeout(function(){$('adm-otp-1').focus()},100);
-    toast('📲 OTP sent to +91 '+phone);
+    if(!window.FB_FUNCS){toast('Loading... wait a moment','err');btn.textContent=origText;btn.disabled=false;return}
+    var reqFn=window.FB_httpsCallable(window.FB_FUNCS,'requestAdminEmailLoginOtp');
+    await reqFn({email:email});
+    _loginMode='admin-email';
+    $('otp-sub').innerHTML='Code sent to <span id="otp-phone-display">'+email+'</span>';
+    for(var i=1;i<=6;i++){$('otp-'+i).value='';$('otp-'+i).classList.remove('filled')}
+    goStep(15);
+    startResendTimer();
+    toast('📧 OTP sent to '+email);
   }catch(e){
-    console.error('Admin OTP send error:',e);
-    var msg='OTP bhejne mein error';
-    if(e.code==='auth/too-many-requests')msg='⏳ Bahut zyada requests — thodi der baad try karo';
-    else if(e.code==='auth/quota-exceeded')msg='⚠️ SMS limit exceeded — thodi der baad try karo';
-    else if(e.code==='auth/app-not-authorized')msg='❌ Domain authorized nahi — Firebase console check karo';
-    else if(e.code==='auth/invalid-phone-number')msg='❌ Invalid phone number';
-    else if(e.code)msg='OTP Error: '+e.code;
-    showErr('adm-err',msg);
-    if(window._recaptchaVerifier){try{window._recaptchaVerifier.clear()}catch(x){}}
-    window._recaptchaVerifier=null;
+    console.error('Admin email OTP send error:',e);
+    showErr('err1',(e&&e.message)?e.message:'Error sending code — try again');
   }
   btn.textContent=origText;btn.disabled=false;
 }
-window.admSendOTP=admSendOTP;
 
-function admOtpNext(el,nextIdx){
-  var v=el.value.replace(/\D/g,'');
-  el.value=v;
-  if(v)el.classList.add('filled');else el.classList.remove('filled');
-  if(v&&nextIdx>0&&nextIdx<=6){var nb=$('adm-otp-'+nextIdx);if(nb)nb.focus()}
-  // Auto-submit when last box filled
-  var full='';for(var i=1;i<=6;i++)full+=($('adm-otp-'+i).value||'');
-  if(full.length===6)setTimeout(admVerifyOTP,200);
+// Called by verifyOTP() when _loginMode==='admin-phone', right after Firebase phone OTP confirms.
+async function grantAdminByPhone(){
+  var grantFn=window.FB_httpsCallable(window.FB_FUNCS,'grantAdminIfPhoneVerified');
+  await grantFn();
+  if(window.FB_AUTH.currentUser)await window.FB_AUTH.currentUser.getIdToken(true);
+  finishAdminLogin();
 }
-window.admOtpNext=admOtpNext;
 
-async function admVerifyOTP(){
-  var code='';
-  for(var i=1;i<=6;i++)code+=($('adm-otp-'+i).value||'');
-  if(code.length!==6){showErr('adm-err2','6 digit OTP daalo');return}
-
-  var btn=$('adm-step-otp').querySelector('.btn-blue');
-  var origText=btn.textContent;
-  btn.textContent='⏳ Verifying...';btn.disabled=true;
-
-  try{
-    if(!_admOtpConfirmation){showErr('adm-err2','OTP session expired — dubara bhejo');admBackToPhone();return}
-    await _admOtpConfirmation.confirm(code);
-    var phone=($('adm-phone').value||'').replace(/\D/g,'');
-
-    // OTP verified + phone in whitelist → grant admin access
-    closeOv('adm-modal');
-    ME=ME||{};
-    ME.role='admin';
-    ME.phone=phone;
-    ME.name='Admin';
-    ME.status='approved';
-    ME.id='admin';
-    saveSession();
-    toast('🔐 Admin login successful!');
-    openManagementPanel();
-  }catch(e){
-    console.error('Admin OTP verify error:',e);
-    var msg='Galat OTP ❌';
-    if(e.code==='auth/invalid-verification-code')msg='❌ Galat OTP code';
-    else if(e.code==='auth/code-expired')msg='⏳ OTP expire ho gaya — dubara bhejo';
-    showErr('adm-err2',msg);
-    // Clear OTP boxes for retry
-    for(var i=1;i<=6;i++){var b=$('adm-otp-'+i);if(b){b.value='';b.classList.remove('filled')}}
-    setTimeout(function(){$('adm-otp-1').focus()},100);
-  }
-  btn.textContent=origText;btn.disabled=false;
+// Called by verifyOTP() when _loginMode==='admin-email' — this path has no Firebase phone
+// session yet, so the Cloud Function verifies the emailed code and hands back a custom token.
+async function verifyAdminEmailOtpAndSignIn(code){
+  var verifyFn=window.FB_httpsCallable(window.FB_FUNCS,'verifyAdminEmailLoginOtp');
+  var res=await verifyFn({code:code});
+  var token=res&&res.data&&res.data.token;
+  if(!token)throw new Error('No session token returned');
+  await window.FB_signInWithCustomToken(window.FB_AUTH,token);
+  finishAdminLogin();
 }
-window.admVerifyOTP=admVerifyOTP;
 
-function admBackToPhone(){
-  $('adm-step-otp').style.display='none';
-  $('adm-step-phone').style.display='block';
-  for(var i=1;i<=6;i++){var b=$('adm-otp-'+i);if(b){b.value='';b.classList.remove('filled')}}
-  showErr('adm-err2','');
-  setTimeout(function(){$('adm-phone').focus()},100);
+function finishAdminLogin(){
+  closeStep15Safely();
+  ME=ME||{};
+  ME.role='admin';
+  ME.phone=curPhone||'';
+  ME.name='Admin';
+  ME.status='approved';
+  ME.id='admin';
+  saveSession();
+  toast('🔐 Admin login successful!');
+  openManagementPanel();
 }
-window.admBackToPhone=admBackToPhone;
+
+function closeStep15Safely(){
+  try{goStep(1)}catch(e){}
+}
 
 function adTab(id,btn){
   document.querySelectorAll('.adm-tab').forEach(function(t){t.classList.remove('on')});
