@@ -1072,11 +1072,18 @@ var SESS_KEY='fpjob_sess';
 var FB_REST_URL='https://fpjob26-default-rtdb.asia-southeast1.firebasedatabase.app';
 // REST API helper — bypasses SDK connection issues
 var fbRest={
-  set:function(path,data){return fetch(FB_REST_URL+'/'+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){if(!r.ok)throw new Error('Firebase error '+r.status);return r.json()})},
-  update:function(path,data){return fetch(FB_REST_URL+'/'+path+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){if(!r.ok)throw new Error('Firebase error '+r.status);return r.json()})},
-  push:function(path,data){return fetch(FB_REST_URL+'/'+path+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){if(!r.ok)throw new Error('Firebase error '+r.status);return r.json().then(function(d){return d.name})})},
-  remove:function(path){return fetch(FB_REST_URL+'/'+path+'.json',{method:'DELETE'}).then(function(r){if(!r.ok)throw new Error('Firebase error '+r.status);return r.json()})},
-  get:function(path){return fetch(FB_REST_URL+'/'+path+'.json').then(function(r){if(!r.ok)throw new Error('Firebase error '+r.status);return r.json()})}
+  _url:function(path){
+    var u=FB_REST_URL+'/'+path+'.json';
+    if(window.FB_AUTH&&window.FB_AUTH.currentUser){
+      return window.FB_AUTH.currentUser.getIdToken().then(function(tok){return u+'?auth='+encodeURIComponent(tok)});
+    }
+    return Promise.resolve(u);
+  },
+  set:function(path,data){return fbRest._url(path).then(function(u){return fetch(u,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})}).then(function(r){if(!r.ok)throw new Error('Firebase error '+r.status);return r.json()})},
+  update:function(path,data){return fbRest._url(path).then(function(u){return fetch(u,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})}).then(function(r){if(!r.ok)throw new Error('Firebase error '+r.status);return r.json()})},
+  push:function(path,data){return fbRest._url(path).then(function(u){return fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})}).then(function(r){if(!r.ok)throw new Error('Firebase error '+r.status);return r.json().then(function(d){return d.name})})},
+  remove:function(path){return fbRest._url(path).then(function(u){return fetch(u,{method:'DELETE'})}).then(function(r){if(!r.ok)throw new Error('Firebase error '+r.status);return r.json()})},
+  get:function(path){return fbRest._url(path).then(function(u){return fetch(u)}).then(function(r){if(!r.ok)throw new Error('Firebase error '+r.status);return r.json()})}
 };
 window.fbRest=fbRest;
 // Refresh local cache from REST
