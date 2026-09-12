@@ -1930,6 +1930,10 @@ async function verifyOTP(){
     if(appr){
       // Approved user — login directly (photo is optional)
       ME=appr;saveSession();saveDeviceInfo(appr.id);enterApp();
+      // Backfill authUid if missing (needed so DB rules can verify this is really them)
+      if(!appr.authUid&&window.FB_AUTH&&window.FB_AUTH.currentUser){
+        fbRest.update('users/'+appr.id,{authUid:window.FB_AUTH.currentUser.uid}).catch(function(){});
+      }
       // If no photo, gentle nudge to upload via profile (non-blocking)
       if(!appr.photo){
         setTimeout(function(){
@@ -2243,7 +2247,8 @@ async function s2Next(){
     registeredAt:new Date().toISOString(),
     source:existingRevoked?'re_verification':existingPre?'pre_registered_confirmed':localContact?'contact_auto_approved':'new_registration',
     lastDevice:getDeviceInfo(),
-    otpVerified:true
+    otpVerified:true,
+    authUid:(window.FB_AUTH&&window.FB_AUTH.currentUser)?window.FB_AUTH.currentUser.uid:null
   };
   // Add vendor-specific fields
   var isVendor=desig.toLowerCase().includes('supplier')||desig.toLowerCase().includes('vendor')||desig.toLowerCase().includes('consultant');
@@ -5991,11 +5996,18 @@ window.removeUser=removeUser;
 // ── Manager Role Toggle (Admin Only) ──
 async function toggleManagerRole(uid, name, action){
   if(!isAdmin()){toast('Only admin can do this','err');return}
+  var targetUser=usersArr().find(function(u){return (u.id||u.phone)===uid});
   if(action==='make'){
     if(getManagerCount()>=MAX_MANAGERS){toast('⚠️ Max '+MAX_MANAGERS+' managers allowed! Pehle kisi ko remove karo.','err');return}
     if(!confirm('👑 '+name+' ko Manager banana chahte ho?\n\nManager permissions:\n• Pending users approve/reject\n• Non-industry users remove\n• Jobs post kar sakta hai'))return;
+    if(!targetUser||!targetUser.authUid){
+      toast('⚠️ '+name+' ne abhi tak app mein login nahi kiya (ya bahut purana account hai). Unhe ek baar logout-login karne ko kaho, phir dubara try karo.','err');
+      return;
+    }
     try{
       await fbRest.update('users/'+uid,{role:'manager',madeManagerAt:new Date().toISOString()});
+      var grantFn=window.FB_httpsCallable(window.FB_FUNCS,'setManagerRole');
+      await grantFn({targetAuthUid:targetUser.authUid,make:true});
       toast('👑 '+name+' ab Manager hai!');
       renderAdminMembersAll();
     }catch(e){toast('Error: '+e.message,'err')}
@@ -6003,6 +6015,10 @@ async function toggleManagerRole(uid, name, action){
     if(!confirm('❌ '+name+' se Manager role hatana chahte ho?'))return;
     try{
       await fbRest.update('users/'+uid,{role:'',madeManagerAt:''});
+      if(targetUser&&targetUser.authUid){
+        var revokeFn=window.FB_httpsCallable(window.FB_FUNCS,'setManagerRole');
+        await revokeFn({targetAuthUid:targetUser.authUid,make:false});
+      }
       toast('✅ '+name+' ab regular member hai');
       renderAdminMembersAll();
     }catch(e){toast('Error: '+e.message,'err')}

@@ -14,7 +14,9 @@
 
     "chats": {
       ".read": "auth != null",
-      ".write": "auth != null"
+      "$mid": {
+        ".write": "auth != null && (auth.token.admin === true || (!data.exists() && ('+91'+newData.child('authorPhone').val()) === auth.token.phone_number) || (data.exists() && ('+91'+data.child('authorPhone').val()) === auth.token.phone_number))"
+      }
     },
 
     "contacts": {
@@ -22,7 +24,10 @@
     },
 
     "users": {
-      ".indexOn": ["phone", "status", "category"]
+      ".indexOn": ["phone", "status", "category"],
+      "$uid": {
+        ".write": "auth != null && (auth.token.admin === true || (auth.token.manager === true && (!data.exists() || (data.child('role').val() !== 'admin' && data.child('role').val() !== 'manager'))) || (!data.exists() && ('+91'+newData.child('phone').val()) === auth.token.phone_number) || (data.exists() && ('+91'+data.child('phone').val()) === auth.token.phone_number))"
+      }
     },
     "jobs": {
       ".indexOn": ["status", "postedAt", "type"]
