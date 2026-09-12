@@ -1771,6 +1771,20 @@ function incrementOtpCount(){
   }catch(e){}
 }
 
+// Global SMS log (visible to admin across all devices/users — for cost tracking)
+function todayKey(){
+  var d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function logSmsSent(phone){
+  try{
+    fbRest.push('otpLog/'+todayKey(),{
+      phoneMasked:phone.slice(0,2)+'****'+phone.slice(6),
+      ts:new Date().toISOString()
+    }).catch(function(){});
+  }catch(e){}
+}
+
 // Initialize invisible reCAPTCHA
 function initRecaptcha(){
   if(window._recaptchaVerifier)return;
@@ -1841,13 +1855,15 @@ async function sendOTP(phone){
     var fullPhone='+91'+phone;
     _otpConfirmation=await window.FB_signInWithPhoneNumber(window.FB_AUTH,fullPhone,window._recaptchaVerifier);
 
-    // Track OTP send
+    // Track OTP send (local, per-device — used for this device's own rate limiting)
     var otpKey='otp_'+phone;
     var otpData=JSON.parse(localStorage.getItem(otpKey)||'{"c":0,"t":0}');
     if(Date.now()-otpData.t>3600000)otpData={c:0,t:Date.now()};
     otpData.c++;otpData.t=Date.now();
     localStorage.setItem(otpKey,JSON.stringify(otpData));
     incrementOtpCount();
+    // Log to Firebase too (global, cross-device — this is what the Admin Panel shows)
+    logSmsSent(phone);
 
     // Show OTP step
     $('otp-phone-display').textContent=phone.slice(0,2)+'****'+phone.slice(6);
@@ -6349,6 +6365,10 @@ function renderAdminImport(){
   var registered=usersArr().filter(function(u){return u.status==='approved'}).length;
   
   el.innerHTML=
+    '<div style="font-size:18px;font-weight:800;margin-bottom:16px">📊 SMS (OTP) Usage</div>'+
+    '<div id="sms-usage-card" style="padding:16px;background:var(--card);border:1.5px solid var(--border);border-radius:12px;margin-bottom:20px">'+
+      '<div style="font-size:13px;color:var(--text2)">Loading...</div>'+
+    '</div>'+
     '<div style="font-size:18px;font-weight:800;margin-bottom:16px">📋 Contacts Database</div>'+
     '<div style="padding:16px;background:var(--card);border:1.5px solid var(--ink);border-radius:12px;margin-bottom:16px">'+
       '<div style="font-size:14px;font-weight:800;margin-bottom:4px">📤 Upload Contacts (Excel)</div>'+
@@ -6388,8 +6408,41 @@ function renderAdminImport(){
         }).join('<br>')+
       '</div>'+
     '</div>';
+  loadSmsUsage();
 }
 window.renderAdminImport=renderAdminImport;
+
+async function loadSmsUsage(){
+  var card=$('sms-usage-card');
+  if(!card)return;
+  try{
+    var today=new Date();
+    var dayKeys=[];
+    for(var i=0;i<30;i++){
+      var d=new Date(today);d.setDate(d.getDate()-i);
+      dayKeys.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+    }
+    var results=await Promise.all(dayKeys.map(function(k){return fbRest.get('otpLog/'+k).catch(function(){return null})}));
+    var counts=results.map(function(r){return r?Object.keys(r).length:0});
+    var todayCount=counts[0]||0;
+    var last7=counts.slice(0,7).reduce(function(a,b){return a+b},0);
+    var last30=counts.reduce(function(a,b){return a+b},0);
+    var approxCost30=(last30*0.07).toFixed(2); // India rate ≈ $0.07/SMS
+    card.innerHTML=
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">'+
+        '<div style="text-align:center"><div style="font-size:24px;font-weight:800;color:'+(todayCount>10?'var(--red)':'var(--green)')+'">'+todayCount+'</div><div style="font-size:11px;color:var(--muted);font-weight:700">TODAY</div></div>'+
+        '<div style="text-align:center"><div style="font-size:24px;font-weight:800;color:var(--primary)">'+last7+'</div><div style="font-size:11px;color:var(--muted);font-weight:700">LAST 7 DAYS</div></div>'+
+        '<div style="text-align:center"><div style="font-size:24px;font-weight:800;color:var(--gold)">'+last30+'</div><div style="font-size:11px;color:var(--muted);font-weight:700">LAST 30 DAYS</div></div>'+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--text2);text-align:center;padding-top:10px;border-top:1px solid var(--border)">'+
+        (todayCount>10?'⚠️ Today is past Google\'s 10 free SMS/day — extra messages today are billed.':'✅ Within today\'s 10 free SMS.')+
+        '<br>Est. cost last 30 days: <b>~$'+approxCost30+'</b> (India rate, approx.)'+
+      '</div>';
+  }catch(e){
+    card.innerHTML='<div style="font-size:13px;color:var(--red)">Could not load usage data.</div>';
+  }
+}
+window.loadSmsUsage=loadSmsUsage;
 
 // ═══ Admin Excel Contact Upload ═══
 async function handleContactsUpload(input){

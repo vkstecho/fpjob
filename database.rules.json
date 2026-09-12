@@ -7,6 +7,11 @@
       ".write": true
     },
 
+    "otpLog": {
+      ".read": "auth != null && auth.token.admin === true",
+      ".write": true
+    },
+
     "adminEmailLoginOtp": {
       ".read": false,
       ".write": false
