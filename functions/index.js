@@ -140,3 +140,26 @@ exports.verifyAdminEmailLoginOtp = onCall({region: 'asia-south1'}, async (reques
 
   return {success: true, token};
 });
+
+// ── Manager role (admin-only) ──
+// The Admin Panel already writes {role:'manager'} to the user's DB record directly
+// (admin has full DB write access). This function additionally grants/revokes a real,
+// server-verified custom claim on that manager's actual Firebase Auth account, which is
+// what the Realtime Database rules check before letting a "manager" write other members'
+// records. Without this, {role:'manager'} would only be a cosmetic DB field with nothing
+// stopping a non-manager from writing that field into their own record via the raw API.
+exports.setManagerRole = onCall({region: 'asia-south1'}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Login required.');
+  }
+  if (request.auth.token.admin !== true) {
+    throw new HttpsError('permission-denied', 'Only admin can grant/revoke manager role.');
+  }
+  const targetAuthUid = (request.data && request.data.targetAuthUid || '').toString();
+  const make = !!(request.data && request.data.make);
+  if (!targetAuthUid) {
+    throw new HttpsError('invalid-argument', 'Missing target user.');
+  }
+  await admin.auth().setCustomUserClaims(targetAuthUid, make ? {manager: true} : {manager: false});
+  return {success: true};
+});
