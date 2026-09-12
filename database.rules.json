@@ -1,0 +1,34 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": "auth != null",
+
+    "login_requests": {
+      ".write": true
+    },
+
+    "adminEmailLoginOtp": {
+      ".read": false,
+      ".write": false
+    },
+
+    "chats": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+
+    "contacts": {
+      ".write": "auth != null && auth.token.admin === true"
+    },
+
+    "users": {
+      ".indexOn": ["phone", "status", "category"]
+    },
+    "jobs": {
+      ".indexOn": ["status", "postedAt", "type"]
+    },
+    "notifications": {
+      ".indexOn": ["status", "createdAt"]
+    }
+  }
+}

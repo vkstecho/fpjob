@@ -16,6 +16,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800;900&family=Poppins:wght@400;600;700;800;900&family=Source+Code+Pro:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // PWA: Register service worker for offline capability + Play Store TWA
 if('serviceWorker' in navigator){
@@ -309,6 +310,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 /* ════ APP ════ */
 #app{background:var(--bg);padding-bottom:64px}
 .page{display:none} .page.on{display:block;animation:fadeUp .2s ease}
+#pg-chats.page.on{display:flex}
 #hdr-pic{width:34px;height:34px;border-radius:50%;background:var(--primary);
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   font-size:13px;font-weight:800;overflow:hidden;flex-shrink:0}
@@ -778,6 +780,21 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
     <div id="members-list" style="padding:0 16px 80px"></div>
   </div>
 
+  <!-- CHATS PAGE (WhatsApp-group-style job/photo feed) -->
+  <div id="pg-chats" class="page" style="flex-direction:column;height:100%">
+    <div style="padding:20px 16px 10px;flex-shrink:0">
+      <div class="sec-eyebrow">◆ JOB UPDATES</div>
+      <div style="font-family:var(--font-head);font-size:32px;font-weight:900;color:var(--ink);letter-spacing:-.5px;line-height:1">Chats</div>
+    </div>
+    <div id="chats-list" style="flex:1;overflow-y:auto;padding:10px 12px 12px;display:flex;flex-direction:column;gap:10px"></div>
+    <div id="chat-composer" style="flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1.5px solid var(--border);background:#fff">
+      <button onclick="pickChatImage()" style="flex-shrink:0;width:44px;height:44px;border-radius:50%;border:none;background:var(--card2);font-size:20px;cursor:pointer">📷</button>
+      <input id="chat-input" type="text" placeholder="Message likho..." style="flex:1;min-height:44px;border:1.5px solid var(--border);border-radius:22px;padding:0 16px;font-size:16px;font-family:var(--font);outline:none" onkeydown="if(event.key==='Enter')sendChatMessage()">
+      <button onclick="sendChatMessage()" style="flex-shrink:0;width:44px;height:44px;border-radius:50%;border:none;background:var(--ink);color:#fff;font-size:18px;cursor:pointer">➤</button>
+      <input id="chat-img-input" type="file" accept="image/*" style="display:none" onchange="sendChatImage(this)">
+    </div>
+  </div>
+
   <!-- PROFILE PAGE -->
   <div id="pg-profile" class="page">
     <div style="padding:20px 16px 10px">
@@ -796,6 +813,9 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
     </button>
     <button class="nav-btn" id="nb-jobs" onclick="showPage('jobs')">
       <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>Jobs
+    </button>
+    <button class="nav-btn" id="nb-chats" onclick="showPage('chats')">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Chats
     </button>
     <button class="nav-btn" id="nb-members" onclick="showPage('members')">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Members
@@ -1501,7 +1521,7 @@ function applyTranslations(){
 }
 
 // ── State ──
-var DB={users:{},jobs:{},notifs:{},login_requests:{}};
+var DB={users:{},jobs:{},notifs:{},login_requests:{},chats:{}};
 var ME=null;
 var camStream=null;
 var photoB64='';
@@ -1664,7 +1684,7 @@ window.showScr=showScr;
 
 // ── Pages ──
 function showPage(pg){
-  ['home','jobs','members','profile'].forEach(function(p){
+  ['home','jobs','chats','members','profile'].forEach(function(p){
     $('pg-'+p).classList.remove('on');
     $('nb-'+p).classList.remove('on');
   });
@@ -1676,6 +1696,7 @@ function showPage(pg){
   _jobsShown=PAGE_SIZE;_memsShown=PAGE_SIZE;
   if(pg==='home')renderHome();
   if(pg==='jobs')renderJobs();
+  if(pg==='chats')renderChats();
   if(pg==='members')renderMembers();
   if(pg==='profile')renderProfile();
 }
@@ -3907,6 +3928,99 @@ function renderMembers(){
   }
 }
 window.renderMembers=renderMembers;
+
+// ════════════════════════════════════
+// CHATS (WhatsApp-group-style job/photo feed)
+// ════════════════════════════════════
+function chatsArr(){
+  return Object.keys(DB.chats||{}).map(function(id){var m=DB.chats[id];m.id=id;return m})
+    .sort(function(a,b){return new Date(a.createdAt)-new Date(b.createdAt)});
+}
+
+function renderChats(){
+  var list=$('chats-list');
+  if(!list)return;
+  var msgs=chatsArr();
+  if(!msgs.length){
+    list.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px">Koi message nahi hai abhi.<br>Job updates ya photos yahan share karo 👇</div>';
+    return;
+  }
+  var isAdmin=canManage();
+  var meP=ME&&ME.phone;
+  list.innerHTML=msgs.map(function(m){
+    var mine=m.authorPhone&&m.authorPhone===meP;
+    var bubbleBg=mine?'var(--ink)':'#fff';
+    var textColor=mine?'#fff':'var(--text)';
+    var nameColor=mine?'rgba(255,255,255,.75)':'var(--accent)';
+    var align=mine?'flex-end':'flex-start';
+    var body='';
+    if(m.imageUrl){
+      body+='<img src="'+esc(m.imageUrl)+'" style="max-width:100%;border-radius:10px;margin-bottom:'+(m.text?'6px':'0')+';display:block;cursor:pointer" onclick="window.open(\''+esc(m.imageUrl)+'\',\'_blank\')">';
+    }
+    if(m.text)body+='<div style="font-size:15px;line-height:1.4;white-space:pre-wrap;word-break:break-word">'+esc(m.text)+'</div>';
+    var delBtn=isAdmin?'<span onclick="deleteChatMsg(\''+m.id+'\')" style="cursor:pointer;font-size:11px;opacity:.5;margin-left:8px">🗑️</span>':'';
+    return '<div style="display:flex;flex-direction:column;align-items:'+align+'">'+
+      '<div style="max-width:78%;background:'+bubbleBg+';color:'+textColor+';border-radius:14px;padding:9px 12px;box-shadow:var(--shadow-sm)">'+
+        (mine?'':'<div style="font-size:12px;font-weight:800;color:'+nameColor+';margin-bottom:3px">'+esc(m.authorName||'—')+'</div>')+
+        body+
+      '</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-top:3px;padding:0 4px">'+timeAgo(m.createdAt)+delBtn+'</div>'+
+    '</div>';
+  }).join('');
+  list.scrollTop=list.scrollHeight;
+}
+window.renderChats=renderChats;
+
+async function sendChatMessage(){
+  var inp=$('chat-input');
+  var text=(inp.value||'').trim();
+  if(!text)return;
+  if(!ME||!ME.phone){toast('Pehle login karo','err');return}
+  var mod=moderateContent(text);
+  if(!mod.ok){toast('❌ Yeh message allowed nahi hai','err');return}
+  inp.value='';
+  try{
+    await fbRest.push('chats',{
+      authorPhone:ME.phone,authorName:ME.name||'Member',
+      text:san(text),
+      createdAt:new Date().toISOString()
+    });
+  }catch(e){toast('❌ Message send nahi hua: '+e.message,'err');inp.value=text}
+}
+window.sendChatMessage=sendChatMessage;
+
+function pickChatImage(){
+  if(!ME||!ME.phone){toast('Pehle login karo','err');return}
+  $('chat-img-input').click();
+}
+window.pickChatImage=pickChatImage;
+
+async function sendChatImage(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('❌ Sirf image files allowed','err');input.value='';return}
+  if(file.size>5*1024*1024){toast('❌ Image 5MB se chhoti honi chahiye','err');input.value='';return}
+  toast('📤 Photo bhej rahe hain...');
+  try{
+    var path='chat_images/'+Date.now()+'_'+ME.phone+'_'+file.name.replace(/[^a-zA-Z0-9._-]/g,'');
+    var result=await window.FB_uploadFile(path,file);
+    await fbRest.push('chats',{
+      authorPhone:ME.phone,authorName:ME.name||'Member',
+      imageUrl:result.url,
+      createdAt:new Date().toISOString()
+    });
+  }catch(e){toast('❌ Photo upload fail: '+e.message,'err')}
+  input.value='';
+}
+window.sendChatImage=sendChatImage;
+
+async function deleteChatMsg(id){
+  if(!canManage())return;
+  if(!confirm('Yeh message delete karein?'))return;
+  try{await fbRest.remove('chats/'+id)}
+  catch(e){toast('❌ Delete fail: '+e.message,'err')}
+}
+window.deleteChatMsg=deleteChatMsg;
 
 function setMF(f,btn){
   mFilter=f;_memsShown=PAGE_SIZE;
@@ -6195,13 +6309,16 @@ console.log('[FPJob] '+_IMPORT_CONTACTS.length+' contacts loaded inline');
 function autoImportContactsOnFirstLogin(){} 
 window.autoImportContactsOnFirstLogin=autoImportContactsOnFirstLogin;
 
-// ═══ FAST LOCAL CONTACT LOOKUP ═══
+// ═══ FAST LOCAL CONTACT LOOKUP (built-in list + admin Excel uploads via Firebase) ═══
 var _contactIndex=null;
+var _FB_CONTACTS={}; // populated live from Firebase 'contacts' node (admin Excel uploads)
 function getContactByPhone(ph){
   if(!_contactIndex){
     _contactIndex={};
     _IMPORT_CONTACTS.forEach(function(c){if(c.p)_contactIndex[c.p]=c});
   }
+  // Firebase-uploaded contacts take priority (admin's latest Excel import)
+  if(_FB_CONTACTS&&_FB_CONTACTS[ph])return _FB_CONTACTS[ph];
   return _contactIndex[ph]||null;
 }
 window.getContactByPhone=getContactByPhone;
@@ -6209,19 +6326,28 @@ window.getContactByPhone=getContactByPhone;
 function renderAdminImport(){
   var el=$('ap-import');
   if(!el)return;
-  var withName=_IMPORT_CONTACTS.filter(function(c){return c.n}).length;
-  var withCo=_IMPORT_CONTACTS.filter(function(c){return c.c}).length;
+  var fbCount=Object.keys(_FB_CONTACTS||{}).length;
+  var totalContacts=_IMPORT_CONTACTS.length+fbCount;
+  var withName=_IMPORT_CONTACTS.filter(function(c){return c.n}).length+Object.values(_FB_CONTACTS||{}).filter(function(c){return c.n}).length;
+  var withCo=_IMPORT_CONTACTS.filter(function(c){return c.c}).length+Object.values(_FB_CONTACTS||{}).filter(function(c){return c.c}).length;
   var registered=usersArr().filter(function(u){return u.status==='approved'}).length;
   
   el.innerHTML=
     '<div style="font-size:18px;font-weight:800;margin-bottom:16px">📋 Contacts Database</div>'+
+    '<div style="padding:16px;background:var(--card);border:1.5px solid var(--ink);border-radius:12px;margin-bottom:16px">'+
+      '<div style="font-size:14px;font-weight:800;margin-bottom:4px">📤 Upload Contacts (Excel)</div>'+
+      '<div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">Columns: Mobile Number, Name, Company Name, Designation, Department, Email ID, Authority. Existing numbers get updated, new numbers get added.</div>'+
+      '<input type="file" id="contacts-xlsx-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleContactsUpload(this)">'+
+      '<button class="btn btn-blue" style="width:100%" onclick="document.getElementById(\'contacts-xlsx-input\').click()">📁 Choose Excel File</button>'+
+      '<div id="contacts-upload-status" style="margin-top:10px;font-size:13px;color:var(--text2)"></div>'+
+    '</div>'+
     '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px">'+
       '<div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center">'+
-        '<div style="font-size:28px;font-weight:800;color:var(--primary)">'+_IMPORT_CONTACTS.length+'</div>'+
+        '<div style="font-size:28px;font-weight:800;color:var(--primary)">'+totalContacts+'</div>'+
         '<div style="font-size:11px;color:var(--muted);font-weight:700">TOTAL CONTACTS</div></div>'+
       '<div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center">'+
-        '<div style="font-size:28px;font-weight:800;color:var(--green)">'+withName+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);font-weight:700">WITH NAMES</div></div>'+
+        '<div style="font-size:28px;font-weight:800;color:var(--green)">'+fbCount+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);font-weight:700">FROM EXCEL UPLOAD</div></div>'+
       '<div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center">'+
         '<div style="font-size:28px;font-weight:800;color:var(--gold)">'+withCo+'</div>'+
         '<div style="font-size:11px;color:var(--muted);font-weight:700">WITH COMPANY</div></div>'+
@@ -6232,10 +6358,10 @@ function renderAdminImport(){
     '<div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:16px">'+
       '<div style="font-size:14px;font-weight:700;margin-bottom:8px">✅ How it works</div>'+
       '<div style="font-size:13px;color:var(--text2);line-height:1.8">'+
-        '• Contacts auto-loaded in app memory (no Firebase import needed)<br>'+
+        '• Upload an Excel file above to add/update contacts anytime — no code changes needed<br>'+
         '• Jab koi register karta hai, naam + company auto-fill hota hai<br>'+
         '• Known contacts get auto-approved on OTP verification<br>'+
-        '• Firebase mein sirf registered users store hote hain'+
+        '• Unknown numbers go to Pending for your approval'+
       '</div>'+
     '</div>'+
     '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px">'+
@@ -6247,6 +6373,73 @@ function renderAdminImport(){
       '</div>'+
     '</div>';
 }
+window.renderAdminImport=renderAdminImport;
+
+// ═══ Admin Excel Contact Upload ═══
+async function handleContactsUpload(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  var statusEl=$('contacts-upload-status');
+  statusEl.textContent='⏳ Reading file...';
+  try{
+    var data=await file.arrayBuffer();
+    var wb=XLSX.read(data,{type:'array'});
+    var sheet=wb.Sheets[wb.SheetNames[0]];
+    var rows=XLSX.utils.sheet_to_json(sheet,{defval:''});
+    if(!rows.length){statusEl.textContent='❌ File is empty';return}
+
+    // Flexible header matching (case-insensitive, handles slightly different column names)
+    function findKey(row,candidates){
+      var keys=Object.keys(row);
+      for(var i=0;i<candidates.length;i++){
+        var match=keys.find(function(k){return k.trim().toLowerCase()===candidates[i]});
+        if(match)return match;
+      }
+      return null;
+    }
+    var sample=rows[0];
+    var kPhone=findKey(sample,['mobile number','mobile','phone','phone number']);
+    var kName=findKey(sample,['name']);
+    var kCo=findKey(sample,['company name','company']);
+    var kDesig=findKey(sample,['designation']);
+    var kDept=findKey(sample,['department']);
+    var kEmail=findKey(sample,['email id','email']);
+    var kAuth=findKey(sample,['authority','category']);
+
+    if(!kPhone){statusEl.textContent='❌ Could not find a "Mobile Number" column';return}
+
+    statusEl.textContent='⏳ Processing '+rows.length+' rows...';
+    var contactsMap={};
+    var added=0,skipped=0;
+    rows.forEach(function(row){
+      var rawPhone=String(row[kPhone]||'').replace(/\D/g,'');
+      var phone=rawPhone.length>10?rawPhone.slice(-10):rawPhone;
+      if(phone.length!==10){skipped++;return}
+      var c={p:phone};
+      if(kName&&row[kName])c.n=String(row[kName]).trim();
+      if(kCo&&row[kCo])c.c=String(row[kCo]).trim();
+      if(kDesig&&row[kDesig])c.d=String(row[kDesig]).trim();
+      if(kDept&&row[kDept])c.t=String(row[kDept]).trim();
+      if(kEmail&&row[kEmail])c.email=String(row[kEmail]).trim();
+      if(kAuth&&row[kAuth])c.k=String(row[kAuth]).trim();
+      contactsMap[phone]=c;
+      added++;
+    });
+
+    if(!added){statusEl.textContent='❌ No valid phone numbers found in file';return}
+
+    statusEl.textContent='⏳ Saving '+added+' contacts to database...';
+    await fbRest.update('contacts',contactsMap);
+    _FB_CONTACTS=Object.assign({},_FB_CONTACTS,contactsMap);
+    statusEl.innerHTML='✅ Uploaded '+added+' contacts'+(skipped?' ('+skipped+' rows skipped — invalid phone number)':'');
+    renderAdminImport();
+  }catch(e){
+    console.error('Contacts upload error:',e);
+    statusEl.textContent='❌ Error: '+e.message;
+  }
+  input.value='';
+}
+window.handleContactsUpload=handleContactsUpload;
 
 // ── INIT ──
 var _appStarted=false;var _fbReady=false;
@@ -6394,6 +6587,18 @@ function onFbReady(){
     }
     // Re-render admin pending if open
     if($('ap-pending')&&$('ap-pending').classList.contains('on'))refreshData();renderAdminPending();
+  });
+
+  // Chats listener — real-time job/photo feed
+  window.FB.listen('chats',function(data){
+    DB.chats=data||{};
+    var ap=document.querySelector('.page.on');
+    if(ap&&ap.id==='pg-chats')renderChats();
+  });
+
+  // Admin-uploaded contacts (from Excel import) — supplements the built-in list
+  window.FB.listen('contacts',function(data){
+    _FB_CONTACTS=data||{};
   });
 }
 
