@@ -33,24 +33,20 @@ admin.initializeApp({
   databaseURL: 'https://fpjob26-default-rtdb.asia-southeast1.firebasedatabase.app'
 });
 
-// One-time setup:
-//   firebase functions:secrets:set GMAIL_USER   (value: fpjob.vkstech@gmail.com)
-//   firebase functions:secrets:set GMAIL_PASS   (value: a 16-character Gmail "App Password")
 const gmailUser = defineSecret('GMAIL_USER');
 const gmailPass = defineSecret('GMAIL_PASS');
 
-const ADMIN_PHONE_E164 = '+918929394920'; // must match ADMIN_PHONE in index.html, with +91 prefix
-const ADMIN_EMAIL = 'fpjob.vkstech@gmail.com'; // must match ADMIN_EMAIL in index.html
-const OTP_TTL_MS = 5 * 60 * 1000;    // code valid for 5 minutes
-const MIN_RESEND_GAP_MS = 45 * 1000; // don't allow re-sending more than once every 45s
+const ADMIN_PHONE_E164 = '+918929394920';
+const ADMIN_EMAIL = 'fpjob.vkstech@gmail.com';
+const OTP_TTL_MS = 5 * 60 * 1000;
+const MIN_RESEND_GAP_MS = 45 * 1000;
 const MAX_ATTEMPTS = 5;
-const OTP_DB_PATH = 'adminEmailLoginOtp/main'; // single fixed slot — there is only ever one admin
+const OTP_DB_PATH = 'adminEmailLoginOtp/main';
 
 function genCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-// ── Path A: phone already verified via Firebase Phone Auth client-side ──
 exports.grantAdminIfPhoneVerified = onCall({region: 'asia-south1'}, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Login required.');
@@ -62,13 +58,11 @@ exports.grantAdminIfPhoneVerified = onCall({region: 'asia-south1'}, async (reque
   return {success: true};
 });
 
-// ── Path B, step 1: email typed instead of phone ──
 exports.requestAdminEmailLoginOtp = onCall(
   {region: 'asia-south1', secrets: [gmailUser, gmailPass]},
   async (request) => {
     const suppliedEmail = ((request.data && request.data.email) || '').toString().trim().toLowerCase();
     if (suppliedEmail !== ADMIN_EMAIL) {
-      // Deliberately vague — never confirm/deny which emails are valid.
       throw new HttpsError('failed-precondition', 'Not authorized.');
     }
 
@@ -111,7 +105,6 @@ exports.requestAdminEmailLoginOtp = onCall(
   }
 );
 
-// ── Path B, step 2: verify the emailed code, then hand back a sign-in token ──
 exports.verifyAdminEmailLoginOtp = onCall({region: 'asia-south1'}, async (request) => {
   try {
     const code = ((request.data && request.data.code) || '').toString();
@@ -135,7 +128,6 @@ exports.verifyAdminEmailLoginOtp = onCall({region: 'asia-south1'}, async (reques
       throw new HttpsError('invalid-argument', 'Incorrect code.');
     }
 
-    // Correct. Clean up the OTP and issue a real session for the admin email account.
     await otpRef.remove();
 
     let userRecord;
@@ -155,13 +147,6 @@ exports.verifyAdminEmailLoginOtp = onCall({region: 'asia-south1'}, async (reques
   }
 });
 
-// ── Manager role (admin-only) ──
-// The Admin Panel already writes {role:'manager'} to the user's DB record directly
-// (admin has full DB write access). This function additionally grants/revokes a real,
-// server-verified custom claim on that manager's actual Firebase Auth account, which is
-// what the Realtime Database rules check before letting a "manager" write other members'
-// records. Without this, {role:'manager'} would only be a cosmetic DB field with nothing
-// stopping a non-manager from writing that field into their own record via the raw API.
 exports.setManagerRole = onCall({region: 'asia-south1'}, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Login required.');
