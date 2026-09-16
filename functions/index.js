@@ -29,9 +29,7 @@ const {defineSecret} = require('firebase-functions/params');
 const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
 
-admin.initializeApp({
-  databaseURL: 'https://fpjob26-default-rtdb.asia-southeast1.firebasedatabase.app'
-});
+admin.initializeApp();
 
 // One-time setup:
 //   firebase functions:secrets:set GMAIL_USER   (value: fpjob.vkstech@gmail.com)
@@ -39,7 +37,7 @@ admin.initializeApp({
 const gmailUser = defineSecret('GMAIL_USER');
 const gmailPass = defineSecret('GMAIL_PASS');
 
-const ADMIN_PHONE_E164 = '+918929397949'; // must match ADMIN_PHONE in index.html, with +91 prefix
+const ADMIN_PHONE_E164 = '+918929394920'; // must match ADMIN_PHONE in index.html, with +91 prefix
 const ADMIN_EMAIL = 'fpjob.vkstech@gmail.com'; // must match ADMIN_EMAIL in index.html
 const OTP_TTL_MS = 5 * 60 * 1000;    // code valid for 5 minutes
 const MIN_RESEND_GAP_MS = 45 * 1000; // don't allow re-sending more than once every 45s
@@ -72,87 +70,75 @@ exports.requestAdminEmailLoginOtp = onCall(
       throw new HttpsError('failed-precondition', 'Not authorized.');
     }
 
-    try {
-      const db = admin.database();
-      const otpRef = db.ref(OTP_DB_PATH);
-      const existing = (await otpRef.once('value')).val();
-      const now = Date.now();
-      if (existing && existing.lastSentAt && now - existing.lastSentAt < MIN_RESEND_GAP_MS) {
-        throw new HttpsError('resource-exhausted', 'Please wait a bit before requesting another code.');
-      }
-
-      const code = genCode();
-      await otpRef.set({
-        code,
-        createdAt: now,
-        expiresAt: now + OTP_TTL_MS,
-        lastSentAt: now,
-        attempts: 0,
-      });
-
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {user: gmailUser.value(), pass: gmailPass.value()},
-      });
-
-      await transporter.sendMail({
-        from: `"FPJob Admin Security" <${gmailUser.value()}>`,
-        to: ADMIN_EMAIL,
-        subject: 'FPJob Admin Login Code',
-        text: `Your admin login code is: ${code}\n\nExpires in 5 minutes. If you did not request this, you can ignore it.`,
-      });
-
-      return {success: true};
-    } catch (e) {
-      if (e instanceof HttpsError) throw e;
-      console.error('requestAdminEmailLoginOtp failed:', e);
-      throw new HttpsError('internal', 'Failed to send code: ' + (e && e.message ? e.message : String(e)));
+    const db = admin.database();
+    const otpRef = db.ref(OTP_DB_PATH);
+    const existing = (await otpRef.once('value')).val();
+    const now = Date.now();
+    if (existing && existing.lastSentAt && now - existing.lastSentAt < MIN_RESEND_GAP_MS) {
+      throw new HttpsError('resource-exhausted', 'Please wait a bit before requesting another code.');
     }
+
+    const code = genCode();
+    await otpRef.set({
+      code,
+      createdAt: now,
+      expiresAt: now + OTP_TTL_MS,
+      lastSentAt: now,
+      attempts: 0,
+    });
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {user: gmailUser.value(), pass: gmailPass.value()},
+    });
+
+    await transporter.sendMail({
+      from: `"FPJob Admin Security" <${gmailUser.value()}>`,
+      to: ADMIN_EMAIL,
+      subject: 'FPJob Admin Login Code',
+      text: `Your admin login code is: ${code}\n\nExpires in 5 minutes. If you did not request this, you can ignore it.`,
+    });
+
+    return {success: true};
   }
 );
 
 // ── Path B, step 2: verify the emailed code, then hand back a sign-in token ──
 exports.verifyAdminEmailLoginOtp = onCall({region: 'asia-south1'}, async (request) => {
-  try {
-    const code = ((request.data && request.data.code) || '').toString();
-    const db = admin.database();
-    const otpRef = db.ref(OTP_DB_PATH);
-    const record = (await otpRef.once('value')).val();
+  const code = ((request.data && request.data.code) || '').toString();
+  const db = admin.database();
+  const otpRef = db.ref(OTP_DB_PATH);
+  const record = (await otpRef.once('value')).val();
 
-    if (!record) {
-      throw new HttpsError('failed-precondition', 'No code requested. Please request a new one.');
-    }
-    if (Date.now() > record.expiresAt) {
-      await otpRef.remove();
-      throw new HttpsError('deadline-exceeded', 'Code expired. Please request a new one.');
-    }
-    if ((record.attempts || 0) >= MAX_ATTEMPTS) {
-      await otpRef.remove();
-      throw new HttpsError('resource-exhausted', 'Too many wrong attempts. Please request a new code.');
-    }
-    if (record.code !== code) {
-      await otpRef.update({attempts: (record.attempts || 0) + 1});
-      throw new HttpsError('invalid-argument', 'Incorrect code.');
-    }
-
-    // Correct. Clean up the OTP and issue a real session for the admin email account.
-    await otpRef.remove();
-
-    let userRecord;
-    try {
-      userRecord = await admin.auth().getUserByEmail(ADMIN_EMAIL);
-    } catch (e) {
-      userRecord = await admin.auth().createUser({email: ADMIN_EMAIL, emailVerified: true});
-    }
-    await admin.auth().setCustomUserClaims(userRecord.uid, {admin: true});
-    const token = await admin.auth().createCustomToken(userRecord.uid, {admin: true});
-
-    return {success: true, token};
-  } catch (e) {
-    if (e instanceof HttpsError) throw e;
-    console.error('verifyAdminEmailLoginOtp failed:', e);
-    throw new HttpsError('internal', 'Verification failed: ' + (e && e.message ? e.message : String(e)));
+  if (!record) {
+    throw new HttpsError('failed-precondition', 'No code requested. Please request a new one.');
   }
+  if (Date.now() > record.expiresAt) {
+    await otpRef.remove();
+    throw new HttpsError('deadline-exceeded', 'Code expired. Please request a new one.');
+  }
+  if ((record.attempts || 0) >= MAX_ATTEMPTS) {
+    await otpRef.remove();
+    throw new HttpsError('resource-exhausted', 'Too many wrong attempts. Please request a new code.');
+  }
+  if (record.code !== code) {
+    await otpRef.update({attempts: (record.attempts || 0) + 1});
+    throw new HttpsError('invalid-argument', 'Incorrect code.');
+  }
+
+  // Correct. Clean up the OTP and issue a real session for the admin email account.
+  await otpRef.remove();
+
+  let userRecord;
+  try {
+    userRecord = await admin.auth().getUserByEmail(ADMIN_EMAIL);
+  } catch (e) {
+    userRecord = await admin.auth().createUser({email: ADMIN_EMAIL, emailVerified: true});
+  }
+  await admin.auth().setCustomUserClaims(userRecord.uid, {admin: true});
+  const token = await admin.auth().createCustomToken(userRecord.uid, {admin: true});
+
+  return {success: true, token};
 });
 
 // ── Manager role (admin-only) ──
