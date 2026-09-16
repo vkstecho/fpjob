@@ -6341,10 +6341,10 @@ function renderAdminImport(){
     '<div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:16px">'+
       '<div style="font-size:14px;font-weight:700;margin-bottom:8px">✅ How it works</div>'+
       '<div style="font-size:13px;color:var(--text2);line-height:1.8">'+
-        '• Upload an Excel file above to add/update contacts anytime — no code changes needed<br>'+
-        '• Jab koi register karta hai, naam + company auto-fill hota hai<br>'+
-        '• Known contacts get auto-approved on OTP verification<br>'+
-        '• Unknown numbers go to Pending for your approval'+
+        '• Upload an Excel file above — every valid number becomes an approved member instantly, no waiting<br>'+
+        '• Re-uploading the same/updated file only adds numbers that aren\'t already members — existing ones are left untouched<br>'+
+        '• Jab woh khud OTP se login karte hain, seedha apni existing profile mein pahunch jaate hain<br>'+
+        '• Sirf woh numbers jo Excel mein nahi the — un unknown numbers hi Pending mein jaate hain approval ke liye'+
       '</div>'+
     '</div>'+
     '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px">'+
@@ -6392,6 +6392,12 @@ async function loadSmsUsage(){
 window.loadSmsUsage=loadSmsUsage;
 
 // ═══ Admin Excel Contact Upload ═══
+// Every valid row becomes BOTH a contacts-lookup entry AND, if that phone isn't already
+// a real user, an instant approved member — so uploading is what "registers" them, not
+// waiting for them to open the app. Re-uploading the same/updated file only touches
+// numbers that are actually new to /users; numbers already there (from this import or a
+// real signup) are left alone, matching by phone number (contacts/ is still refreshed for
+// everyone, since that's just lookup data used for name/company autofill).
 async function handleContactsUpload(input){
   var file=input.files&&input.files[0];
   if(!file)return;
@@ -6425,12 +6431,12 @@ async function handleContactsUpload(input){
     if(!kPhone){statusEl.textContent='❌ Could not find a "Mobile Number" column';return}
 
     statusEl.textContent='⏳ Processing '+rows.length+' rows...';
-    var contactsMap={};
-    var added=0,skipped=0;
+    var contactsMap={}; // keyed by 10-digit phone — de-dupes automatically, last row wins
+    var skippedInvalid=0;
     rows.forEach(function(row){
       var rawPhone=String(row[kPhone]||'').replace(/\D/g,'');
       var phone=rawPhone.length>10?rawPhone.slice(-10):rawPhone;
-      if(phone.length!==10){skipped++;return}
+      if(phone.length!==10){skippedInvalid++;return}
       var c={p:phone};
       if(kName&&row[kName])c.n=String(row[kName]).trim();
       if(kCo&&row[kCo])c.c=String(row[kCo]).trim();
@@ -6439,16 +6445,55 @@ async function handleContactsUpload(input){
       if(kEmail&&row[kEmail])c.email=String(row[kEmail]).trim();
       if(kAuth&&row[kAuth])c.k=String(row[kAuth]).trim();
       contactsMap[phone]=c;
-      added++;
     });
 
-    if(!added){statusEl.textContent='❌ No valid phone numbers found in file';return}
+    var phones=Object.keys(contactsMap);
+    var dupesInFile=rows.length-skippedInvalid-phones.length;
+    if(!phones.length){statusEl.textContent='❌ No valid phone numbers found in file';return}
 
-    statusEl.textContent='⏳ Saving '+added+' contacts to database...';
-    await fbRest.update('contacts',contactsMap);
+    // Which of these phones are already real /users records (from a previous import or an
+    // actual signup)? Only the ones that AREN'T get created as new members.
+    var existingPhones={};
+    usersArr().forEach(function(u){if(u.phone)existingPhones[u.phone]=true});
+    var usersMap={};
+    phones.forEach(function(phone){
+      if(existingPhones[phone])return;
+      var c=contactsMap[phone];
+      var uid='u_'+phone+'_excel';
+      usersMap[uid]={
+        id:uid,phone:phone,name:c.n||'',company:c.c||'',
+        designation:c.d||'',department:c.t||'',email:c.email||'',
+        category:c.k||getCategoryFromDesig(c.d||''),
+        status:'approved',source:'excel_import',registeredAt:new Date().toISOString()
+      };
+    });
+    var newMemberUids=Object.keys(usersMap);
+
+    // Send in chunks (not one giant request) so a large file can't silently fail/timeout —
+    // each chunk is a single multi-path update covering contacts/ and users/ together.
+    var CHUNK=300;
+    for(var i=0;i<phones.length;i+=CHUNK){
+      var chunkPhones=phones.slice(i,i+CHUNK);
+      var patch={};
+      chunkPhones.forEach(function(p){patch['contacts/'+p]=contactsMap[p]});
+      chunkPhones.forEach(function(p){
+        var uid='u_'+p+'_excel';
+        if(usersMap[uid])patch['users/'+uid]=usersMap[uid];
+      });
+      statusEl.textContent='⏳ Saving '+Math.min(i+CHUNK,phones.length)+' / '+phones.length+'...';
+      await fbRest.update('',patch);
+    }
+
     _FB_CONTACTS=Object.assign({},_FB_CONTACTS,contactsMap);
-    statusEl.innerHTML='✅ Uploaded '+added+' contacts'+(skipped?' ('+skipped+' rows skipped — invalid phone number)':'');
+    newMemberUids.forEach(function(uid){DB.users[uid]=usersMap[uid]});
+    statusEl.innerHTML='✅ '+phones.length+' contacts saved · '+newMemberUids.length+' added as new members'+
+      ((skippedInvalid||dupesInFile)?' <br><span style="color:var(--muted)">('+
+        [skippedInvalid?skippedInvalid+' rows had no valid 10-digit number':'',
+         dupesInFile?dupesInFile+' duplicate numbers in the file':'']
+        .filter(Boolean).join(' · ')+')</span>':'');
     renderAdminImport();
+    if(typeof renderAdminMembersAll==='function')renderAdminMembersAll();
+    refreshData().catch(function(){});
   }catch(e){
     console.error('Contacts upload error:',e);
     statusEl.textContent='❌ Error: '+e.message;
