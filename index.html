@@ -2008,6 +2008,10 @@ async function verifyOTP(){
     if(e.code==='auth/code-expired')msg='⏳ OTP expire ho gaya — Resend karo';
     if(e.code==='auth/invalid-verification-code')msg='❌ Galat OTP — sahi code daalo';
     if(!e.code&&e.message)msg='❌ '+e.message;
+    if(_loginMode==='admin-phone'){
+      // Debug mode for admin path — show the real error until this is confirmed fixed
+      msg='DEBUG code:'+(e&&e.code)+' | msg:'+(e&&e.message);
+    }
     showErr('err-otp',msg);
     // Clear OTP boxes
     for(var i=1;i<=6;i++){$('otp-'+i).value='';$('otp-'+i).classList.remove('filled')}
