@@ -1812,8 +1812,9 @@ function s1Next(){
 
   var ph=raw.replace(/\D/g,'');
   if(ph.length!==10){showErr('err1',t('err_phone')||'10 digit number daalo');return}
-  // Block removed users
-  var removedUser=usersArr().find(function(u){return u.phone===ph&&u.status==='removed'});
+  // Block removed users — but never the hardcoded admin number, which logs in on its
+  // own path regardless of anything stored about it in the users list.
+  var removedUser=(ph!==ADMIN_PHONE)&&usersArr().find(function(u){return u.phone===ph&&u.status==='removed'});
   if(removedUser){toast('🚫 Account removed — Admin se contact karo approval ke liye','err');return}
   curPhone=ph;
   _loginMode=(ph===ADMIN_PHONE)?'admin-phone':'user';
