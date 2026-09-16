@@ -1526,7 +1526,7 @@ var ME=null;
 var camStream=null;
 var photoB64='';
 var _firstTimeApproved=false;
-var curPhone="";var _loginAttempts=0;var _loginLockUntil=0;
+var curPhone="";var curAdminEmail="";var _loginAttempts=0;var _loginLockUntil=0;
 var jTypeF='all',jDeptF='all',mFilter='all';
 var _jobsShown=PAGE_SIZE,_memsShown=PAGE_SIZE; // pagination counters
 
@@ -1727,7 +1727,6 @@ function onPhone(inp){
   $('ph-pre-tag').style.display='';
   v=v.replace(/\D/g,'').slice(0,10);inp.value=v;
   if(v.length===10){
-    if(v===ADMIN_PHONE)return; // admin number — no member badge needed
     var au=usersArr().find(function(u){return u.phone===v&&u.status==='approved'});
     var ru=usersArr().find(function(u){return u.phone===v&&u.status==='revoked'});
     var rm=usersArr().find(function(u){return u.phone===v&&u.status==='removed'});
@@ -1814,10 +1813,12 @@ function s1Next(){
 
   var raw=($('ph-inp').value||'').trim();
 
-  // Admin email — typed in the SAME box, in place of a phone number
+  // Admin email — typed in the SAME box, in place of a phone number.
+  // No client-side check here: the Cloud Function is the only place that knows
+  // the real admin email, and it returns a deliberately vague error either way.
   if(raw.indexOf('@')!==-1){
     var email=raw.toLowerCase();
-    if(email!==ADMIN_EMAIL){showErr('err1','❌ Yeh email registered nahi hai');return}
+    curAdminEmail=email;
     sendAdminEmailOtp(email);
     return;
   }
@@ -1828,7 +1829,11 @@ function s1Next(){
   var removedUser=usersArr().find(function(u){return u.phone===ph&&u.status==='removed'});
   if(removedUser){toast('🚫 Account removed — Admin se contact karo approval ke liye','err');return}
   curPhone=ph;
-  _loginMode=(ph===ADMIN_PHONE)?'admin-phone':'user';
+  // No client-side admin-phone comparison: every phone goes through the normal
+  // OTP flow, and verifyOTP() always tries the admin grant first once the OTP
+  // is confirmed — the Cloud Function is the only place that knows the real
+  // admin phone.
+  _loginMode='user';
 
   // Check OTP rate limit (max 3 OTPs per phone per hour)
   var otpKey='otp_'+ph;
@@ -1935,9 +1940,15 @@ async function verifyOTP(){
     await _otpConfirmation.confirm(code);
     toast('✅ Phone verified!');
 
-    if(_loginMode==='admin-phone'){
+    // Always ask the server whether this just-verified phone is the admin phone —
+    // the client no longer knows the admin number itself, so it can't decide this
+    // locally. If the server says no (or the call fails), we just continue as a
+    // normal user below; grantAdminByPhone() only returns/redirects on success.
+    try{
       await grantAdminByPhone();
       return;
+    }catch(admErr){
+      console.log('Not admin phone — continuing as normal user login',admErr&&admErr.code);
     }
 
     // OTP verified — now route based on user type
@@ -2008,10 +2019,6 @@ async function verifyOTP(){
     if(e.code==='auth/code-expired')msg='⏳ OTP expire ho gaya — Resend karo';
     if(e.code==='auth/invalid-verification-code')msg='❌ Galat OTP — sahi code daalo';
     if(!e.code&&e.message)msg='❌ '+e.message;
-    if(_loginMode==='admin-phone'){
-      // Debug mode for admin path — show the real error until this is confirmed fixed
-      msg='DEBUG code:'+(e&&e.code)+' | msg:'+(e&&e.message);
-    }
     showErr('err-otp',msg);
     // Clear OTP boxes
     for(var i=1;i<=6;i++){$('otp-'+i).value='';$('otp-'+i).classList.remove('filled')}
@@ -2040,7 +2047,7 @@ function startResendTimer(){
 }
 
 function resendOTP(){
-  if(_loginMode==='admin-email'){sendAdminEmailOtp(ADMIN_EMAIL);return}
+  if(_loginMode==='admin-email'){sendAdminEmailOtp(curAdminEmail);return}
   if(!curPhone)return;
   // FIX: Properly clear reCAPTCHA before retry
   if(window._recaptchaVerifier){try{window._recaptchaVerifier.clear()}catch(x){}}
@@ -5366,8 +5373,9 @@ window.openManagementPanel=openManagementPanel;
 // Same box as normal login. Enter the admin PHONE -> normal SMS OTP -> instantly admin.
 // Enter the admin EMAIL in the same box, in place of a phone number -> email OTP -> instantly admin.
 // No separate "Admin Login" button/screen — s1Next()/onPhone() (defined earlier) route into this.
-var ADMIN_PHONE='8929397949';               // 10-digit, no +91 — must match Cloud Functions ADMIN_PHONE
-var ADMIN_EMAIL='fpjob.vkstech@gmail.com';  // must exactly match Cloud Functions ADMIN_EMAIL
+// SECURITY: the real admin phone/email live ONLY in the Cloud Functions (index.js) now — the
+// client never learns them, so view-source can't reveal who to target. Every login attempt goes
+// through the normal user flow; the server tells us if it was actually an admin.
 var _loginMode='user'; // 'user' | 'admin-phone' | 'admin-email' — read by verifyOTP()
 
 async function sendAdminEmailOtp(email){
@@ -5385,9 +5393,11 @@ async function sendAdminEmailOtp(email){
     startResendTimer();
     toast('📧 OTP sent to '+email);
   }catch(e){
+    // Generic message only — never surface e.code/e.message/e.details to the UI.
+    // The Cloud Function returns the same vague error whether the email was wrong
+    // or something else failed, so don't undo that here.
     console.error('Admin email OTP send error:',e);
-    var debugMsg='code:'+(e&&e.code)+' | msg:'+(e&&e.message)+' | details:'+JSON.stringify(e&&e.details);
-    showErr('err1',debugMsg);
+    showErr('err1','❌ Yeh email registered nahi hai');
   }
   btn.textContent=origText;btn.disabled=false;
 }
