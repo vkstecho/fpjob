@@ -5382,7 +5382,8 @@ async function sendAdminEmailOtp(email){
     toast('📧 OTP sent to '+email);
   }catch(e){
     console.error('Admin email OTP send error:',e);
-    showErr('err1',(e&&e.message)?e.message:'Error sending code — try again');
+    var debugMsg='code:'+(e&&e.code)+' | msg:'+(e&&e.message)+' | details:'+JSON.stringify(e&&e.details);
+    showErr('err1',debugMsg);
   }
   btn.textContent=origText;btn.disabled=false;
 }
