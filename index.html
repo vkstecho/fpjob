@@ -811,11 +811,11 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
     <button class="nav-btn on" id="nb-home" onclick="showPage('home')">
       <svg viewBox="0 0 24 24"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg>Home
     </button>
-    <button class="nav-btn" id="nb-chats" onclick="showPage('chats')">
-      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Chats
-    </button>
     <button class="nav-btn" id="nb-jobs" onclick="showPage('jobs')">
       <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>Jobs
+    </button>
+    <button class="nav-btn" id="nb-chats" onclick="showPage('chats')">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Chats
     </button>
     <button class="nav-btn" id="nb-members" onclick="showPage('members')">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Members
@@ -1018,7 +1018,6 @@ import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-ap
 import{getDatabase,ref,set,get,push,update,remove,onValue}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import{getAuth,RecaptchaVerifier,signInWithPhoneNumber,signInWithCustomToken}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import{getStorage,ref as sRef,uploadBytes,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-import{getFunctions,httpsCallable}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 const DB_URLS=["https://fpjob26-default-rtdb.asia-southeast1.firebasedatabase.app","https://fpjob26-default-rtdb.firebaseio.com"];
 function initFB(i){
   var cfg={apiKey:"AIzaSyDWVgkBEXfD1nmgHvccO7-im2jEPXsoMbM",authDomain:"fpjob26.firebaseapp.com",
@@ -1037,8 +1036,6 @@ function initFB(i){
     // Firebase Phone Auth
     window.FB_AUTH=getAuth(app);
     window.FB_AUTH.languageCode='hi';
-    // Firebase Functions (used for admin email-OTP 2nd factor)
-    window.FB_FUNCS=getFunctions(app,'asia-south1');
     // Firebase Storage for resume uploads
     window.FB_STORAGE=getStorage(app);
     window.FB_uploadFile=async function(path,file,onProgress){
@@ -1064,7 +1061,6 @@ initFB(0);
 window.FB_RecaptchaVerifier=RecaptchaVerifier;
 window.FB_signInWithPhoneNumber=signInWithPhoneNumber;
 window.FB_signInWithCustomToken=signInWithCustomToken;
-window.FB_httpsCallable=httpsCallable;
 setTimeout(function(){document.dispatchEvent(new Event('fb-ready'))},200);
 setTimeout(function(){if(!window._appStarted)document.dispatchEvent(new Event('fb-ready'))},5000);
 </script>
@@ -1086,7 +1082,7 @@ function isManager(){return ME&&ME.role==='manager'}
 function canManage(){return isAdmin()||isManager()}
 function getManagerCount(){return usersArr().filter(function(u){return u.role==='manager'&&u.status==='approved'}).length}
 window.isAdmin=isAdmin;window.isManager=isManager;window.canManage=canManage;
-var ADMIN_WA='918929397949';
+var ADMIN_WA='918929394920';
 var WA_GROUP_LINK='https://chat.whatsapp.com/YOUR_GROUP_INVITE_CODE'; // Change this to your actual group link
 var SESS_KEY='fpjob_sess';
 var FB_REST_URL='https://fpjob26-default-rtdb.asia-southeast1.firebasedatabase.app';
@@ -1526,7 +1522,7 @@ var ME=null;
 var camStream=null;
 var photoB64='';
 var _firstTimeApproved=false;
-var curPhone="";var curAdminEmail="";var _loginAttempts=0;var _loginLockUntil=0;
+var curPhone="";var _loginAttempts=0;var _loginLockUntil=0;
 var jTypeF='all',jDeptF='all',mFilter='all';
 var _jobsShown=PAGE_SIZE,_memsShown=PAGE_SIZE; // pagination counters
 
@@ -1727,6 +1723,7 @@ function onPhone(inp){
   $('ph-pre-tag').style.display='';
   v=v.replace(/\D/g,'').slice(0,10);inp.value=v;
   if(v.length===10){
+    if(v===ADMIN_PHONE)return; // admin number — no member badge needed
     var au=usersArr().find(function(u){return u.phone===v&&u.status==='approved'});
     var ru=usersArr().find(function(u){return u.phone===v&&u.status==='revoked'});
     var rm=usersArr().find(function(u){return u.phone===v&&u.status==='removed'});
@@ -1813,27 +1810,13 @@ function s1Next(){
 
   var raw=($('ph-inp').value||'').trim();
 
-  // Admin email — typed in the SAME box, in place of a phone number.
-  // No client-side check here: the Cloud Function is the only place that knows
-  // the real admin email, and it returns a deliberately vague error either way.
-  if(raw.indexOf('@')!==-1){
-    var email=raw.toLowerCase();
-    curAdminEmail=email;
-    sendAdminEmailOtp(email);
-    return;
-  }
-
   var ph=raw.replace(/\D/g,'');
   if(ph.length!==10){showErr('err1',t('err_phone')||'10 digit number daalo');return}
   // Block removed users
   var removedUser=usersArr().find(function(u){return u.phone===ph&&u.status==='removed'});
   if(removedUser){toast('🚫 Account removed — Admin se contact karo approval ke liye','err');return}
   curPhone=ph;
-  // No client-side admin-phone comparison: every phone goes through the normal
-  // OTP flow, and verifyOTP() always tries the admin grant first once the OTP
-  // is confirmed — the Cloud Function is the only place that knows the real
-  // admin phone.
-  _loginMode='user';
+  _loginMode=(ph===ADMIN_PHONE)?'admin-phone':'user';
 
   // Check OTP rate limit (max 3 OTPs per phone per hour)
   var otpKey='otp_'+ph;
@@ -1932,23 +1915,13 @@ async function verifyOTP(){
   btn.textContent='⏳ Verifying...';btn.disabled=true;
 
   try{
-    if(_loginMode==='admin-email'){
-      await verifyAdminEmailOtpAndSignIn(code);
-      return;
-    }
     if(!_otpConfirmation){toast('OTP session expired — dubara bhejo','err');goStep(1);return}
     await _otpConfirmation.confirm(code);
     toast('✅ Phone verified!');
 
-    // Always ask the server whether this just-verified phone is the admin phone —
-    // the client no longer knows the admin number itself, so it can't decide this
-    // locally. If the server says no (or the call fails), we just continue as a
-    // normal user below; grantAdminByPhone() only returns/redirects on success.
-    try{
-      await grantAdminByPhone();
+    if(_loginMode==='admin-phone'){
+      finishAdminLogin();
       return;
-    }catch(admErr){
-      console.log('Not admin phone — continuing as normal user login',admErr&&admErr.code);
     }
 
     // OTP verified — now route based on user type
@@ -2047,7 +2020,6 @@ function startResendTimer(){
 }
 
 function resendOTP(){
-  if(_loginMode==='admin-email'){sendAdminEmailOtp(curAdminEmail);return}
   if(!curPhone)return;
   // FIX: Properly clear reCAPTCHA before retry
   if(window._recaptchaVerifier){try{window._recaptchaVerifier.clear()}catch(x){}}
@@ -5369,57 +5341,14 @@ function openManagementPanel(){
 window.openManagementPanel=openManagementPanel;
 
 // ── Admin ──
-// ── Unified Admin Login ──
+// ── Admin Login ──
 // Same box as normal login. Enter the admin PHONE -> normal SMS OTP -> instantly admin.
-// Enter the admin EMAIL in the same box, in place of a phone number -> email OTP -> instantly admin.
-// No separate "Admin Login" button/screen — s1Next()/onPhone() (defined earlier) route into this.
-// SECURITY: the real admin phone/email live ONLY in the Cloud Functions (index.js) now — the
-// client never learns them, so view-source can't reveal who to target. Every login attempt goes
-// through the normal user flow; the server tells us if it was actually an admin.
-var _loginMode='user'; // 'user' | 'admin-phone' | 'admin-email' — read by verifyOTP()
-
-async function sendAdminEmailOtp(email){
-  var btn=$('l-s1').querySelector('.btn-blue');
-  var origText=btn.textContent;
-  btn.textContent='📧 Sending code...';btn.disabled=true;
-  try{
-    if(!window.FB_FUNCS){toast('Loading... wait a moment','err');btn.textContent=origText;btn.disabled=false;return}
-    var reqFn=window.FB_httpsCallable(window.FB_FUNCS,'requestAdminEmailLoginOtp');
-    await reqFn({email:email});
-    _loginMode='admin-email';
-    $('otp-sub').innerHTML='Code sent to <span id="otp-phone-display">'+email+'</span>';
-    for(var i=1;i<=6;i++){$('otp-'+i).value='';$('otp-'+i).classList.remove('filled')}
-    goStep(15);
-    startResendTimer();
-    toast('📧 OTP sent to '+email);
-  }catch(e){
-    // Generic message only — never surface e.code/e.message/e.details to the UI.
-    // The Cloud Function returns the same vague error whether the email was wrong
-    // or something else failed, so don't undo that here.
-    console.error('Admin email OTP send error:',e);
-    showErr('err1','❌ Yeh email registered nahi hai');
-  }
-  btn.textContent=origText;btn.disabled=false;
-}
-
-// Called by verifyOTP() when _loginMode==='admin-phone', right after Firebase phone OTP confirms.
-async function grantAdminByPhone(){
-  var grantFn=window.FB_httpsCallable(window.FB_FUNCS,'grantAdminIfPhoneVerified');
-  await grantFn();
-  if(window.FB_AUTH.currentUser)await window.FB_AUTH.currentUser.getIdToken(true);
-  finishAdminLogin();
-}
-
-// Called by verifyOTP() when _loginMode==='admin-email' — this path has no Firebase phone
-// session yet, so the Cloud Function verifies the emailed code and hands back a custom token.
-async function verifyAdminEmailOtpAndSignIn(code){
-  var verifyFn=window.FB_httpsCallable(window.FB_FUNCS,'verifyAdminEmailLoginOtp');
-  var res=await verifyFn({code:code});
-  var token=res&&res.data&&res.data.token;
-  if(!token)throw new Error('No session token returned');
-  await window.FB_signInWithCustomToken(window.FB_AUTH,token);
-  finishAdminLogin();
-}
+// No separate "Admin Login" button/screen — s1Next() (defined earlier) routes into this.
+// Admin status is decided purely by the Firebase-verified phone number matching ADMIN_PHONE
+// below, checked both here and in the Realtime Database rules (auth.token.phone_number) —
+// no Cloud Functions / custom claims / deployment step required.
+var ADMIN_PHONE='8929397949';  // 10-digit, no +91 — must match ADMIN_PHONE_E164 in database_rules.json
+var _loginMode='user'; // 'user' | 'admin-phone' — read by verifyOTP()
 
 function finishAdminLogin(){
   closeStep15Safely();
@@ -6037,8 +5966,11 @@ async function toggleManagerRole(uid, name, action){
     }
     try{
       await fbRest.update('users/'+uid,{role:'manager',madeManagerAt:new Date().toISOString()});
-      var grantFn=window.FB_httpsCallable(window.FB_FUNCS,'setManagerRole');
-      await grantFn({targetAuthUid:targetUser.authUid,make:true});
+      // Written directly under /managers by the admin — allowed because database_rules.json
+      // restricts writes to that node to auth.token.phone_number===ADMIN_PHONE. This is what
+      // the users/$uid rule actually checks (root.child('managers').child(auth.uid).val()),
+      // no Cloud Function call needed.
+      await fbRest.set('managers/'+targetUser.authUid,true);
       toast('👑 '+name+' ab Manager hai!');
       renderAdminMembersAll();
     }catch(e){toast('Error: '+e.message,'err')}
@@ -6047,8 +5979,7 @@ async function toggleManagerRole(uid, name, action){
     try{
       await fbRest.update('users/'+uid,{role:'',madeManagerAt:''});
       if(targetUser&&targetUser.authUid){
-        var revokeFn=window.FB_httpsCallable(window.FB_FUNCS,'setManagerRole');
-        await revokeFn({targetAuthUid:targetUser.authUid,make:false});
+        await fbRest.remove('managers/'+targetUser.authUid);
       }
       toast('✅ '+name+' ab regular member hai');
       renderAdminMembersAll();
