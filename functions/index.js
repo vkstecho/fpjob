@@ -3,7 +3,7 @@
  * --------------------------------------------
  * The app's login screen has ONE input box. Whatever the admin types there decides the path:
  *
- *   A) Types the admin PHONE (8929394920)
+ *   A) Types the admin PHONE (8929397949)
  *      -> normal Firebase Phone Auth SMS OTP happens entirely client-side (unchanged).
  *      -> once that OTP is confirmed, the client calls grantAdminIfPhoneVerified() here.
  *      -> we double-check the caller's Firebase Auth token really has phone_number === ADMIN_PHONE
@@ -37,7 +37,7 @@ admin.initializeApp();
 const gmailUser = defineSecret('GMAIL_USER');
 const gmailPass = defineSecret('GMAIL_PASS');
 
-const ADMIN_PHONE_E164 = '+918929394920'; // must match ADMIN_PHONE in index.html, with +91 prefix
+const ADMIN_PHONE_E164 = '+918929397949'; // the real admin phone, E.164 (client no longer holds this value)
 const ADMIN_EMAIL = 'fpjob.vkstech@gmail.com'; // must match ADMIN_EMAIL in index.html
 const OTP_TTL_MS = 5 * 60 * 1000;    // code valid for 5 minutes
 const MIN_RESEND_GAP_MS = 45 * 1000; // don't allow re-sending more than once every 45s
