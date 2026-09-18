@@ -811,11 +811,11 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
     <button class="nav-btn on" id="nb-home" onclick="showPage('home')">
       <svg viewBox="0 0 24 24"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg>Home
     </button>
-    <button class="nav-btn" id="nb-chats" onclick="showPage('chats')">
-      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Chats
-    </button>
     <button class="nav-btn" id="nb-jobs" onclick="showPage('jobs')">
       <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>Jobs
+    </button>
+    <button class="nav-btn" id="nb-chats" onclick="showPage('chats')">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Chats
     </button>
     <button class="nav-btn" id="nb-members" onclick="showPage('members')">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Members
@@ -1018,7 +1018,6 @@ import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-ap
 import{getDatabase,ref,set,get,push,update,remove,onValue}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import{getAuth,RecaptchaVerifier,signInWithPhoneNumber,signInWithCustomToken}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import{getStorage,ref as sRef,uploadBytes,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-import{getFunctions,httpsCallable}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 const DB_URLS=["https://fpjob26-default-rtdb.asia-southeast1.firebasedatabase.app","https://fpjob26-default-rtdb.firebaseio.com"];
 function initFB(i){
   var cfg={apiKey:"AIzaSyDWVgkBEXfD1nmgHvccO7-im2jEPXsoMbM",authDomain:"fpjob26.firebaseapp.com",
@@ -1037,8 +1036,6 @@ function initFB(i){
     // Firebase Phone Auth
     window.FB_AUTH=getAuth(app);
     window.FB_AUTH.languageCode='hi';
-    // Firebase Functions (used for admin email-OTP 2nd factor)
-    window.FB_FUNCS=getFunctions(app,'asia-south1');
     // Firebase Storage for resume uploads
     window.FB_STORAGE=getStorage(app);
     window.FB_uploadFile=async function(path,file,onProgress){
@@ -1064,7 +1061,6 @@ initFB(0);
 window.FB_RecaptchaVerifier=RecaptchaVerifier;
 window.FB_signInWithPhoneNumber=signInWithPhoneNumber;
 window.FB_signInWithCustomToken=signInWithCustomToken;
-window.FB_httpsCallable=httpsCallable;
 setTimeout(function(){document.dispatchEvent(new Event('fb-ready'))},200);
 setTimeout(function(){if(!window._appStarted)document.dispatchEvent(new Event('fb-ready'))},5000);
 </script>
@@ -1814,21 +1810,12 @@ function s1Next(){
 
   var raw=($('ph-inp').value||'').trim();
 
-  // Admin email — typed in the SAME box, in place of a phone number
-  if(raw.indexOf('@')!==-1){
-    var email=raw.toLowerCase();
-    if(email!==ADMIN_EMAIL){showErr('err1','❌ Yeh email registered nahi hai');return}
-    sendAdminEmailOtp(email);
-    return;
-  }
-
   var ph=raw.replace(/\D/g,'');
   if(ph.length!==10){showErr('err1',t('err_phone')||'10 digit number daalo');return}
-  // Block removed users (never applies to the admin number itself)
-  if(ph!==ADMIN_PHONE){
-    var removedUser=usersArr().find(function(u){return u.phone===ph&&u.status==='removed'});
-    if(removedUser){toast('🚫 Account removed — Admin se contact karo approval ke liye','err');return}
-  }
+  // Block removed users — but never the hardcoded admin number, which logs in on its
+  // own path regardless of anything stored about it in the users list.
+  var removedUser=(ph!==ADMIN_PHONE)&&usersArr().find(function(u){return u.phone===ph&&u.status==='removed'});
+  if(removedUser){toast('🚫 Account removed — Admin se contact karo approval ke liye','err');return}
   curPhone=ph;
   _loginMode=(ph===ADMIN_PHONE)?'admin-phone':'user';
 
@@ -1929,16 +1916,12 @@ async function verifyOTP(){
   btn.textContent='⏳ Verifying...';btn.disabled=true;
 
   try{
-    if(_loginMode==='admin-email'){
-      await verifyAdminEmailOtpAndSignIn(code);
-      return;
-    }
     if(!_otpConfirmation){toast('OTP session expired — dubara bhejo','err');goStep(1);return}
     await _otpConfirmation.confirm(code);
     toast('✅ Phone verified!');
 
     if(_loginMode==='admin-phone'){
-      await grantAdminByPhone();
+      finishAdminLogin();
       return;
     }
 
@@ -2010,10 +1993,6 @@ async function verifyOTP(){
     if(e.code==='auth/code-expired')msg='⏳ OTP expire ho gaya — Resend karo';
     if(e.code==='auth/invalid-verification-code')msg='❌ Galat OTP — sahi code daalo';
     if(!e.code&&e.message)msg='❌ '+e.message;
-    if(_loginMode==='admin-phone'){
-      // Debug mode for admin path — show the real error until this is confirmed fixed
-      msg='DEBUG code:'+(e&&e.code)+' | msg:'+(e&&e.message);
-    }
     showErr('err-otp',msg);
     // Clear OTP boxes
     for(var i=1;i<=6;i++){$('otp-'+i).value='';$('otp-'+i).classList.remove('filled')}
@@ -2042,7 +2021,6 @@ function startResendTimer(){
 }
 
 function resendOTP(){
-  if(_loginMode==='admin-email'){sendAdminEmailOtp(ADMIN_EMAIL);return}
   if(!curPhone)return;
   // FIX: Properly clear reCAPTCHA before retry
   if(window._recaptchaVerifier){try{window._recaptchaVerifier.clear()}catch(x){}}
@@ -2431,15 +2409,12 @@ function loadSession(){
     // Admin sessions or approved users
     if(s.status!=='approved'&&s.role!=='admin')return false;
     if(Date.now()-s._at>30*24*3600*1000){localStorage.removeItem(SESS_KEY);return false}
-    // Admin sessions aren't tied to a regular member record — skip the blocked check for them
-    if(s.role!=='admin'){
-      // Check if user was revoked or removed
-      var blocked=usersArr().find(function(u){return u.phone===s.phone&&(u.status==='revoked'||u.status==='removed')});
-      if(blocked){
-        localStorage.removeItem(SESS_KEY);
-        toast(blocked.status==='removed'?'🚫 Account removed — Admin se contact karo':'🔒 Access revoked — Admin se verify karo','err');
-        return false;
-      }
+    // Check if user was revoked or removed
+    var blocked=usersArr().find(function(u){return u.phone===s.phone&&(u.status==='revoked'||u.status==='removed')});
+    if(blocked){
+      localStorage.removeItem(SESS_KEY);
+      toast(blocked.status==='removed'?'🚫 Account removed — Admin se contact karo':'🔒 Access revoked — Admin se verify karo','err');
+      return false;
     }
     var fresh=usersArr().find(function(u){return u.phone===s.phone&&u.status==='approved'});
     ME=fresh||s;
@@ -5367,54 +5342,14 @@ function openManagementPanel(){
 window.openManagementPanel=openManagementPanel;
 
 // ── Admin ──
-// ── Unified Admin Login ──
+// ── Admin Login ──
 // Same box as normal login. Enter the admin PHONE -> normal SMS OTP -> instantly admin.
-// Enter the admin EMAIL in the same box, in place of a phone number -> email OTP -> instantly admin.
-// No separate "Admin Login" button/screen — s1Next()/onPhone() (defined earlier) route into this.
-var ADMIN_PHONE='8929397949';               // 10-digit, no +91 — must match Cloud Functions ADMIN_PHONE
-var ADMIN_EMAIL='fpjob.vkstech@gmail.com';  // must exactly match Cloud Functions ADMIN_EMAIL
-var _loginMode='user'; // 'user' | 'admin-phone' | 'admin-email' — read by verifyOTP()
-
-async function sendAdminEmailOtp(email){
-  var btn=$('l-s1').querySelector('.btn-blue');
-  var origText=btn.textContent;
-  btn.textContent='📧 Sending code...';btn.disabled=true;
-  try{
-    if(!window.FB_FUNCS){toast('Loading... wait a moment','err');btn.textContent=origText;btn.disabled=false;return}
-    var reqFn=window.FB_httpsCallable(window.FB_FUNCS,'requestAdminEmailLoginOtp');
-    await reqFn({email:email});
-    _loginMode='admin-email';
-    $('otp-sub').innerHTML='Code sent to <span id="otp-phone-display">'+email+'</span>';
-    for(var i=1;i<=6;i++){$('otp-'+i).value='';$('otp-'+i).classList.remove('filled')}
-    goStep(15);
-    startResendTimer();
-    toast('📧 OTP sent to '+email);
-  }catch(e){
-    console.error('Admin email OTP send error:',e);
-    var debugMsg='code:'+(e&&e.code)+' | msg:'+(e&&e.message)+' | details:'+JSON.stringify(e&&e.details);
-    showErr('err1',debugMsg);
-  }
-  btn.textContent=origText;btn.disabled=false;
-}
-
-// Called by verifyOTP() when _loginMode==='admin-phone', right after Firebase phone OTP confirms.
-async function grantAdminByPhone(){
-  var grantFn=window.FB_httpsCallable(window.FB_FUNCS,'grantAdminIfPhoneVerified');
-  await grantFn();
-  if(window.FB_AUTH.currentUser)await window.FB_AUTH.currentUser.getIdToken(true);
-  finishAdminLogin();
-}
-
-// Called by verifyOTP() when _loginMode==='admin-email' — this path has no Firebase phone
-// session yet, so the Cloud Function verifies the emailed code and hands back a custom token.
-async function verifyAdminEmailOtpAndSignIn(code){
-  var verifyFn=window.FB_httpsCallable(window.FB_FUNCS,'verifyAdminEmailLoginOtp');
-  var res=await verifyFn({code:code});
-  var token=res&&res.data&&res.data.token;
-  if(!token)throw new Error('No session token returned');
-  await window.FB_signInWithCustomToken(window.FB_AUTH,token);
-  finishAdminLogin();
-}
+// No separate "Admin Login" button/screen — s1Next() (defined earlier) routes into this.
+// Admin status is decided purely by the Firebase-verified phone number matching ADMIN_PHONE
+// below, checked both here and in the Realtime Database rules (auth.token.phone_number) —
+// no Cloud Functions / custom claims / deployment step required.
+var ADMIN_PHONE='8929397949';  // 10-digit, no +91 — must match ADMIN_PHONE_E164 in database_rules.json
+var _loginMode='user'; // 'user' | 'admin-phone' — read by verifyOTP()
 
 function finishAdminLogin(){
   closeStep15Safely();
@@ -6032,8 +5967,11 @@ async function toggleManagerRole(uid, name, action){
     }
     try{
       await fbRest.update('users/'+uid,{role:'manager',madeManagerAt:new Date().toISOString()});
-      var grantFn=window.FB_httpsCallable(window.FB_FUNCS,'setManagerRole');
-      await grantFn({targetAuthUid:targetUser.authUid,make:true});
+      // Written directly under /managers by the admin — allowed because database_rules.json
+      // restricts writes to that node to auth.token.phone_number===ADMIN_PHONE. This is what
+      // the users/$uid rule actually checks (root.child('managers').child(auth.uid).val()),
+      // no Cloud Function call needed.
+      await fbRest.set('managers/'+targetUser.authUid,true);
       toast('👑 '+name+' ab Manager hai!');
       renderAdminMembersAll();
     }catch(e){toast('Error: '+e.message,'err')}
@@ -6042,8 +5980,7 @@ async function toggleManagerRole(uid, name, action){
     try{
       await fbRest.update('users/'+uid,{role:'',madeManagerAt:''});
       if(targetUser&&targetUser.authUid){
-        var revokeFn=window.FB_httpsCallable(window.FB_FUNCS,'setManagerRole');
-        await revokeFn({targetAuthUid:targetUser.authUid,make:false});
+        await fbRest.remove('managers/'+targetUser.authUid);
       }
       toast('✅ '+name+' ab regular member hai');
       renderAdminMembersAll();
@@ -6404,10 +6341,10 @@ function renderAdminImport(){
     '<div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:16px">'+
       '<div style="font-size:14px;font-weight:700;margin-bottom:8px">✅ How it works</div>'+
       '<div style="font-size:13px;color:var(--text2);line-height:1.8">'+
-        '• Upload an Excel file above to add/update contacts anytime — no code changes needed<br>'+
-        '• Jab koi register karta hai, naam + company auto-fill hota hai<br>'+
-        '• Known contacts get auto-approved on OTP verification<br>'+
-        '• Unknown numbers go to Pending for your approval'+
+        '• Upload an Excel file above — every valid number becomes an approved member instantly, no waiting<br>'+
+        '• Re-uploading the same/updated file only adds numbers that aren\'t already members — existing ones are left untouched<br>'+
+        '• Jab woh khud OTP se login karte hain, seedha apni existing profile mein pahunch jaate hain<br>'+
+        '• Sirf woh numbers jo Excel mein nahi the — un unknown numbers hi Pending mein jaate hain approval ke liye'+
       '</div>'+
     '</div>'+
     '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px">'+
@@ -6455,6 +6392,12 @@ async function loadSmsUsage(){
 window.loadSmsUsage=loadSmsUsage;
 
 // ═══ Admin Excel Contact Upload ═══
+// Every valid row becomes BOTH a contacts-lookup entry AND, if that phone isn't already
+// a real user, an instant approved member — so uploading is what "registers" them, not
+// waiting for them to open the app. Re-uploading the same/updated file only touches
+// numbers that are actually new to /users; numbers already there (from this import or a
+// real signup) are left alone, matching by phone number (contacts/ is still refreshed for
+// everyone, since that's just lookup data used for name/company autofill).
 async function handleContactsUpload(input){
   var file=input.files&&input.files[0];
   if(!file)return;
@@ -6488,12 +6431,12 @@ async function handleContactsUpload(input){
     if(!kPhone){statusEl.textContent='❌ Could not find a "Mobile Number" column';return}
 
     statusEl.textContent='⏳ Processing '+rows.length+' rows...';
-    var contactsMap={};
-    var added=0,skipped=0;
+    var contactsMap={}; // keyed by 10-digit phone — de-dupes automatically, last row wins
+    var skippedInvalid=0;
     rows.forEach(function(row){
       var rawPhone=String(row[kPhone]||'').replace(/\D/g,'');
       var phone=rawPhone.length>10?rawPhone.slice(-10):rawPhone;
-      if(phone.length!==10){skipped++;return}
+      if(phone.length!==10){skippedInvalid++;return}
       var c={p:phone};
       if(kName&&row[kName])c.n=String(row[kName]).trim();
       if(kCo&&row[kCo])c.c=String(row[kCo]).trim();
@@ -6502,50 +6445,55 @@ async function handleContactsUpload(input){
       if(kEmail&&row[kEmail])c.email=String(row[kEmail]).trim();
       if(kAuth&&row[kAuth])c.k=String(row[kAuth]).trim();
       contactsMap[phone]=c;
-      added++;
     });
 
-    if(!added){statusEl.textContent='❌ No valid phone numbers found in file';return}
+    var phones=Object.keys(contactsMap);
+    var dupesInFile=rows.length-skippedInvalid-phones.length;
+    if(!phones.length){statusEl.textContent='❌ No valid phone numbers found in file';return}
 
-    statusEl.textContent='⏳ Saving '+added+' contacts to database...';
-    await fbRest.update('contacts',contactsMap);
-    _FB_CONTACTS=Object.assign({},_FB_CONTACTS,contactsMap);
-
-    // Also create/update approved Member records so they show up in Members immediately —
-    // but never overwrite someone who has already registered/logged in themselves for real.
-    statusEl.textContent='⏳ Creating member profiles...';
-    var existingByPhone={};
-    usersArr().forEach(function(u){if(u.phone)existingByPhone[u.phone]=u});
+    // Which of these phones are already real /users records (from a previous import or an
+    // actual signup)? Only the ones that AREN'T get created as new members.
+    var existingPhones={};
+    usersArr().forEach(function(u){if(u.phone)existingPhones[u.phone]=true});
     var usersMap={};
-    var newMembers=0,skippedExisting=0;
-    Object.keys(contactsMap).forEach(function(phone){
+    phones.forEach(function(phone){
+      if(existingPhones[phone])return;
       var c=contactsMap[phone];
-      var existing=existingByPhone[phone];
-      if(existing&&existing.otpVerified){skippedExisting++;return} // real person already registered — leave them alone
-      var uid=existing?existing.id:('u_'+phone+'_import');
+      var uid='u_'+phone+'_excel';
       usersMap[uid]={
-        id:uid,phone:phone,
-        name:c.n||'—',
-        designation:c.d||'',
-        department:c.t||'',
-        company:c.c||'',
-        email:c.email||'',
+        id:uid,phone:phone,name:c.n||'',company:c.c||'',
+        designation:c.d||'',department:c.t||'',email:c.email||'',
         category:c.k||getCategoryFromDesig(c.d||''),
-        status:'approved',
-        registeredAt:(existing&&existing.registeredAt)||new Date().toISOString(),
-        source:'excel_import',
-        otpVerified:false
+        status:'approved',source:'excel_import',registeredAt:new Date().toISOString()
       };
-      newMembers++;
     });
-    if(Object.keys(usersMap).length){
-      await fbRest.update('users',usersMap);
+    var newMemberUids=Object.keys(usersMap);
+
+    // Send in chunks (not one giant request) so a large file can't silently fail/timeout —
+    // each chunk is a single multi-path update covering contacts/ and users/ together.
+    var CHUNK=300;
+    for(var i=0;i<phones.length;i+=CHUNK){
+      var chunkPhones=phones.slice(i,i+CHUNK);
+      var patch={};
+      chunkPhones.forEach(function(p){patch['contacts/'+p]=contactsMap[p]});
+      chunkPhones.forEach(function(p){
+        var uid='u_'+p+'_excel';
+        if(usersMap[uid])patch['users/'+uid]=usersMap[uid];
+      });
+      statusEl.textContent='⏳ Saving '+Math.min(i+CHUNK,phones.length)+' / '+phones.length+'...';
+      await fbRest.update('',patch);
     }
 
-    statusEl.innerHTML='✅ Uploaded '+added+' contacts — '+newMembers+' added/updated as Members'+
-      (skippedExisting?' ('+skippedExisting+' already real members, left untouched)':'')+
-      (skipped?' · '+skipped+' rows skipped (invalid phone)':'');
+    _FB_CONTACTS=Object.assign({},_FB_CONTACTS,contactsMap);
+    newMemberUids.forEach(function(uid){DB.users[uid]=usersMap[uid]});
+    statusEl.innerHTML='✅ '+phones.length+' contacts saved · '+newMemberUids.length+' added as new members'+
+      ((skippedInvalid||dupesInFile)?' <br><span style="color:var(--muted)">('+
+        [skippedInvalid?skippedInvalid+' rows had no valid 10-digit number':'',
+         dupesInFile?dupesInFile+' duplicate numbers in the file':'']
+        .filter(Boolean).join(' · ')+')</span>':'');
     renderAdminImport();
+    if(typeof renderAdminMembersAll==='function')renderAdminMembersAll();
+    refreshData().catch(function(){});
   }catch(e){
     console.error('Contacts upload error:',e);
     statusEl.textContent='❌ Error: '+e.message;
