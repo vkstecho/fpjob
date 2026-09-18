@@ -2433,7 +2433,21 @@ function enterApp(){enterAppWithFP()}
 // ════════════════════════════════════
 var FP_KEY='fpjob_fp_enrolled';
 
-function isBiometricAvailable(){return window.PublicKeyCredential!==undefined}
+// isBiometricAvailable() used to just check that the WebAuthn API exists
+// (window.PublicKeyCredential!==undefined), which is true on almost every
+// modern browser/WebView even when the device has NO working platform
+// authenticator (no fingerprint sensor registered, or a WebView that can't
+// reach it). That made the app enroll/offer fingerprint login on devices
+// where it could never actually succeed, and enterAppWithFP always fell
+// back to the "Failed — try again or use password" screen forever.
+// Do the real capability check (async) once at load and cache the result.
+var _platformAuthAvailable=(window.PublicKeyCredential!==undefined); // optimistic default until real check resolves
+if(window.PublicKeyCredential&&PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable){
+  PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+    .then(function(ok){_platformAuthAvailable=ok})
+    .catch(function(){_platformAuthAvailable=false});
+}
+function isBiometricAvailable(){return _platformAuthAvailable}
 
 async function enrollFingerprint(user){
   if(!isBiometricAvailable())return false;
@@ -2488,14 +2502,31 @@ function showFingerprintScreen(user,onSuccess){
   window._fpOnSuccess=onSuccess;window._fpUser=user;
 }
 
+var _fpFailCount=0;
 async function doFingerprint(){
   var ring=$('fp-ring'),status=$('fp-status');
   ring.className='fp-ring scanning';status.textContent='Verifying... 🔍';
   var ok=await verifyFingerprint(window._fpUser.phone);
   if(ok){
+    _fpFailCount=0;
     ring.className='fp-ring success';status.textContent='✅ Verified!';
     setTimeout(function(){$('fp-screen').classList.remove('show');if(window._fpOnSuccess)window._fpOnSuccess()},600);
-  }else{ring.className='fp-ring error';status.textContent='❌ Failed — try again or use password'}
+  }else{
+    _fpFailCount++;
+    ring.className='fp-ring error';
+    // A credential that keeps failing on THIS device (cleared browser data,
+    // OS biometrics reset, different WebView instance, etc.) will never
+    // start working again — retrying just traps the user on this screen.
+    // After 2 failures, clear the stale enrollment and drop to password
+    // automatically instead of leaving them stuck tapping a dead sensor.
+    if(_fpFailCount>=2){
+      try{localStorage.removeItem(FP_KEY+'_'+window._fpUser.phone)}catch(e){}
+      status.textContent='❌ Fingerprint not working here — switching to password';
+      setTimeout(function(){_fpFailCount=0;fpSkip()},1200);
+    }else{
+      status.textContent='❌ Failed — try again or use password';
+    }
+  }
 }
 window.doFingerprint=doFingerprint;
 
@@ -2512,7 +2543,10 @@ function enterAppWithFP(){
   // onFbReady, before login) runs with no auth session and gets a permission-denied
   // from the database rules — Firebase's realtime listener doesn't auto-retry after
   // that, so without this it stays empty for the rest of the session.
-  if(window.FB)window.FB.listen('contacts',function(data){_FB_CONTACTS=data||{}});
+  if(window.FB)window.FB.listen('contacts',function(data){
+    _FB_CONTACTS=data||{};
+    if($('ap-import')&&$('ap-import').classList.contains('on'))renderAdminImport();
+  });
   var h=new Date().getHours();
   var greetKey=h<12?'greeting_morning':h<17?'greeting_afternoon':'greeting_evening';
   $('greeting').textContent=t(greetKey)+', '+(ME.name||'').split(' ')[0]+'!';
@@ -6312,7 +6346,16 @@ function renderAdminImport(){
   var el=$('ap-import');
   if(!el)return;
   var fbCount=Object.keys(_FB_CONTACTS||{}).length;
-  var totalContacts=_IMPORT_CONTACTS.length+fbCount;
+  // TOTAL CONTACTS used to be _IMPORT_CONTACTS.length+fbCount (a plain sum).
+  // But getContactByPhone() treats _FB_CONTACTS as an override for numbers
+  // that already exist in _IMPORT_CONTACTS ("Firebase-uploaded contacts take
+  // priority"), so any phone present in both lists was counted twice —
+  // inflating TOTAL CONTACTS and making it drift from REGISTERED, which
+  // counts unique phone numbers. Count unique phones instead.
+  var _allPhones={};
+  _IMPORT_CONTACTS.forEach(function(c){if(c.p)_allPhones[c.p]=true});
+  Object.keys(_FB_CONTACTS||{}).forEach(function(p){_allPhones[p]=true});
+  var totalContacts=Object.keys(_allPhones).length;
   var withName=_IMPORT_CONTACTS.filter(function(c){return c.n}).length+Object.values(_FB_CONTACTS||{}).filter(function(c){return c.n}).length;
   var withCo=_IMPORT_CONTACTS.filter(function(c){return c.c}).length+Object.values(_FB_CONTACTS||{}).filter(function(c){return c.c}).length;
   var registered=usersArr().filter(function(u){return u.status==='approved'}).length;
@@ -6699,9 +6742,16 @@ function onFbReady(){
     if(ap&&ap.id==='pg-chats')renderChats();
   });
 
-  // Admin-uploaded contacts (from Excel import) — supplements the built-in list
+  // Admin-uploaded contacts (from Excel import) — supplements the built-in list.
+  // This listener resolves asynchronously, often AFTER the admin has already
+  // opened the Contacts tab (renderAdminImport ran once with _FB_CONTACTS
+  // still {}). That race is why TOTAL CONTACTS / FROM EXCEL UPLOAD could show
+  // stale/zero numbers next to an accurate, differently-sourced REGISTERED
+  // count. Re-render the panel whenever fresh data actually lands, if it's
+  // the tab currently on screen.
   window.FB.listen('contacts',function(data){
     _FB_CONTACTS=data||{};
+    if($('ap-import')&&$('ap-import').classList.contains('on'))renderAdminImport();
   });
 }
 
