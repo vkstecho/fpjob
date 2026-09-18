@@ -675,7 +675,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
   </div>
 
   <!-- HOME PAGE -->
-  <div id="pg-home" class="page on">
+  <div id="pg-home" class="page">
     <!-- Hero greeting strip -->
     <div style="padding:20px 16px 16px;position:relative">
       <div id="greeting" style="font-family:var(--font-head);font-size:34px;font-weight:900;margin-bottom:4px;line-height:1.1;color:var(--ink);letter-spacing:-.5px"></div>
@@ -781,7 +781,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
   </div>
 
   <!-- CHATS PAGE (WhatsApp-group-style job/photo feed) -->
-  <div id="pg-chats" class="page" style="flex-direction:column;height:100%">
+  <div id="pg-chats" class="page on" style="flex-direction:column;height:100%">
     <div style="padding:20px 16px 10px;flex-shrink:0">
       <div class="sec-eyebrow">◆ JOB UPDATES</div>
       <div style="font-family:var(--font-head);font-size:32px;font-weight:900;color:var(--ink);letter-spacing:-.5px;line-height:1">Chats</div>
@@ -808,14 +808,14 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 <!-- Bottom Nav -->
 <nav id="nav">
   <div class="nav-items">
-    <button class="nav-btn on" id="nb-home" onclick="showPage('home')">
+    <button class="nav-btn on" id="nb-chats" onclick="showPage('chats')">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Chats
+    </button>
+    <button class="nav-btn" id="nb-home" onclick="showPage('home')">
       <svg viewBox="0 0 24 24"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg>Home
     </button>
     <button class="nav-btn" id="nb-jobs" onclick="showPage('jobs')">
       <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>Jobs
-    </button>
-    <button class="nav-btn" id="nb-chats" onclick="showPage('chats')">
-      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Chats
     </button>
     <button class="nav-btn" id="nb-members" onclick="showPage('members')">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Members
@@ -2505,7 +2505,7 @@ function enterAppWithFP(){
   var wasFirstTime=!isFingerprintEnrolled(ME.phone);
   // Track device on every app entry
   saveDeviceInfo(ME.id);
-  showScr('app');showPage('home');
+  showScr('app');showPage('chats');
   renderHdrPic();startListeners();
   var h=new Date().getHours();
   var greetKey=h<12?'greeting_morning':h<17?'greeting_afternoon':'greeting_evening';
@@ -6324,6 +6324,7 @@ function renderAdminImport(){
       '<button class="btn btn-blue" style="width:100%" onclick="document.getElementById(\'contacts-xlsx-input\').click()">📁 Choose Excel File</button>'+
       '<div id="contacts-upload-status" style="margin-top:10px;font-size:13px;color:var(--text2)"></div>'+
     '</div>'+
+    '<div id="last-upload-card"></div>'+
     '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px">'+
       '<div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center">'+
         '<div style="font-size:28px;font-weight:800;color:var(--primary)">'+totalContacts+'</div>'+
@@ -6356,8 +6357,30 @@ function renderAdminImport(){
       '</div>'+
     '</div>';
   loadSmsUsage();
+  loadLastUploadSummary();
 }
 window.renderAdminImport=renderAdminImport;
+
+async function loadLastUploadSummary(){
+  var card=$('last-upload-card');
+  if(!card)return;
+  try{
+    var s=await fbRest.get('contacts_meta/lastUpload');
+    if(!s){card.innerHTML='';return}
+    card.innerHTML=
+      '<div style="padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:16px">'+
+        '<div style="font-size:13px;font-weight:700;margin-bottom:6px">🧾 Last upload'+(s.fileName?': '+s.fileName:'')+' — '+timeAgo(s.at)+'</div>'+
+        '<div style="font-size:12px;color:var(--text2);line-height:1.8">'+
+          s.rowsInFile+' rows in file'+
+          (s.skippedInvalid?' → '+s.skippedInvalid+' skipped (invalid number)':'')+
+          (s.dupesInFile?' → '+s.dupesInFile+' duplicate numbers in file':'')+
+          ' → '+s.uniqueValid+' unique valid numbers'+
+          ' → '+s.alreadyKnown+' already existing (updated) · '+s.newMembers+' new members added'+
+        '</div>'+
+      '</div>';
+  }catch(e){card.innerHTML=''}
+}
+window.loadLastUploadSummary=loadLastUploadSummary;
 
 async function loadSmsUsage(){
   var card=$('sms-usage-card');
@@ -6486,6 +6509,18 @@ async function handleContactsUpload(input){
 
     _FB_CONTACTS=Object.assign({},_FB_CONTACTS,contactsMap);
     newMemberUids.forEach(function(uid){DB.users[uid]=usersMap[uid]});
+
+    // Persist a summary of THIS upload specifically — the stat cards below show running
+    // totals across every upload ever done, which on their own don't explain why e.g.
+    // "2733 rows" turned into "2719 from excel upload". This is what reconciles it.
+    var uploadSummary={
+      fileName:file.name||'',at:new Date().toISOString(),
+      rowsInFile:rows.length,skippedInvalid:skippedInvalid,dupesInFile:dupesInFile,
+      uniqueValid:phones.length,alreadyKnown:phones.length-newMemberUids.length,
+      newMembers:newMemberUids.length
+    };
+    fbRest.set('contacts_meta/lastUpload',uploadSummary).catch(function(){});
+
     statusEl.innerHTML='✅ '+phones.length+' contacts saved · '+newMemberUids.length+' added as new members'+
       ((skippedInvalid||dupesInFile)?' <br><span style="color:var(--muted)">('+
         [skippedInvalid?skippedInvalid+' rows had no valid 10-digit number':'',

@@ -27,6 +27,12 @@
     },
 
     "contacts": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.phone_number === '+918929397949'"
+    },
+
+    "contacts_meta": {
+      ".read": "auth != null && auth.token.phone_number === '+918929397949'",
       ".write": "auth != null && auth.token.phone_number === '+918929397949'"
     },
 
