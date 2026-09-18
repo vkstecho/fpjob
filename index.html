@@ -2056,7 +2056,7 @@ async function sendLoginRequest(){
       toast('❌ Yeh number registered nahi hai — Pehle register karo','err');
       btn.textContent=origText;btn.disabled=false;return;
     }
-    if(u.status==='revoked'||u.status==='removed'){
+    if(ph!==ADMIN_PHONE&&(u.status==='revoked'||u.status==='removed')){
       toast('🔒 Access revoked hai — Dubara register karo, admin approval lagega','err');
       btn.textContent=origText;btn.disabled=false;return;
     }
@@ -2409,8 +2409,9 @@ function loadSession(){
     // Admin sessions or approved users
     if(s.status!=='approved'&&s.role!=='admin')return false;
     if(Date.now()-s._at>30*24*3600*1000){localStorage.removeItem(SESS_KEY);return false}
-    // Check if user was revoked or removed
-    var blocked=usersArr().find(function(u){return u.phone===s.phone&&(u.status==='revoked'||u.status==='removed')});
+    // Check if user was revoked or removed — never the hardcoded admin number, which
+    // (like at login) doesn't depend on anything stored in the users list about it.
+    var blocked=(s.phone!==ADMIN_PHONE)&&usersArr().find(function(u){return u.phone===s.phone&&(u.status==='revoked'||u.status==='removed')});
     if(blocked){
       localStorage.removeItem(SESS_KEY);
       toast(blocked.status==='removed'?'🚫 Account removed — Admin se contact karo':'🔒 Access revoked — Admin se verify karo','err');
@@ -2507,6 +2508,11 @@ function enterAppWithFP(){
   saveDeviceInfo(ME.id);
   showScr('app');showPage('chats');
   renderHdrPic();startListeners();
+  // Re-subscribe to 'contacts' now that we're authenticated. The first attempt (in
+  // onFbReady, before login) runs with no auth session and gets a permission-denied
+  // from the database rules — Firebase's realtime listener doesn't auto-retry after
+  // that, so without this it stays empty for the rest of the session.
+  if(window.FB)window.FB.listen('contacts',function(data){_FB_CONTACTS=data||{}});
   var h=new Date().getHours();
   var greetKey=h<12?'greeting_morning':h<17?'greeting_afternoon':'greeting_evening';
   $('greeting').textContent=t(greetKey)+', '+(ME.name||'').split(' ')[0]+'!';
@@ -6614,8 +6620,9 @@ function onFbReady(){
     DB.users=data||{};
     if(!_appStarted)tryStart();
     else{
-      // Auto-kick if current user was revoked
-      if(ME&&ME.phone){
+      // Auto-kick if current user was revoked — never the hardcoded admin number,
+      // whose access never depends on anything stored about it in the users list.
+      if(ME&&ME.phone&&ME.phone!==ADMIN_PHONE){
         var freshMe=usersArr().find(function(u){return u.phone===ME.phone});
         if(freshMe&&(freshMe.status==='revoked'||freshMe.status==='removed')){
           ME=null;localStorage.removeItem(SESS_KEY);
