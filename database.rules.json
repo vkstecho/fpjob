@@ -1,43 +1,56 @@
 {
   "rules": {
-    ".read": true,
-    ".write": "auth != null",
-
     "login_requests": {
+      ".read": "auth != null && auth.token.phone_number === '+918929397949'",
       ".write": true
     },
 
     "otpLog": {
-      ".read": "auth != null && auth.token.admin === true",
+      ".read": "auth != null && auth.token.phone_number === '+918929397949'",
       ".write": true
     },
 
-    "adminEmailLoginOtp": {
-      ".read": false,
-      ".write": false
+    "managers": {
+      ".write": "auth != null && auth.token.phone_number === '+918929397949'",
+      "$uid": {
+        ".read": "auth != null && (auth.token.phone_number === '+918929397949' || auth.uid === $uid)"
+      }
     },
 
     "chats": {
       ".read": "auth != null",
       "$mid": {
-        ".write": "auth != null && (auth.token.admin === true || (!data.exists() && ('+91'+newData.child('authorPhone').val()) === auth.token.phone_number) || (data.exists() && ('+91'+data.child('authorPhone').val()) === auth.token.phone_number))"
+        ".write": "auth != null && (auth.token.phone_number === '+918929397949' || (!data.exists() && ('+91'+newData.child('authorPhone').val()) === auth.token.phone_number) || (data.exists() && ('+91'+data.child('authorPhone').val()) === auth.token.phone_number))"
       }
     },
 
     "contacts": {
-      ".write": "auth != null && auth.token.admin === true"
+      ".read": true,
+      ".write": "auth != null && auth.token.phone_number === '+918929397949'"
+    },
+
+    "contacts_meta": {
+      ".read": "auth != null && auth.token.phone_number === '+918929397949'",
+      ".write": "auth != null && auth.token.phone_number === '+918929397949'"
     },
 
     "users": {
+      ".read": true,
       ".indexOn": ["phone", "status", "category"],
       "$uid": {
-        ".write": "auth != null && (auth.token.admin === true || (auth.token.manager === true && (!data.exists() || (data.child('role').val() !== 'admin' && data.child('role').val() !== 'manager'))) || (!data.exists() && ('+91'+newData.child('phone').val()) === auth.token.phone_number) || (data.exists() && ('+91'+data.child('phone').val()) === auth.token.phone_number))"
+        ".write": "auth != null && (auth.token.phone_number === '+918929397949' || (root.child('managers').child(auth.uid).val() === true && (!data.exists() || (data.child('role').val() !== 'admin' && data.child('role').val() !== 'manager'))) || (!data.exists() && ('+91'+newData.child('phone').val()) === auth.token.phone_number) || (data.exists() && ('+91'+data.child('phone').val()) === auth.token.phone_number))"
       }
     },
+
     "jobs": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.phone_number === '+918929397949' || root.child('managers').child(auth.uid).val() === true)",
       ".indexOn": ["status", "postedAt", "type"]
     },
+
     "notifications": {
+      ".read": "auth != null",
+      ".write": "auth != null && (auth.token.phone_number === '+918929397949' || root.child('managers').child(auth.uid).val() === true)",
       ".indexOn": ["status", "createdAt"]
     }
   }

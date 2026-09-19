@@ -1042,7 +1042,11 @@ function initFB(attempt){
       push:function(p,v){return push(r(p),v).then(function(ref){return ref.key})},
       update:function(p,v){return update(r(p||'/'),v).catch(function(e){console.error('FB.update error at path:',p,e);throw e})},
       remove:function(p){return remove(r(p))},
-      listen:function(p,cb){onValue(r(p),function(s){cb(s.exists()?s.val():null)})}
+      // Previously had NO error handler — a Realtime Database rules rejection
+      // (permission-denied) on a listener just silently never called cb again,
+      // leaving whatever screen was reading it stuck showing stale/empty data
+      // forever with zero indication anything was wrong. Surface it instead.
+      listen:function(p,cb){onValue(r(p),function(s){cb(s.exists()?s.val():null)},function(err){console.error('FB.listen error at path:',p,err);toast('⚠️ '+p+' load fail: '+err.message,'err')})}
     };
     // Firebase Phone Auth
     window.FB_AUTH=getAuth(app);
@@ -1164,7 +1168,7 @@ var TRANSLATIONS={
     wait_review:'⏳ Admin is reviewing',wait_auto:'🔔 Auto-login on approval',wait_tab:'📱 Keep this tab open',
     status_check:'🔄 Check Status',
     take_photo:'Take Photo',
-    home:'Home',jobs:'Jobs',members:'Members',profile:'Profile',
+    home:'Home',jobs:'Jobs',members:'Members',profile:'Profile',chats:'Chats',
     greeting_morning:'Good Morning ☀️',greeting_afternoon:'Good Afternoon 👋',greeting_evening:'Good Evening 🌙',
     network_tag:'Flexible Packaging Industry Network 🏭',
     stats_members:'MEMBERS',stats_jobs:'JOBS',stats_companies:'COMPANIES',
@@ -1245,7 +1249,7 @@ var TRANSLATIONS={
     wait_review:'⏳ एडमिन रिव्यू कर रहा है',wait_auto:'🔔 अप्रूव होने पर ऑटो-लॉगिन',wait_tab:'📱 यह टैब खुली रखें',
     status_check:'🔄 स्टेटस चेक करो',
     take_photo:'फोटो लो',
-    home:'होम',jobs:'नौकरी',members:'सदस्य',profile:'प्रोफाइल',
+    home:'होम',jobs:'नौकरी',members:'सदस्य',profile:'प्रोफाइल',chats:'चैट्स',
     greeting_morning:'सुप्रभात ☀️',greeting_afternoon:'नमस्कार 👋',greeting_evening:'शुभ संध्या 🌙',
     network_tag:'फ्लेक्सिबल पैकेजिंग इंडस्ट्री नेटवर्क 🏭',
     stats_members:'सदस्य',stats_jobs:'नौकरियां',stats_companies:'कंपनियां',
@@ -1326,7 +1330,7 @@ var TRANSLATIONS={
     wait_review:'⏳ ଆଡମିନ ସମୀକ୍ଷା କରୁଛନ୍ତି',wait_auto:'🔔 ଅନୁମୋଦନ ପରେ ଅଟୋ-ଲଗଇନ',wait_tab:'📱 ଏହି ଟ୍ୟାବ ଖୋଲା ରଖନ୍ତୁ',
     status_check:'🔄 ଷ୍ଟାଟସ ଚେକ',
     take_photo:'ଫଟୋ ନିଅନ୍ତୁ',
-    home:'ହୋମ',jobs:'ଚାକିରୀ',members:'ସଦସ୍ୟ',profile:'ପ୍ରୋଫାଇଲ',
+    home:'ହୋମ',jobs:'ଚାକିରୀ',members:'ସଦସ୍ୟ',profile:'ପ୍ରୋଫାଇଲ',chats:'ଚାଟ୍',
     greeting_morning:'ସୁପ୍ରଭାତ ☀️',greeting_afternoon:'ନମସ୍କାର 👋',greeting_evening:'ଶୁଭ ସନ୍ଧ୍ୟା 🌙',
     network_tag:'ଫ୍ଲେକ୍ସିବଲ ପ୍ୟାକେଜିଂ ଇଣ୍ଡଷ୍ଟ୍ରି ନେଟୱର୍କ 🏭',
     stats_members:'ସଦସ୍ୟ',stats_jobs:'ଚାକିରୀ',stats_companies:'କମ୍ପାନୀ',
@@ -1405,7 +1409,7 @@ var TRANSLATIONS={
     wait_review:'⏳ অ্যাডমিন পর্যালোচনা করছে',wait_auto:'🔔 অনুমোদনের পর অটো-লগইন',wait_tab:'📱 এই ট্যাব খোলা রাখুন',
     status_check:'🔄 স্ট্যাটাস চেক',
     take_photo:'ফটো তুলুন',
-    home:'হোম',jobs:'চাকরি',members:'সদস্য',profile:'প্রোফাইল',
+    home:'হোম',jobs:'চাকরি',members:'সদস্য',profile:'প্রোফাইল',chats:'চ্যাট',
     greeting_morning:'সুপ্রভাত ☀️',greeting_afternoon:'নমস্কার 👋',greeting_evening:'শুভ সন্ধ্যা 🌙',
     network_tag:'ফ্লেক্সিবল প্যাকেজিং ইন্ডাস্ট্রি নেটওয়ার্ক 🏭',
     stats_members:'সদস্য',stats_jobs:'চাকরি',stats_companies:'কোম্পানি',
@@ -1494,7 +1498,14 @@ function setLang(lang,btn){
     if(ap.id==='pg-profile')renderProfile();
   }
   // Update nav labels
-  var navLabels=[t('home'),t('jobs'),t('members'),t('profile')];
+  // BUG: there are 5 nav buttons in the DOM (Chats, Home, Jobs, Members,
+  // Profile — see <nav id="nav">) but this array only ever had 4 entries,
+  // with no 'chats' key. Since labels are assigned by index, every button
+  // got the PREVIOUS button's label: Chats→"Home", Home→"Jobs", Jobs→
+  // "Members", Members→"Profile", and Profile fell off the end of the
+  // array (index 4 was undefined) so it silently kept its own hardcoded
+  // "Profile" text — which is why the nav visibly showed "Profile" twice.
+  var navLabels=[t('chats'),t('home'),t('jobs'),t('members'),t('profile')];
   document.querySelectorAll('.nav-btn').forEach(function(nb,i){
     var txt=nb.childNodes[nb.childNodes.length-1];
     if(txt&&txt.nodeType===3)txt.textContent=navLabels[i]||'';
@@ -1523,8 +1534,9 @@ function applyTranslations(){
   e=$('pre-badge');if(e)e.textContent=t('badge_pre');
   var rb=$('revoked-badge');if(rb)rb.textContent='🔒 '+(LANG==='hi'?'एक्सेस रद्द — दोबारा फोटो लेकर वेरिफाई करो':LANG==='od'?'ଅନୁମତି ରଦ୍ଦ — ପୁଣି ଫଟୋ ନିଅନ୍ତୁ':LANG==='bn'?'অ্যাক্সেস বাতিল — আবার ফটো তুলে যাচাই করুন':'Access revoked — Re-verify with new photo');
   var s1btn=document.querySelector('#l-s1 .btn-blue');if(s1btn)s1btn.textContent=t('next_btn');
-  // Nav labels
-  var navKeys=['home','jobs','members','profile'];
+  // Nav labels — see the matching fix/comment in setLang() above: this array
+  // was missing 'chats' at the front, shifting every nav label over by one.
+  var navKeys=['chats','home','jobs','members','profile'];
   document.querySelectorAll('.nav-btn').forEach(function(nb,i){
     var txt=nb.childNodes[nb.childNodes.length-1];
     if(txt&&txt.nodeType===3&&navKeys[i])txt.textContent=t(navKeys[i]);
