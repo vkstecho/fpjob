@@ -786,10 +786,10 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
       <div class="sec-eyebrow">◆ JOB UPDATES</div>
       <div style="font-family:var(--font-head);font-size:32px;font-weight:900;color:var(--ink);letter-spacing:-.5px;line-height:1">Chats</div>
     </div>
-    <div id="chats-list" style="flex:1;overflow-y:auto;padding:10px 12px 12px;display:flex;flex-direction:column;gap:10px"></div>
+    <div id="chats-list" style="flex:1;overflow-y:auto;padding:10px 12px 12px;display:flex;flex-direction:column;gap:10px;background:#E9E1D6"></div>
     <div id="chat-composer" style="flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1.5px solid var(--border);background:#fff">
       <button onclick="pickChatImage()" style="flex-shrink:0;width:44px;height:44px;border-radius:50%;border:none;background:var(--card2);font-size:20px;cursor:pointer">📷</button>
-      <input id="chat-input" type="text" placeholder="Message likho..." style="flex:1;min-height:44px;border:1.5px solid var(--border);border-radius:22px;padding:0 16px;font-size:16px;font-family:var(--font);outline:none" onkeydown="if(event.key==='Enter')sendChatMessage()">
+      <textarea id="chat-input" rows="1" placeholder="Message likho..." style="flex:1;max-height:120px;min-height:44px;border:1.5px solid var(--border);border-radius:22px;padding:11px 16px;font-size:16px;font-family:var(--font);outline:none;resize:none;line-height:1.3;overflow-y:auto" oninput="this.style.height='44px';this.style.height=Math.min(this.scrollHeight,120)+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"></textarea>
       <button onclick="sendChatMessage()" style="flex-shrink:0;width:44px;height:44px;border-radius:50%;border:none;background:var(--ink);color:#fff;font-size:18px;cursor:pointer">➤</button>
       <input id="chat-img-input" type="file" accept="image/*" style="display:none" onchange="sendChatImage(this)">
     </div>
@@ -1018,13 +1018,24 @@ import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-ap
 import{getDatabase,ref,set,get,push,update,remove,onValue}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import{getAuth,RecaptchaVerifier,signInWithPhoneNumber,signInWithCustomToken}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import{getStorage,ref as sRef,uploadBytes,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-const DB_URLS=["https://fpjob26-default-rtdb.asia-southeast1.firebasedatabase.app","https://fpjob26-default-rtdb.firebaseio.com"];
-function initFB(i){
+// This app's Realtime Database was provisioned in asia-southeast1. The legacy,
+// region-less "*.firebaseio.com" URL below does NOT serve data for a database
+// outside the default region — it just returns empty, silently. It used to be
+// a "fallback" tried on any init error, meaning a device that briefly failed to
+// connect to the real (asia-southeast1) URL would switch to this dead one and
+// stay there: reads/listeners would return nothing forever, with no error shown,
+// while writes (fbRest, below) kept succeeding against the real URL. That's the
+// exact "someone else's message never shows up for me" symptom — the sender's
+// write always lands in the real DB; a device stuck on the dead URL just never
+// sees it. Never switch databases — retry the one real URL instead.
+const RTDB_URL="https://fpjob26-default-rtdb.asia-southeast1.firebasedatabase.app";
+function initFB(attempt){
+  attempt=attempt||0;
   var cfg={apiKey:"AIzaSyDWVgkBEXfD1nmgHvccO7-im2jEPXsoMbM",authDomain:"fpjob26.firebaseapp.com",
-    databaseURL:DB_URLS[i||0],projectId:"fpjob26",storageBucket:"fpjob26.firebasestorage.app",
+    databaseURL:RTDB_URL,projectId:"fpjob26",storageBucket:"fpjob26.firebasestorage.app",
     messagingSenderId:"1066973147296",appId:"1:1066973147296:web:ccaf4b51e381c8305ad9c5"};
   try{
-    var app=initializeApp(cfg,'fpjob-'+(i||0));var db=getDatabase(app);var r=function(p){return ref(db,p)};
+    var app=initializeApp(cfg,'fpjob-'+attempt);var db=getDatabase(app);var r=function(p){return ref(db,p)};
     window.FB={
       get:function(p){return get(r(p)).then(function(s){return s.exists()?s.val():null})},
       set:function(p,v){return set(r(p),v)},
@@ -1053,8 +1064,12 @@ function initFB(i){
       try{await deleteObject(sRef(window.FB_STORAGE,path));return true}
       catch(e){console.error('Storage delete error:',e);return false}
     };
-    window.FB_READY=true;console.log('🔥 Firebase OK:',DB_URLS[i||0]);
-  }catch(e){console.error('Firebase error:',e);if(i===0)initFB(1);else window.FB_READY=false}
+    window.FB_READY=true;console.log('🔥 Firebase OK:',RTDB_URL);
+  }catch(e){
+    console.error('Firebase init error (attempt '+attempt+'):',e);
+    if(attempt<3)setTimeout(function(){initFB(attempt+1)},1500);
+    else window.FB_READY=false;
+  }
 }
 initFB(0);
 // Expose Auth functions globally
@@ -4009,10 +4024,13 @@ function renderChats(){
   var isAdmin=canManage();
   var meP=ME&&ME.phone;
   list.innerHTML=msgs.map(function(m){
+    // Outgoing bubbles were black with white text — WhatsApp's own-message
+    // bubble is light green with dark text (and no sender-name line, since
+    // it's obviously you). Match that instead of an inverted color scheme.
     var mine=m.authorPhone&&m.authorPhone===meP;
-    var bubbleBg=mine?'var(--ink)':'#fff';
-    var textColor=mine?'#fff':'var(--text)';
-    var nameColor=mine?'rgba(255,255,255,.75)':'var(--accent)';
+    var bubbleBg=mine?'#D9FDD3':'#fff';
+    var textColor=mine?'#111b21':'var(--text)';
+    var nameColor='var(--accent)';
     var align=mine?'flex-end':'flex-start';
     var body='';
     if(m.imageUrl){
@@ -4040,6 +4058,7 @@ async function sendChatMessage(){
   var mod=moderateContent(text);
   if(!mod.ok){toast('❌ Yeh message allowed nahi hai','err');return}
   inp.value='';
+  inp.style.height='44px';
   try{
     await fbRest.push('chats',{
       authorPhone:ME.phone,authorName:ME.name||'Member',
@@ -5779,8 +5798,14 @@ function renderAdminMembersAll(){
   showing.forEach(function(u){
     var c=document.createElement('div');c.className='p-card';c.style.marginBottom='8px';
     var ini=(u.name||'?').split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase();
-    var statusColor=u.status==='approved'?'var(--green)':u.status==='pending'?'var(--gold)':u.status==='pre_registered'?'var(--primary)':u.status==='contact'?'#6B7280':u.status==='revoked'?'#F97316':u.status==='removed'?'var(--red)':'var(--red)';
-    var statusLabel=u.status==='approved'?'✅':u.status==='pending'?'⏳':u.status==='pre_registered'?'📋':u.status==='contact'?'📇':u.status==='revoked'?'🔒':u.status==='removed'?'🚫':'❌';
+    // Some legacy/older records in /users have no `status` field at all — string-
+    // concatenating u.status directly used to print the literal text "undefined"
+    // in that case (JS turns `undefined` into that string when glued into text).
+    // Show something readable instead while the underlying missing-status data
+    // still gets flagged (⚠️) rather than silently treated as any known state.
+    var statusColor=u.status==='approved'?'var(--green)':u.status==='pending'?'var(--gold)':u.status==='pre_registered'?'var(--primary)':u.status==='contact'?'#6B7280':u.status==='revoked'?'#F97316':u.status==='removed'?'var(--red)':u.status?'var(--red)':'#9CA3AF';
+    var statusLabel=u.status==='approved'?'✅':u.status==='pending'?'⏳':u.status==='pre_registered'?'📋':u.status==='contact'?'📇':u.status==='revoked'?'🔒':u.status==='removed'?'🚫':u.status?'❌':'⚠️';
+    var statusText=u.status||'no status set';
     var roleBadge=u.role==='admin'?' 🔐 Admin':u.role==='manager'?' 👑 Mgr':'';
     // Device info
     var dev=u.lastDevice||{};
@@ -5808,7 +5833,7 @@ function renderAdminMembersAll(){
           (u.photo?'<img src="'+u.photo+'" style="width:44px;height:44px;object-fit:cover">':ini)+'</div>'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-size:14px;font-weight:700">'+esc(u.name||'—')+
-            ' <span style="font-size:11px;color:'+statusColor+'">'+statusLabel+' '+u.status+'</span>'+(roleBadge?'<span style="font-size:10px;font-weight:800;color:'+(u.role==='admin'?'var(--green)':'#F59E0B')+'">'+roleBadge+'</span>':'')+'</div>'+
+            ' <span style="font-size:11px;color:'+statusColor+'">'+statusLabel+' '+esc(statusText)+'</span>'+(roleBadge?'<span style="font-size:10px;font-weight:800;color:'+(u.role==='admin'?'var(--green)':'#F59E0B')+'">'+roleBadge+'</span>':'')+'</div>'+
           '<div style="font-size:12px;color:var(--text2)">'+fmtPhone(u.phone||'')+'</div>'+
           '<div style="font-size:11px;color:var(--muted)">'+esc(u.designation||u.category||'—')+' · '+esc(u.company||'—')+'</div>'+
           devStr+lastLoginStr+
@@ -6522,9 +6547,19 @@ async function handleContactsUpload(input){
     var contactsMap={}; // keyed by 10-digit phone — de-dupes automatically, last row wins
     var skippedInvalid=0;
     rows.forEach(function(row){
-      var rawPhone=String(row[kPhone]||'').replace(/\D/g,'');
-      var phone=rawPhone.length>10?rawPhone.slice(-10):rawPhone;
-      if(phone.length!==10){skippedInvalid++;return}
+      var raw=String(row[kPhone]||'').replace(/\D/g,'');
+      // This used to be `raw.length>10 ? raw.slice(-10) : raw` — i.e. "assume every
+      // number is Indian and just take the last 10 digits". That silently mangled
+      // non-Indian numbers (this file has +92 Pakistan, +971 UAE, +98 Iran entries)
+      // into fake-looking Indian numbers instead of rejecting them — corrupting data
+      // and auto-approving bogus "members" on an India-only platform. Now: accept a
+      // bare 10-digit number, or a number with the +91 country code stripped off —
+      // nothing else — and require it to start with 6-9 like a real Indian mobile.
+      var phone=null;
+      if(raw.length===10)phone=raw;
+      else if(raw.length===12&&raw.slice(0,2)==='91')phone=raw.slice(2);
+      else if(raw.length===13&&raw.slice(0,3)==='091')phone=raw.slice(3);
+      if(!phone||!/^[6-9]\d{9}$/.test(phone)){skippedInvalid++;return}
       var c={p:phone};
       if(kName&&row[kName])c.n=String(row[kName]).trim();
       if(kCo&&row[kCo])c.c=String(row[kCo]).trim();
