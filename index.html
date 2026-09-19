@@ -2530,7 +2530,23 @@ async function doFingerprint(){
 }
 window.doFingerprint=doFingerprint;
 
-function fpSkip(){$('fp-screen').classList.remove('show');showScr('login');goStep(1)}
+function fpSkip(){
+  $('fp-screen').classList.remove('show');
+  showScr('login');
+  // fpSkip() used to just do goStep(1) unconditionally, dumping the user onto a
+  // BLANK "Enter your mobile number" screen — forcing them to retype the same
+  // 10-digit number they'd already verified, even though the app already knows
+  // it (there's no real password check anywhere in this app; "Use password
+  // instead" has only ever meant "fall back to OTP login"). Pre-fill the known
+  // number and kick off the OTP send immediately, landing the user straight on
+  // the code-entry screen instead of back at square one.
+  var knownPhone=((window._fpUser&&window._fpUser.phone)||(typeof ME!=='undefined'&&ME&&ME.phone)||curPhone||'').replace(/\D/g,'').slice(-10);
+  goStep(1);
+  if(knownPhone.length===10){
+    $('ph-inp').value=knownPhone;
+    s1Next();
+  }
+}
 window.fpSkip=fpSkip;
 
 function enterAppWithFP(){
