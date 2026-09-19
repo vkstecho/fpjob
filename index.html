@@ -5448,6 +5448,7 @@ function finishAdminLogin(){
   ME.id='admin';
   saveSession();
   toast('🔐 Admin login successful!');
+  ensureManagerListeners();
   openManagementPanel();
 }
 
@@ -6718,12 +6719,33 @@ setInterval(function(){
   fbRest.get('jobs').then(function(d){if(d)DB.jobs=d}).catch(function(){});
 },30000);
 
+var _mgrListenersAttached=false;
+function ensureManagerListeners(){
+  if(_mgrListenersAttached||!window.FB||!canManage())return;
+  _mgrListenersAttached=true;
+  window.FB.listen('login_requests',function(data){
+    DB.login_requests=data||{};
+    // If admin panel is open on pending tab, refresh badge
+    var pendBtn=document.querySelector('.adm-tab[onclick*="pending"]');
+    if(pendBtn){
+      var reqs=Object.values(data||{}).filter(function(r){return r.status==='pending'});
+      var badge=$('pnd-cnt');
+      var totalPend=(usersArr().filter(function(u){return u.status==='pending'}).length)+reqs.length;
+      if(badge)badge.innerHTML=totalPend?'<span class="badge-count">'+totalPend+'</span>':'';
+    }
+    // Re-render admin pending if open
+    if($('ap-pending')&&$('ap-pending').classList.contains('on'))refreshData();renderAdminPending();
+  });
+}
+window.ensureManagerListeners=ensureManagerListeners;
+
 function onFbReady(){
   if(_fbReady)return;_fbReady=true;
   // REST API fallback — load data even if SDK listeners fail
   loadDataViaREST();
   window.FB.listen('users',function(data){
     DB.users=data||{};
+    ensureManagerListeners(); // role may only be knowable once users data has loaded
     if(!_appStarted)tryStart();
     else{
       // Auto-kick if current user was revoked — never the hardcoded admin number,
@@ -6783,20 +6805,17 @@ function onFbReady(){
     renderNotifs();
   });
 
-  // Login Requests listener — for admin panel real-time updates
-  window.FB.listen('login_requests',function(data){
-    DB.login_requests=data||{};
-    // If admin panel is open on pending tab, refresh badge
-    var pendBtn=document.querySelector('.adm-tab[onclick*="pending"]');
-    if(pendBtn){
-      var reqs=Object.values(data||{}).filter(function(r){return r.status==='pending'});
-      var badge=$('pnd-cnt');
-      var totalPend=(usersArr().filter(function(u){return u.status==='pending'}).length)+reqs.length;
-      if(badge)badge.innerHTML=totalPend?'<span class="badge-count">'+totalPend+'</span>':'';
-    }
-    // Re-render admin pending if open
-    if($('ap-pending')&&$('ap-pending').classList.contains('on'))refreshData();renderAdminPending();
-  });
+  // Login Requests listener — for admin panel real-time updates.
+  // BUG: this used to fire unconditionally for every signed-in user, not just
+  // admins/managers. It "worked" (silently) only because the old database
+  // rules made login_requests publicly readable. Now that reads are properly
+  // restricted to admin/manager, an ordinary member correctly gets refused —
+  // but the app had no business asking for this on their behalf at all, and
+  // that refusal was showing up as a scary red permission error for people
+  // who were never supposed to see this data. Only attach it if this session
+  // can actually manage the app; re-check whenever role-relevant data loads,
+  // since ME.role may not be known yet the first time this runs.
+  ensureManagerListeners();
 
   // Chats listener — real-time job/photo feed
   window.FB.listen('chats',function(data){
