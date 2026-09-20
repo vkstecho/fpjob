@@ -1027,7 +1027,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getDatabase,ref,set,get,push,update,remove,onValue}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import{getAuth,RecaptchaVerifier,signInWithPhoneNumber,signInWithCustomToken}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import{getStorage,ref as sRef,uploadBytes,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+import{getStorage,ref as sRef,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 // This app's Realtime Database was provisioned in asia-southeast1. The legacy,
 // region-less "*.firebaseio.com" URL below does NOT serve data for a database
 // outside the default region — it just returns empty, silently. It used to be
@@ -1066,8 +1066,20 @@ function initFB(attempt){
     window.FB_uploadFile=async function(path,file,onProgress){
       try{
         var storageRef=sRef(window.FB_STORAGE,path);
-        var snapshot=await uploadBytes(storageRef,file);
-        var url=await getDownloadURL(snapshot.ref);
+        // FIX: this accepted an onProgress callback but used uploadBytes(),
+        // which is a single fire-and-await call with zero progress events —
+        // so onProgress was always dead code. Callers had no way to show real
+        // upload progress, which on a slow connection makes even a genuinely-
+        // in-progress upload look frozen. uploadBytesResumable() emits real
+        // byte-level progress via 'state_changed', so now it actually fires.
+        var url=await new Promise(function(resolve,reject){
+          var task=uploadBytesResumable(storageRef,file);
+          task.on('state_changed',function(snap){
+            if(onProgress)onProgress(Math.round(100*snap.bytesTransferred/snap.totalBytes));
+          },reject,function(){
+            getDownloadURL(task.snapshot.ref).then(resolve,reject);
+          });
+        });
         return {url:url,path:path,size:file.size};
       }catch(e){
         console.error('Storage upload error:',e);
@@ -2631,20 +2643,12 @@ function enterAppWithFP(){
     _FB_CONTACTS=data||{};
     if($('ap-import')&&$('ap-import').classList.contains('on'))renderAdminImport();
   });
-  // FIX: 'chats' has the exact same problem as 'contacts' above, and it was never
-  // given the same fix. The database rule for chats is ".read": "auth != null" —
-  // the ONLY 'chats' listener in the whole app was the one registered in
-  // onFbReady(), which runs before login on a session with no auth yet, so it
-  // permission-denied immediately and (per Firebase's listener behavior) never
-  // retried for the rest of that session. Net effect: a device only ever saw
-  // messages IT sent (via the optimistic local update in sendChatMessage), and
-  // never received messages other members sent — every user effectively had
-  // their own private view of "Chats" instead of a shared group chat. Re-subscribe
-  // here, now that there's a real auth session, exactly like 'contacts' does.
-  if(window.FB)window.FB.listen('chats',function(data){
-    DB.chats=data||{};
-    if(document.querySelector('.page.on#pg-chats'))renderChats();
-  });
+  // 'chats' has the exact same problem 'contacts' above had: the database rule
+  // is ".read": "auth != null", so it can only be subscribed once there's a
+  // real auth session. Handled by the shared, guarded ensureChatsListener()
+  // helper (see its definition) so every login path — member, admin, and
+  // manager — gets it exactly once.
+  ensureChatsListener();
   var h=new Date().getHours();
   var greetKey=h<12?'greeting_morning':h<17?'greeting_afternoon':'greeting_evening';
   $('greeting').textContent=t(greetKey)+', '+(ME.name||'').split(' ')[0]+'!';
@@ -4165,22 +4169,66 @@ function pickChatImage(){
 }
 window.pickChatImage=pickChatImage;
 
+// Chat photos were being uploaded at full camera resolution — a modern phone
+// photo is routinely 3-5MB, and on an average mobile connection that alone
+// accounts for most of the "very slow" send time; the 5MB cap below did
+// nothing to help since almost every camera shot is already under it. Resize
+// to a sane chat-display size and re-encode as JPEG before upload — this
+// typically takes a 4-5MB photo down to 150-400KB (10-20x smaller) with no
+// visible quality loss at chat-bubble size, and is the single biggest lever
+// on upload speed. Falls back to the original file if canvas/compression
+// isn't available or the image is already small.
+function compressImageForChat(file){
+  return new Promise(function(resolve){
+    if(!file.type.startsWith('image/')||file.type==='image/gif'||file.size<250*1024){
+      resolve(file);return;
+    }
+    var img=new Image();
+    var url=URL.createObjectURL(file);
+    img.onload=function(){
+      URL.revokeObjectURL(url);
+      var maxDim=1600;
+      var w=img.width,h=img.height;
+      if(w>maxDim||h>maxDim){
+        if(w>h){h=Math.round(h*maxDim/w);w=maxDim}
+        else{w=Math.round(w*maxDim/h);h=maxDim}
+      }
+      var canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      var ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      canvas.toBlob(function(blob){
+        if(!blob||blob.size>=file.size){resolve(file);return}
+        resolve(new File([blob],file.name.replace(/\.\w+$/,'')+'.jpg',{type:'image/jpeg'}));
+      },'image/jpeg',0.75);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);resolve(file)};
+    img.src=url;
+  });
+}
+
 async function sendChatImage(input){
   var file=input.files&&input.files[0];
   if(!file)return;
   if(!file.type.startsWith('image/')){toast('❌ Sirf image files allowed','err');input.value='';return}
   if(file.size>5*1024*1024){toast('❌ Image 5MB se chhoti honi chahiye','err');input.value='';return}
-  toast('📤 Photo bhej rahe hain...');
+  input.value='';
   try{
-    var path='chat_images/'+Date.now()+'_'+ME.phone+'_'+file.name.replace(/[^a-zA-Z0-9._-]/g,'');
-    var result=await window.FB_uploadFile(path,file);
+    var upload=await compressImageForChat(file);
+    var path='chat_images/'+Date.now()+'_'+ME.phone+'_'+file.name.replace(/[^a-zA-Z0-9._-]/g,'').replace(/\.\w+$/,'')+'.jpg';
+    // Real progress instead of a static "sending..." toast that never moves —
+    // on a slow connection an unmoving message reads as frozen even when the
+    // upload is genuinely proceeding.
+    var result=await window.FB_uploadFile(path,upload,function(pct){
+      toast('📤 Photo bhej rahe hain... '+pct+'%');
+    });
     await fbRest.push('chats',{
       authorPhone:ME.phone,authorName:ME.name||'Member',
       imageUrl:result.url,
       createdAt:new Date().toISOString()
     });
+    toast('✅ Photo bhej diya');
   }catch(e){toast('❌ Photo upload fail: '+e.message,'err')}
-  input.value='';
 }
 window.sendChatImage=sendChatImage;
 
@@ -5526,6 +5574,7 @@ function renderNotifs(){
 function openManagementPanel(){
   if(!canManage())return;
   showScr('admin');startListeners();
+  ensureChatsListener();
   // Show/hide tabs based on role
   document.querySelectorAll('.adm-tab').forEach(function(tab){
     var tabId = tab.getAttribute('onclick')||'';
@@ -6808,7 +6857,7 @@ var _appStarted=false;var _fbReady=false;
 
 function tryStart(){
   if(_appStarted)return;_appStarted=true;
-  console.log('🔧 FPJob Version: index_30_v45 (20-Sep-2026)');
+  console.log('🔧 FPJob Version: index_30_v48 (20-Sep-2026)');
   // Apply saved language
   var savedLang=localStorage.getItem('fpjob_lang')||'hi';
   LANG=savedLang;
@@ -6881,6 +6930,28 @@ setInterval(function(){
 },30000);
 
 var _mgrListenersAttached=false;
+var _chatsListenerAttached=false;
+// FIX: the 'chats' realtime listener was only ever attached inside
+// enterAppWithFP() — the normal-member login path. Admin/manager accounts
+// never go through that function: finishAdminLogin() and a restored
+// admin/manager session both jump straight to openManagementPanel(), and
+// admin can also reach the ordinary Chats page from there. Since no
+// listener was ever attached, DB.chats stayed whatever it was locally —
+// admin only ever saw messages THEY sent (via the optimistic local update
+// in sendChatMessage()), never messages from other members. Pulling this
+// into one guarded helper, called from both enterAppWithFP() and
+// openManagementPanel(), fixes it for every login path without attaching
+// duplicate listeners if it's called more than once in a session.
+function ensureChatsListener(){
+  if(_chatsListenerAttached||!window.FB)return;
+  _chatsListenerAttached=true;
+  window.FB.listen('chats',function(data){
+    DB.chats=data||{};
+    if(document.querySelector('.page.on#pg-chats'))renderChats();
+  });
+}
+window.ensureChatsListener=ensureChatsListener;
+
 function ensureManagerListeners(){
   if(_mgrListenersAttached||!window.FB||!canManage())return;
   _mgrListenersAttached=true;
@@ -6978,12 +7049,16 @@ function onFbReady(){
   // since ME.role may not be known yet the first time this runs.
   ensureManagerListeners();
 
-  // Chats listener — real-time job/photo feed
-  window.FB.listen('chats',function(data){
-    DB.chats=data||{};
-    var ap=document.querySelector('.page.on');
-    if(ap&&ap.id==='pg-chats')renderChats();
-  });
+  // FIX: this used to also attach a 'chats' listener here, but onFbReady()
+  // runs the moment Firebase loads — before login, with no auth session yet.
+  // The database rule for chats is ".read": "auth != null", so that early
+  // listener always got permission-denied immediately, and (per FB.listen's
+  // error handler) showed a scary red "chats load fail: permission_denied"
+  // toast on the phone-number/login screen, before the user had even signed
+  // in. It never provided any real data either, since it never retried after
+  // the denial. chats is already correctly (re-)subscribed in
+  // enterAppWithFP(), once there's a real auth session — so this pre-login
+  // attempt was pure noise. Removed.
 
   // Admin-uploaded contacts (from Excel import) — supplements the built-in list.
   // This listener resolves asynchronously, often AFTER the admin has already
@@ -7013,7 +7088,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }
   },4000);
   // ── Version-based cache clearing ──
-  var APP_VERSION = 'index_30_v45';
+  var APP_VERSION = 'index_30_v48';
   var lastVer = localStorage.getItem('fpjob_version');
   if(lastVer !== APP_VERSION){
     console.log('[FPJob] Version changed: '+lastVer+' → '+APP_VERSION+'. Clearing caches...');
