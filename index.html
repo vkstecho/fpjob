@@ -6114,7 +6114,7 @@ function renderAdminMembersAll(){
           '<a href="tel:+91'+esc(u.phone||'')+'" class="btn btn-outline" style="padding:6px 12px;font-size:11px;text-decoration:none">📞 Call</a>'
         :
           '<button class="btn btn-outline edit-user-btn" style="padding:6px 12px;font-size:11px" data-uid="'+esc(u.id||u.phone)+'">✏️ Edit</button>'+
-          (isAdmin()&&u.status==='approved'&&u.role!=='admin'?(u.role==='manager'?'<button class="btn mgr-toggle-btn" style="padding:6px 12px;font-size:11px;background:rgba(245,158,11,.15);color:#F59E0B;border:1.5px solid rgba(245,158,11,.3)" data-uid="'+esc(u.id||u.phone)+'" data-name="'+esc(u.name||'')+'" data-action="remove">👑 Remove Manager</button>':'<button class="btn mgr-toggle-btn" style="padding:6px 12px;font-size:11px;background:rgba(10,102,194,.1);color:var(--primary);border:1.5px solid rgba(10,102,194,.3)" data-uid="'+esc(u.id||u.phone)+'" data-name="'+esc(u.name||'')+'" data-action="make">👑 Make Manager</button>'):'')+
+          (isAdmin()&&u.status==='approved'&&u.role!=='admin'?(u.role==='manager'?'<button class="btn mgr-toggle-btn" style="padding:6px 12px;font-size:11px;background:rgba(245,158,11,.15);color:#F59E0B;border:1.5px solid rgba(245,158,11,.3)" data-uid="'+esc(u.id||u.phone)+'" data-name="'+esc(u.name||'')+'" data-action="remove">👑 Remove Manager</button>':(u.authUid?'<button class="btn mgr-toggle-btn" style="padding:6px 12px;font-size:11px;background:rgba(10,102,194,.1);color:var(--primary);border:1.5px solid rgba(10,102,194,.3)" data-uid="'+esc(u.id||u.phone)+'" data-name="'+esc(u.name||'')+'" data-action="make">👑 Make Manager</button>':'<button class="btn" style="padding:6px 12px;font-size:11px;background:var(--card2);color:var(--muted);border:1.5px solid var(--border);cursor:default" title="'+esc(u.name||'Yeh member')+' ne kabhi phone-OTP se login nahi kiya — pehle unhe app mein login karne do">👑 Make Manager (login required)</button>')):'')+
           (u.status==='approved'?'<button class="btn revoke-btn" style="padding:6px 12px;font-size:11px;background:rgba(249,115,22,.15);color:#F97316;border:1.5px solid rgba(249,115,22,.3)" data-uid="'+esc(u.id||u.phone)+'" data-name="'+esc(u.name||'')+'">🔒 Revoke</button>':'')+
           (u.status==='revoked'||u.status==='removed'?'<button class="btn btn-green reapprove-btn" style="padding:6px 12px;font-size:11px" data-uid="'+esc(u.id||u.phone)+'" data-name="'+esc(u.name||'')+'" data-phone="'+esc(u.phone||'')+'">✅ Re-Approve</button>':'')+
           '<button class="btn btn-red del-user-btn" style="padding:6px 12px;font-size:11px" data-uid="'+esc(u.id||u.phone)+'" data-name="'+esc(u.name||'')+'">🗑️</button>'+
@@ -6921,7 +6921,7 @@ var _appStarted=false;var _fbReady=false;
 
 function tryStart(){
   if(_appStarted)return;_appStarted=true;
-  console.log('🔧 FPJob Version: index_30_v50 (20-Sep-2026)');
+  console.log('🔧 FPJob Version: index_30_v51 (20-Sep-2026)');
   // Apply saved language
   var savedLang=localStorage.getItem('fpjob_lang')||'hi';
   LANG=savedLang;
@@ -7152,7 +7152,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }
   },4000);
   // ── Version-based cache clearing ──
-  var APP_VERSION = 'index_30_v50';
+  var APP_VERSION = 'index_30_v51';
   var lastVer = localStorage.getItem('fpjob_version');
   if(lastVer !== APP_VERSION){
     console.log('[FPJob] Version changed: '+lastVer+' → '+APP_VERSION+'. Clearing caches...');
