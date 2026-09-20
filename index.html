@@ -105,6 +105,16 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sheet-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 0}
 .sheet-hdr{padding:16px 20px 10px;display:flex;align-items:center;justify-content:space-between}
+/* ── Sheet close (✕) button ── */
+/* Was plain, near-invisible text in --muted (a grayish-tan) on either a
+   white header or, worse, floating directly over photo/media content with
+   nothing behind it — exactly what made it "very faded" in practice. A
+   solid dark circle behind a white glyph stays legible over any content. */
+.sheet-x{background:rgba(10,14,26,.55);color:#fff;border:none;border-radius:50%;
+  width:32px;height:32px;min-height:0;flex-shrink:0;font-size:17px;line-height:1;
+  cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sheet-x:active{background:rgba(10,14,26,.75)}
+.sheet-x-float{position:absolute;top:14px;right:14px;z-index:2}
 /* ── Nav ── */
 #nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.98);
   backdrop-filter:blur(20px);border-top:1px solid var(--border);
@@ -891,9 +901,11 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
           <option value="pending">Pending</option>
           <option value="revoked">Revoked</option>
           <option value="pre_registered">Pre-Reg</option>
+          <option value="role_admin">🔐 Admin (authority)</option>
+          <option value="role_manager">👑 App Manager (authority)</option>
           <option value="Operator">Operators</option>
           <option value="Engineer">Engineers</option>
-          <option value="Manager">Managers</option>
+          <option value="Manager">Managers (job title)</option>
           <option value="Head">Heads</option>
           <option value="Supplier">Suppliers</option>
           <option value="contact">📇 Contacts</option>
@@ -923,7 +935,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
     <div class="sheet-handle"></div>
     <div class="sheet-hdr">
       <div style="font-size:18px;font-weight:800">Job Post Karo 💼</div>
-      <button onclick="closeOv('pj-modal')" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1">✕</button>
+      <button onclick="closeOv('pj-modal')" class="sheet-x" aria-label="Close">✕</button>
     </div>
     <div id="pj-form" style="padding:0 20px 24px"></div>
   </div>
@@ -935,7 +947,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
     <div class="sheet-handle"></div>
     <div class="sheet-hdr">
       <div style="font-size:18px;font-weight:800">Job Banner 🎨</div>
-      <button onclick="closeOv('banner-modal')" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1">✕</button>
+      <button onclick="closeOv('banner-modal')" class="sheet-x" aria-label="Close">✕</button>
     </div>
     <div id="banner-content" style="padding:0 16px 24px"></div>
   </div>
@@ -945,7 +957,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 <div id="jd-modal" class="overlay">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <button onclick="closeOv('jd-modal')" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;z-index:1;line-height:1">✕</button>
+    <button onclick="closeOv('jd-modal')" class="sheet-x sheet-x-float" aria-label="Close">✕</button>
     <div id="jd-content"></div>
   </div>
 </div>
@@ -954,7 +966,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 <div id="md-modal" class="overlay">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <button onclick="closeOv('md-modal')" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;z-index:1;line-height:1">✕</button>
+    <button onclick="closeOv('md-modal')" class="sheet-x sheet-x-float" aria-label="Close">✕</button>
     <div id="md-content"></div>
   </div>
 </div>
@@ -965,7 +977,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
     <div class="sheet-handle"></div>
     <div class="sheet-hdr">
       <div style="font-size:18px;font-weight:800">Edit Member ✏️</div>
-      <button onclick="closeOv('edit-modal')" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1">✕</button>
+      <button onclick="closeOv('edit-modal')" class="sheet-x" aria-label="Close">✕</button>
     </div>
     <div id="edit-form" style="padding:0 20px 24px"></div>
   </div>
@@ -977,7 +989,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
     <div class="sheet-handle"></div>
     <div class="sheet-hdr">
       <div style="font-size:18px;font-weight:800">Edit Profile ✏️</div>
-      <button onclick="closeOv('profile-edit-modal')" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1">✕</button>
+      <button onclick="closeOv('profile-edit-modal')" class="sheet-x" aria-label="Close">✕</button>
     </div>
     <div id="profile-edit-form" style="padding:0 20px 24px"></div>
   </div>
@@ -989,7 +1001,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
     <div class="sheet-handle"></div>
     <div class="sheet-hdr">
       <div style="font-size:18px;font-weight:800">＋ Add Member</div>
-      <button onclick="closeOv('addmem-modal')" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1">✕</button>
+      <button onclick="closeOv('addmem-modal')" class="sheet-x" aria-label="Close">✕</button>
     </div>
     <div id="addmem-form" style="padding:0 20px 24px"></div>
   </div>
@@ -1014,7 +1026,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
         <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:1.5px;font-weight:700">◆ RESUME BUILDER</div>
         <div style="font-family:var(--font-head);font-size:24px;font-weight:900;color:var(--ink);letter-spacing:-.3px">Apna Resume Banao</div>
       </div>
-      <button onclick="closeOv('rb-modal')" style="background:none;border:none;color:var(--muted);font-size:28px;cursor:pointer;line-height:1">✕</button>
+      <button onclick="closeOv('rb-modal')" class="sheet-x" aria-label="Close">✕</button>
     </div>
     <!-- Step indicator -->
     <div id="rb-steps" style="display:flex;gap:4px;padding:0 20px 12px"></div>
@@ -1755,6 +1767,7 @@ function backToApp(){
   showScr('app');
   var cur=document.querySelector('.page.on');
   showPage(cur?cur.id.replace('pg-',''):'chats');
+  if(history.state&&history.state.fpAdmin)history.back();
 }
 window.backToApp=backToApp;
 
@@ -1778,9 +1791,39 @@ function showPage(pg){
 }
 window.showPage=showPage;
 
-function openOv(id){$(id).classList.add('open')}
-function closeOv(id){$(id).classList.remove('open')}
+// FIX: the Android back button/gesture had nothing to act on — this app
+// never called history.pushState, so there was no in-app back-stack for the
+// WebView/TWA to walk. Result: pressing back while a sheet/modal was open,
+// or while inside the Admin Panel, skipped straight past "close this" and
+// exited the app instead. Every openOv() now pushes one history entry, and
+// closeOv() (however it's triggered — the ✕ button, a successful save, etc.)
+// consumes that entry via history.back() if it's still the current one. The
+// popstate handler below is what actually hides things — so the physical
+// back button, which fires popstate the same way the ✕ button's history.back()
+// does, now closes the modal instead of leaving the app.
+function openOv(id){
+  $(id).classList.add('open');
+  history.pushState({fpOv:id},'');
+}
+function closeOv(id){
+  $(id).classList.remove('open');
+  if(history.state&&history.state.fpOv===id)history.back();
+}
+window.openOv=openOv;
 window.closeOv=closeOv;
+
+window.addEventListener('popstate',function(e){
+  var st=e.state;
+  // Landed somewhere that isn't a given overlay's own pushed state → that
+  // overlay should no longer be showing.
+  document.querySelectorAll('.overlay.open').forEach(function(ov){
+    if(!st||st.fpOv!==ov.id)ov.classList.remove('open');
+  });
+  // Back out of the Admin/Manager Panel to the main app, same as tapping
+  // its own ← button, instead of exiting.
+  if((!st||!st.fpAdmin)&&$('admin')&&$('admin').classList.contains('show'))backToApp();
+});
+
 
 // ── Login steps ──
 function goStep(n){
@@ -2991,7 +3034,7 @@ function openBannerStudio(job){
         '<div class="sheet-hdr">'+
           '<div><div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:1.5px;font-weight:700">◆ BANNER STUDIO</div>'+
           '<div style="font-family:var(--font-head);font-size:24px;font-weight:900;color:var(--ink);letter-spacing:-.3px">Customize & Download</div></div>'+
-          '<button onclick="closeOv(\'banner-studio-modal\')" style="background:none;border:none;color:var(--muted);font-size:28px;cursor:pointer;line-height:1">✕</button>'+
+          '<button onclick="closeOv(\'banner-studio-modal\')" class="sheet-x" aria-label="Close">✕</button>'+
         '</div>'+
         '<div id="banner-studio-body" style="padding:0 20px 20px"></div>'+
       '</div>';
@@ -4084,6 +4127,22 @@ function chatsArr(){
     .sort(function(a,b){return new Date(a.createdAt)-new Date(b.createdAt)});
 }
 
+// Auto-link emails and phone numbers inside chat messages — a job post like
+// "share your resume on x@y.com" or "call 98765 43210" is far more useful
+// when those are tappable instead of plain text the user has to retype.
+// Runs on already-HTML-escaped text (esc() only touches & < > " ', never
+// @ . + - or digits), and matches both in a single pass so a phone-like
+// digit run can't accidentally get re-matched inside an email that was
+// already turned into a link.
+function linkifyChat(text){
+  return text.replace(/([\w.+-]+@[\w-]+\.[a-zA-Z]{2,})|(\+?\d[\d\s-]{7,}\d)/g,function(m,email,phone){
+    if(email)return '<a href="mailto:'+email+'" style="color:var(--primary);text-decoration:underline" onclick="event.stopPropagation()">'+email+'</a>';
+    var digits=phone.replace(/[^\d+]/g,'');
+    if(digits.replace(/\D/g,'').length<8)return phone; // e.g. a bare year/number, not really a phone
+    return '<a href="tel:'+digits+'" style="color:var(--primary);text-decoration:underline" onclick="event.stopPropagation()">'+phone+'</a>';
+  });
+}
+
 function renderChats(){
   var list=$('chats-list');
   if(!list)return;
@@ -4107,7 +4166,7 @@ function renderChats(){
     if(m.imageUrl){
       body+='<img src="'+esc(m.imageUrl)+'" style="max-width:100%;border-radius:10px;margin-bottom:'+(m.text?'6px':'0')+';display:block;cursor:pointer" onclick="window.open(\''+esc(m.imageUrl)+'\',\'_blank\')">';
     }
-    if(m.text)body+='<div style="font-size:15px;line-height:1.4;white-space:pre-wrap;word-break:break-word">'+esc(m.text)+'</div>';
+    if(m.text)body+='<div style="font-size:15px;line-height:1.4;white-space:pre-wrap;word-break:break-word">'+linkifyChat(esc(m.text))+'</div>';
     // WhatsApp-group behaviour: an admin/manager can delete anyone's message,
     // and any member can delete their own — not admin-only like before.
     var canDel=isAdmin||mine;
@@ -4592,7 +4651,7 @@ function openProfileEdit(){
           '<span style="font-size:11px;color:#fff;font-weight:700">📷 Change</span>'+
         '</div>'+
       '</div>'+
-      '<input type="file" id="pe-photo-input" accept="image/*" capture="user" style="display:none">'+
+      '<input type="file" id="pe-photo-input" accept="image/*" style="display:none">'+
       '<div style="font-size:12px;color:var(--muted)">Tap photo to change</div>'+
     '</div>'+
     fld('pe-name','text','Naam','',[],ME.name||'')+
@@ -5574,6 +5633,7 @@ function renderNotifs(){
 function openManagementPanel(){
   if(!canManage())return;
   showScr('admin');startListeners();
+  history.pushState({fpAdmin:true},'');
   ensureChatsListener();
   // Show/hide tabs based on role
   document.querySelectorAll('.adm-tab').forEach(function(tab){
@@ -5964,6 +6024,10 @@ function renderAdminMembersAll(){
         status:fbUser?fbUser.status:'contact',source:'contacts_list'};
     });
     if(q)allUsers=allUsers.filter(function(u){return (u.name||'').toLowerCase().includes(q)||(u.phone||'').includes(q)||(u.company||'').toLowerCase().includes(q)});
+  }else if(catF==='role_admin'){
+    allUsers=allUsers.filter(function(u){return u.role==='admin'});
+  }else if(catF==='role_manager'){
+    allUsers=allUsers.filter(function(u){return u.role==='manager'});
   }else if(catF!=='all')allUsers=allUsers.filter(function(u){return u.category===catF||u.status===catF});
   if(!allUsers.length){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">Koi user nahi mila</div>';return}
 
@@ -6857,7 +6921,7 @@ var _appStarted=false;var _fbReady=false;
 
 function tryStart(){
   if(_appStarted)return;_appStarted=true;
-  console.log('🔧 FPJob Version: index_30_v48 (20-Sep-2026)');
+  console.log('🔧 FPJob Version: index_30_v50 (20-Sep-2026)');
   // Apply saved language
   var savedLang=localStorage.getItem('fpjob_lang')||'hi';
   LANG=savedLang;
@@ -7088,7 +7152,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }
   },4000);
   // ── Version-based cache clearing ──
-  var APP_VERSION = 'index_30_v48';
+  var APP_VERSION = 'index_30_v50';
   var lastVer = localStorage.getItem('fpjob_version');
   if(lastVer !== APP_VERSION){
     console.log('[FPJob] Version changed: '+lastVer+' → '+APP_VERSION+'. Clearing caches...');
