@@ -4104,11 +4104,22 @@ async function sendChatMessage(){
   inp.value='';
   inp.style.height='44px';
   try{
-    await fbRest.push('chats',{
+    var newId=await fbRest.push('chats',{
       authorPhone:ME.phone,authorName:ME.name||'Member',
       text:san(text),
       createdAt:new Date().toISOString()
     });
+    // Sending used to clear the box and then rely ENTIRELY on the separate
+    // realtime listener round-trip to make the message actually appear —
+    // so if that write succeeded but the listener was slow, didn't re-fire,
+    // or the "am I on the chats tab" check inside it ever mismatched, the
+    // result looked exactly like "nothing happened", with zero error and
+    // zero confirmation, even though the send genuinely worked. Render the
+    // sent message immediately once the server confirms it, instead of
+    // waiting on that separate path.
+    DB.chats=DB.chats||{};
+    DB.chats[newId]={authorPhone:ME.phone,authorName:ME.name||'Member',text:san(text),createdAt:new Date().toISOString()};
+    if(document.querySelector('.page.on#pg-chats'))renderChats();
   }catch(e){toast('❌ Message send nahi hua: '+e.message,'err');inp.value=text}
 }
 window.sendChatMessage=sendChatMessage;
