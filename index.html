@@ -996,6 +996,16 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 </div>
 
 <!-- ═══ RESUME BUILDER MODAL ═══ -->
+<div id="confirm-modal" class="overlay">
+  <div class="sheet" style="padding:26px 20px 20px;text-align:center;max-width:360px">
+    <div id="confirm-msg" style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:22px;line-height:1.4"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline btn-w100" onclick="closeConfirm(false)">Cancel</button>
+      <button class="btn btn-red btn-w100" onclick="closeConfirm(true)">OK</button>
+    </div>
+  </div>
+</div>
+
 <div id="rb-modal" class="overlay">
   <div class="sheet" style="max-width:560px;max-height:95vh">
     <div class="sheet-handle"></div>
@@ -4080,7 +4090,10 @@ function renderChats(){
       body+='<img src="'+esc(m.imageUrl)+'" style="max-width:100%;border-radius:10px;margin-bottom:'+(m.text?'6px':'0')+';display:block;cursor:pointer" onclick="window.open(\''+esc(m.imageUrl)+'\',\'_blank\')">';
     }
     if(m.text)body+='<div style="font-size:15px;line-height:1.4;white-space:pre-wrap;word-break:break-word">'+esc(m.text)+'</div>';
-    var delBtn=isAdmin?'<span onclick="deleteChatMsg(\''+m.id+'\')" style="cursor:pointer;font-size:11px;opacity:.5;margin-left:8px">🗑️</span>':'';
+    // WhatsApp-group behaviour: an admin/manager can delete anyone's message,
+    // and any member can delete their own — not admin-only like before.
+    var canDel=isAdmin||mine;
+    var delBtn=canDel?'<span onclick="deleteChatMsg(\''+m.id+'\')" style="cursor:pointer;font-size:11px;opacity:.5;margin-left:8px">🗑️</span>':'';
     return '<div style="display:flex;flex-direction:column;align-items:'+align+'">'+
       '<div style="max-width:78%;background:'+bubbleBg+';color:'+textColor+';border-radius:14px;padding:9px 12px;box-shadow:var(--shadow-sm)">'+
         (mine?'':'<div style="font-size:12px;font-weight:800;color:'+nameColor+';margin-bottom:3px">'+esc(m.authorName||'—')+'</div>')+
@@ -4158,12 +4171,53 @@ async function sendChatImage(input){
 window.sendChatImage=sendChatImage;
 
 async function deleteChatMsg(id){
-  if(!canManage())return;
-  if(!confirm('Yeh message delete karein?'))return;
-  try{await fbRest.remove('chats/'+id)}
-  catch(e){toast('❌ Delete fail: '+e.message,'err')}
+  var m=DB.chats&&DB.chats[id];
+  var mine=m&&ME&&m.authorPhone===ME.phone;
+  if(!canManage()&&!mine)return;
+  var ok=await askConfirm('Yeh message delete karein?');
+  if(!ok)return;
+  // FIX: deletion used to rely entirely on the realtime 'chats' listener
+  // round-trip to refresh the UI — the same race already fixed for sending
+  // (listener can be slow/miss a re-fire), so a successful server-side
+  // delete could still look like "nothing happened" with the message still
+  // sitting on screen. Remove it from the local cache and re-render right
+  // away, then reconcile with the server; roll back + tell the user if the
+  // delete actually failed (e.g. permission denied).
+  var prev=m;
+  if(DB.chats)delete DB.chats[id];
+  if(document.querySelector('.page.on#pg-chats'))renderChats();
+  try{
+    await fbRest.remove('chats/'+id);
+  }catch(e){
+    if(prev){DB.chats=DB.chats||{};DB.chats[id]=prev}
+    if(document.querySelector('.page.on#pg-chats'))renderChats();
+    toast('❌ Delete fail: '+e.message,'err');
+  }
 }
 window.deleteChatMsg=deleteChatMsg;
+
+// ── Lightweight promise-based confirm, styled like the rest of the app ──
+// Replaces native confirm(), which renders as a bare, unstyled
+// "yoursite.com says" browser popup that looks broken/untrustworthy inside
+// a WebView-wrapped app.
+var _confirmResolve=null;
+function askConfirm(msg){
+  return new Promise(function(resolve){
+    _confirmResolve=resolve;
+    var msgEl=$('confirm-msg');
+    if(msgEl)msgEl.textContent=msg;
+    var ov=$('confirm-modal');
+    if(ov)ov.classList.add('open');
+    else resolve(confirm(msg)); // fallback if markup missing
+  });
+}
+function closeConfirm(result){
+  var ov=$('confirm-modal');
+  if(ov)ov.classList.remove('open');
+  if(_confirmResolve){_confirmResolve(result);_confirmResolve=null}
+}
+window.askConfirm=askConfirm;
+window.closeConfirm=closeConfirm;
 
 function setMF(f,btn){
   mFilter=f;_memsShown=PAGE_SIZE;
@@ -5512,15 +5566,39 @@ function adTab(id,btn){
   btn.classList.add('on');
   document.querySelectorAll('.adm-pg').forEach(function(p){p.classList.remove('on')});
   $('ap-'+id).classList.add('on');
-  if(id==='pending')refreshData();renderAdminPending();
+  // FIX: this used to be `if(id==='pending')refreshData();renderAdminPending();`
+  // — no braces, so only refreshData() was actually conditional; renderAdminPending()
+  // ran on every single tab switch regardless of which tab was clicked. Scoped
+  // each branch to its own tab properly below.
+  if(id==='pending'){refreshData();renderAdminPending();}
   if(id==='jobreviews')renderAdminJobReviews();
   if(id==='members')renderAdminMembersAll();
   if(id==='devices')renderAdminDevices();
   if(id==='jobs')renderAdminJobs();
   if(id==='postjob')renderAdminPostJob();
-  if(id==='import')renderAdminImport();
+  // FIX: renderAdminImport() used to only read whatever _FB_CONTACTS already held
+  // in memory — populated purely by a background Firebase listener whose timing
+  // isn't guaranteed relative to "admin has now tapped the Contacts tab". If that
+  // listener hadn't delivered data yet, TOTAL CONTACTS / FROM EXCEL UPLOAD showed
+  // stale or 0 counts even though the real data (e.g. a just-completed Excel
+  // upload) was sitting correctly in the database. Paint immediately with
+  // whatever's cached, then explicitly re-fetch 'contacts' fresh from the server
+  // and re-render once it arrives, so the numbers can't get stuck wrong.
+  if(id==='import'){renderAdminImport();refreshContactsAndRerender();}
 }
 window.adTab=adTab;
+
+var _contactsRefreshing=false;
+function refreshContactsAndRerender(){
+  if(_contactsRefreshing)return;
+  _contactsRefreshing=true;
+  fbRest.get('contacts').then(function(data){
+    _contactsRefreshing=false;
+    _FB_CONTACTS=data||{};
+    if($('ap-import')&&$('ap-import').classList.contains('on'))renderAdminImport();
+  }).catch(function(){_contactsRefreshing=false});
+}
+window.refreshContactsAndRerender=refreshContactsAndRerender;
 
 // ── Admin Devices Tab ──
 function renderAdminDevices(){
@@ -6493,6 +6571,9 @@ function renderAdminImport(){
         '<div style="font-size:28px;font-weight:800;color:var(--green)">'+registered+'</div>'+
         '<div style="font-size:11px;color:var(--muted);font-weight:700">REGISTERED</div></div>'+
     '</div>'+
+    '<div style="padding:10px 14px;background:var(--card2);border-radius:10px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.6">'+
+      'ℹ️ TOTAL CONTACTS/FROM EXCEL/WITH COMPANY come from the <b>contacts</b> address-book (built-in list + Excel uploads). REGISTERED counts actual app accounts in <b>users</b> — a separate list. They won\'t match: some contacts never opened the app, and some members registered without ever being in an Excel file.'+
+    '</div>'+
     '<div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:16px">'+
       '<div style="font-size:14px;font-weight:700;margin-bottom:8px">✅ How it works</div>'+
       '<div style="font-size:13px;color:var(--text2);line-height:1.8">'+
@@ -6706,7 +6787,7 @@ var _appStarted=false;var _fbReady=false;
 
 function tryStart(){
   if(_appStarted)return;_appStarted=true;
-  console.log('🔧 FPJob Version: index_30_v42 (20-Mar-2026)');
+  console.log('🔧 FPJob Version: index_30_v44 (20-Sep-2026)');
   // Apply saved language
   var savedLang=localStorage.getItem('fpjob_lang')||'hi';
   LANG=savedLang;
@@ -6911,7 +6992,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }
   },4000);
   // ── Version-based cache clearing ──
-  var APP_VERSION = 'index_30_v42';
+  var APP_VERSION = 'index_30_v44';
   var lastVer = localStorage.getItem('fpjob_version');
   if(lastVer !== APP_VERSION){
     console.log('[FPJob] Version changed: '+lastVer+' → '+APP_VERSION+'. Clearing caches...');
