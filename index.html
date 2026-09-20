@@ -863,7 +863,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 <!-- ══════════════ ADMIN ══════════════ -->
 <div id="admin" class="screen">
   <div class="adm-hdr">
-    <button onclick="showScr('app')" style="background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer;padding:0;line-height:1">←</button>
+    <button onclick="backToApp()" style="background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer;padding:0;line-height:1">←</button>
     <div style="font-size:17px;font-weight:800;flex:1;margin-left:10px">Admin Panel 🔐</div>
     <div style="font-size:11px;color:var(--muted)">v42</div>
   </div>
@@ -1713,6 +1713,20 @@ function showScr(id){
   $('fab').style.display=id==='app'?'flex':'none';
 }
 window.showScr=showScr;
+
+// Returning to the main app screen (e.g. the Admin Panel's ← back button) used
+// to call showScr('app') alone, which unconditionally shows the "＋ Post Job"
+// floating button (#fab) — it doesn't know or care which of the 5 tabs is
+// actually underneath. showPage() is what correctly hides #fab again except
+// on Jobs/Home-as-manager, but nothing was calling it on the way back, so the
+// FAB stayed stuck on screen — including right on top of the Chats send
+// button, making it look (and function) like sending was completely broken.
+function backToApp(){
+  showScr('app');
+  var cur=document.querySelector('.page.on');
+  showPage(cur?cur.id.replace('pg-',''):'chats');
+}
+window.backToApp=backToApp;
 
 // ── Pages ──
 function showPage(pg){
