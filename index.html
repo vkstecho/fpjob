@@ -1566,6 +1566,15 @@ var approved=function(){return usersArr().filter(function(u){return u.status==='
 function toast(msg,type){
   var t=$('toast');t.textContent=msg;
   t.style.background=type==='err'?'#EF4444':type==='warn'?'#F59E0B':'#22C55E';
+  // #toast is `position:fixed;bottom:88px` against the LAYOUT viewport. On some
+  // Android WebViews, opening the on-screen keyboard doesn't shrink that layout
+  // viewport — only the visual one — so a toast fired right after tapping into
+  // a text field (e.g. failed chat send) can render UNDER the keyboard, fully
+  // invisible, making a real error look like "nothing happened at all". Push
+  // the toast up above the keyboard using the VisualViewport API when present.
+  var kbHeight=0;
+  if(window.visualViewport)kbHeight=Math.max(0,window.innerHeight-window.visualViewport.height-window.visualViewport.offsetTop);
+  t.style.bottom=(88+kbHeight)+'px';
   t.style.display='block';clearTimeout(t._t);
   t._t=setTimeout(function(){t.style.display='none'},3500);
 }
@@ -6677,6 +6686,14 @@ function tryStart(){
     var splash=$('splash');if(splash)splash.classList.remove('show');
     if(_fbReady)startListeners();
     if(loadSession()){
+      // BUG: this always called enterApp() (the normal member view), even for
+      // a restored admin/manager session. finishAdminLogin() correctly opens
+      // the real Admin/Manager Panel on a fresh login, but reopening the app
+      // later (or a page refresh) re-enters through here — and an admin/
+      // manager account was landing back on the ordinary Chats/Home/Jobs/
+      // Members/Profile screen instead of their actual panel, which is
+      // probably why "Admin" keeps testing things on the member-facing UI.
+      if(ME&&(ME.role==='admin'||ME.role==='manager')){openManagementPanel();return}
       if(isBiometricAvailable()&&isFingerprintEnrolled(ME.phone)){
         showFingerprintScreen(ME,function(){enterApp()});
       }else{enterApp()}
