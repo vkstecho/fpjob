@@ -4076,6 +4076,15 @@ async function sendChatMessage(){
   var text=(inp.value||'').trim();
   if(!text)return;
   if(!ME||!ME.phone){toast('Pehle login karo','err');return}
+  // If this device's Firebase Auth session is gone (expired, or never actually
+  // survived a reload — this app has repeatedly shown this WebView doesn't
+  // reliably persist things, e.g. fingerprint credentials), every write that
+  // requires auth!=null gets rejected. Catch that BEFORE attempting the send
+  // and say so plainly, instead of a vague/absent error the user can't act on.
+  if(!window.FB_AUTH||!window.FB_AUTH.currentUser){
+    toast('⚠️ Session expired — logout & login again to send messages','err');
+    return;
+  }
   var mod=moderateContent(text);
   if(!mod.ok){toast('❌ Yeh message allowed nahi hai','err');return}
   inp.value='';
