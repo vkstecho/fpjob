@@ -5630,6 +5630,12 @@ function renderNotifs(){
 }
 
 // ── Management Panel (Admin + Manager) ──
+function enterAppAsStaff(){
+  showScr('app');showPage('chats');renderHdrPic();startListeners();
+  ensureChatsListener();ensureManagerListeners();
+}
+window.enterAppAsStaff=enterAppAsStaff;
+
 function openManagementPanel(){
   if(!canManage())return;
   showScr('admin');startListeners();
@@ -5677,7 +5683,7 @@ function finishAdminLogin(){
   saveSession();
   toast('🔐 Admin login successful!');
   ensureManagerListeners();
-  openManagementPanel();
+  enterAppAsStaff();
 }
 
 function closeStep15Safely(){
@@ -6950,7 +6956,7 @@ function tryStart(){
       // manager account was landing back on the ordinary Chats/Home/Jobs/
       // Members/Profile screen instead of their actual panel, which is
       // probably why "Admin" keeps testing things on the member-facing UI.
-      if(ME&&(ME.role==='admin'||ME.role==='manager')){openManagementPanel();return}
+      if(ME&&(ME.role==='admin'||ME.role==='manager')){enterAppAsStaff();return}
       if(isBiometricAvailable()&&isFingerprintEnrolled(ME.phone)){
         showFingerprintScreen(ME,function(){enterApp()});
       }else{enterApp()}
@@ -7006,13 +7012,44 @@ var _chatsListenerAttached=false;
 // into one guarded helper, called from both enterAppWithFP() and
 // openManagementPanel(), fixes it for every login path without attaching
 // duplicate listeners if it's called more than once in a session.
-function ensureChatsListener(){
-  if(_chatsListenerAttached||!window.FB)return;
-  _chatsListenerAttached=true;
-  window.FB.listen('chats',function(data){
-    DB.chats=data||{};
-    if(document.querySelector('.page.on#pg-chats'))renderChats();
+function verifyAuthOrRelogin(){
+  if(!window.FB_AUTH||!window.FB_AUTH.authStateReady)return;
+  window.FB_AUTH.authStateReady().then(function(){
+    if(ME&&!window.FB_AUTH.currentUser){
+      var ph=ME.phone;
+      ME=null;localStorage.removeItem(SESS_KEY);
+      _chatsListenerAttached=false;
+      toast('Session expired — verify OTP again','warn');
+      showScr('login');goStep(1);
+      if(ph)$('ph-inp').value=String(ph).replace(/\D/g,'').slice(-10);
+    }
   });
+}
+function ensureChatsListener(){
+  if(!window.FB)return;
+  if(!_chatsListenerAttached){
+    _chatsListenerAttached=true;
+    window.FB.listen('chats',function(data){
+      DB.chats=data||{};
+      if(document.querySelector('.page.on#pg-chats'))renderChats();
+    });
+    verifyAuthOrRelogin();
+  }
+  // Backup fetch over REST while the Chats tab is open (last 50 messages)
+  if(!window._chatsPoll){
+    window._chatsPoll=setInterval(function(){
+      if(!ME||!document.querySelector('.page.on#pg-chats'))return;
+      fbRest._url('chats').then(function(u){
+        u+=(u.indexOf('?')>-1?'&':'?')+'orderBy=%22%24key%22&limitToLast=50';
+        return fetch(u)
+      }).then(function(r){return r.ok?r.json():null}).then(function(d){
+        if(!d)return;
+        var before=Object.keys(DB.chats||{}).length;
+        DB.chats=Object.assign(DB.chats||{},d);
+        if(Object.keys(DB.chats).length!==before)renderChats();
+      }).catch(function(){});
+    },8000);
+  }
 }
 window.ensureChatsListener=ensureChatsListener;
 
