@@ -5,7 +5,7 @@
 <title>FPJob</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e3b2e">
-<meta name="description" content="FPJob – member chat and jobs">
+<meta name="description" content="FPJob – member chat, jobs and resume builder">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" sizes="96x96" href="/icon-96.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -13,140 +13,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="FPJob">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="css/app.css">
 <script defer src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<style>
-:root{
-  --pine:#0e3b2e; --pine2:#17553f; --amber:#f2a900; --amber-d:#b97f00;
-  --bg:#eceff0; --card:#fff; --text:#16201c; --muted:#65726c; --line:#dde3e0; --danger:#c0392b;
-  --sat:env(safe-area-inset-top); --sab:env(safe-area-inset-bottom);
-  font-family: Bahnschrift, "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overscroll-behavior:none}
-body{font-size:16px;line-height:1.4}
-button,input,textarea,select{font:inherit;color:inherit}
-button{cursor:pointer;border:0;background:none}
-:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
-.hide{display:none!important}
-
-/* ---------- install bar ---------- */
-#installBar{position:fixed;left:0;right:0;top:0;z-index:60;background:var(--amber);color:#2a1d00;display:flex;align-items:center;gap:10px;padding:calc(8px + var(--sat)) 12px 8px;font-weight:600}
-#installBar img{width:30px;height:30px;border-radius:8px}
-#installBar span{flex:1;font-size:14px}
-#installBar button.go{background:var(--pine);color:#fff;padding:8px 14px;border-radius:20px;font-weight:700}
-#installBar button.x{font-size:22px;padding:0 6px;color:#2a1d00}
-body.hasBar #app,body.hasBar #login{padding-top:calc(48px + var(--sat))}
-
-/* ---------- login ---------- */
-#login{min-height:100%;background:var(--pine);color:#fff;display:flex;flex-direction:column;justify-content:center;padding:24px;padding-top:var(--sat)}
-#login .brand{display:flex;align-items:center;gap:14px;margin-bottom:34px}
-#login .brand img{width:64px;height:64px;border-radius:16px}
-#login h1{margin:0;font-size:34px;letter-spacing:.5px}
-#login p{margin:2px 0 0;color:#b9d3c8}
-.box{background:#fff;color:var(--text);border-radius:16px;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
-.box label{font-size:13px;color:var(--muted);font-weight:600}
-.phoneRow{display:flex;align-items:center;border:2px solid var(--line);border-radius:12px;margin:6px 0 14px;overflow:hidden}
-.phoneRow:focus-within{border-color:var(--pine)}
-.phoneRow select{border:0;background:#f2f5f3;padding:0 6px;font-weight:700;align-self:stretch;outline:0;max-width:120px}
-.phoneRow input{flex:1;border:0;padding:13px 12px;font-size:18px;letter-spacing:1px;outline:0;min-width:0}
-.btn{display:block;width:100%;background:var(--pine);color:#fff;padding:13px;border-radius:12px;font-weight:700;font-size:16px}
-.btn:disabled{opacity:.55}
-.btn.amber{background:var(--amber);color:#2a1d00}
-.btn.ghost{background:#eef2f0;color:var(--pine)}
-.btn.danger{background:var(--danger)}
-.btn.sm{display:inline-block;width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
-.err{color:#ffd9d3;margin-top:14px;font-size:14px;min-height:20px}
-.link{color:var(--pine2);font-weight:700;padding:8px 0}
-#otp{width:100%;text-align:center;letter-spacing:12px;font-size:26px;border:2px solid var(--line);border-radius:12px;padding:12px;margin:6px 0 14px;outline:0}
-#otp:focus{border-color:var(--pine)}
-
-/* ---------- app shell ---------- */
-#app{height:100dvh;display:flex;flex-direction:column}
-header.top{background:var(--pine);color:#fff;padding:calc(12px + var(--sat)) 16px 12px;display:flex;align-items:center;gap:12px;flex:none}
-body.hasBar header.top{padding-top:12px}
-header.top img{width:32px;height:32px;border-radius:8px}
-header.top h2{margin:0;font-size:19px;flex:1}
-header.top small{color:#a9cbbd}
-main{flex:1;min-height:0;position:relative}
-.page{position:absolute;inset:0;display:none;flex-direction:column}
-.page.on{display:flex}
-.scroll{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
-nav.tabs{flex:none;display:flex;background:#fff;border-top:1px solid var(--line);padding-bottom:var(--sab)}
-nav.tabs button{flex:1;padding:8px 0 7px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:11.5px;font-weight:600;position:relative}
-nav.tabs button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-nav.tabs button.on{color:var(--pine)}
-nav.tabs button.on::before{content:"";position:absolute;top:0;width:34px;height:3px;background:var(--amber);border-radius:0 0 3px 3px}
-.badge{position:absolute;top:3px;left:calc(50% + 6px);background:var(--amber);color:#2a1d00;border-radius:10px;font-size:11px;font-weight:800;min-width:18px;padding:0 5px;text-align:center}
-
-/* ---------- chat ---------- */
-#chatList{flex:1;overflow-y:auto;padding:10px 10px 6px;background:#efeae2;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch;overflow-anchor:none}
-.row{display:flex;margin:2px 0}
-.row.mine{justify-content:flex-end}
-.bub{max-width:84%;background:#fff;color:#111b21;border-radius:0 9px 9px 9px;padding:6px 9px 4px 9px;box-shadow:0 1px .5px rgba(11,20,26,.14);font-size:15.5px;word-wrap:break-word;overflow-wrap:anywhere}
-.row.mine .bub{background:#d9fdd3;color:#111b21;border-radius:9px 0 9px 9px}
-.row.mine+.row.mine .bub,.row.other+.row.other .bub{border-radius:9px}
-.who{font-size:12.5px;font-weight:700;margin-bottom:1px}
-.txt{white-space:pre-wrap}
-.txt a{color:#027eb5;text-decoration:underline;word-break:break-word}
-.txt code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92em}
-.pic{display:block;max-width:100%;max-height:300px;border-radius:9px;margin:2px 0 3px;background:#0002;min-height:60px}
-.meta{font-size:11px;color:#667781;text-align:right;margin-top:1px;display:flex;justify-content:flex-end;gap:4px}
-.gone{font-style:italic;opacity:.7}
-.older{align-self:center;margin:4px 0 8px;font-size:12px;color:var(--muted);background:#fffc;padding:3px 12px;border-radius:12px}
-.composer{flex:none;display:flex;align-items:flex-end;gap:8px;padding:6px 8px;background:#f0f2f5}
-.composer textarea{flex:1;resize:none;max-height:120px;border:0;border-radius:22px;padding:10px 14px;background:#fff;outline:0;line-height:1.3}
-.circ{flex:none;width:44px;height:44px;border-radius:50%;background:var(--pine);display:flex;align-items:center;justify-content:center}
-.circ svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#sendBtn{background:#00a884}
-.circ.plain{background:transparent}.circ.plain svg{stroke:var(--pine2)}
-#toBottom{position:absolute;right:14px;bottom:74px;background:var(--amber);color:#2a1d00;font-weight:800;border-radius:20px;padding:6px 14px;box-shadow:0 2px 8px #0004}
-
-/* ---------- lists / cards ---------- */
-.search{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:#fff;margin-bottom:12px;outline:0}
-.item{display:flex;gap:12px;align-items:center;background:#fff;border-radius:12px;padding:11px 12px;margin-bottom:8px;width:100%;text-align:left}
-.av{flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;background-size:cover;background-position:center}
-.av.big{width:96px;height:96px;font-size:40px}
-.item .t{font-weight:700}
-.item .s{font-size:13px;color:var(--muted)}
-.tag{display:inline-block;background:#fff3d1;color:var(--amber-d);font-size:11px;font-weight:800;border-radius:6px;padding:1px 7px;margin-left:6px;vertical-align:middle}
-.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px}
-.card h3{margin:0 0 8px;font-size:17px}
-.card p{margin:4px 0;color:var(--muted);font-size:14px}
-.job h3{margin:0}
-.job .co{color:var(--pine2);font-weight:700;font-size:14px}
-.job .d{white-space:pre-wrap;margin:8px 0;font-size:14.5px}
-.job .f{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
-.field{margin-bottom:10px}
-.field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:3px}
-.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;outline:0}
-.field input:focus,.field textarea:focus{border-color:var(--pine)}
-.fab{position:absolute;right:16px;bottom:16px;background:var(--amber);color:#2a1d00;font-weight:800;padding:13px 20px;border-radius:28px;box-shadow:0 4px 14px #0004}
-.empty{text-align:center;color:var(--muted);padding:40px 20px}
-table.prev{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
-table.prev td,table.prev th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
-.pw{overflow-x:auto;max-height:230px}
-
-/* ---------- sheet / toast ---------- */
-#scrim{position:fixed;inset:0;background:#0007;z-index:80;display:none;align-items:flex-end;justify-content:center}
-#scrim.on{display:flex}
-#sheet{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 18px calc(18px + var(--sab));max-height:88dvh;overflow:auto}
-#sheet h3{margin:0 0 10px}
-#sheet .kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14.5px}
-#sheet .kv span:first-child{color:var(--muted)}
-#sheet .kv span:last-child{text-align:right;overflow-wrap:anywhere}
-#sheet .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-#sheet img.full{width:100%;border-radius:10px}
-#toast{position:fixed;left:50%;bottom:calc(90px + var(--sab));transform:translateX(-50%);background:#16201c;color:#fff;padding:10px 18px;border-radius:22px;z-index:99;font-size:14px;display:none;max-width:90%;text-align:center}
-#splash{position:fixed;inset:0;background:var(--pine);z-index:70;display:flex;align-items:center;justify-content:center}
-#splash img{width:96px;height:96px;border-radius:24px}
-@media (prefers-reduced-motion:no-preference){#splash.out{opacity:0;transition:opacity .25s}}
-</style>
 </head>
 <body>
 
 <div id="splash"><img src="/icon-192.png" alt="FPJob"></div>
 
-<!-- Install bar (visible on first open until installed or dismissed) -->
+<!-- Install bar -->
 <div id="installBar" class="hide">
   <img src="/icon-96.png" alt="">
   <span>Get the FPJob app on your phone</span>
@@ -182,6 +56,10 @@ table.prev td,table.prev th{padding:5px 6px;border-bottom:1px solid var(--line);
   <header class="top"><img src="/icon-96.png" alt=""><h2 id="pageTitle">Chats</h2><small id="who"></small></header>
   <main>
     <section class="page on" id="page-chat">
+      <div class="toolbar">
+        <input class="search" id="cSearch" placeholder="Search messages…" autocomplete="off">
+        <span id="chatSearchHit" class="hide"></span>
+      </div>
       <div id="chatList"></div>
       <button id="toBottom" class="hide">New messages ↓</button>
       <div class="composer">
@@ -193,16 +71,38 @@ table.prev td,table.prev th{padding:5px 6px;border-bottom:1px solid var(--line);
     </section>
 
     <section class="page" id="page-members">
-      <div class="scroll"><input class="search" id="mSearch" placeholder="Search name, company, department"><div id="mList"></div></div>
+      <div class="scroll">
+        <div id="profileBanner" class="banner hide">Complete your profile so members can find you. <button type="button" id="goProfile">Go to Profile</button></div>
+        <input class="search" id="mSearch" placeholder="Search name, company, department">
+        <div id="mList"></div>
+      </div>
     </section>
 
     <section class="page" id="page-jobs">
-      <div class="scroll" id="jList"></div>
+      <div class="scroll">
+        <input class="search" id="jSearch" placeholder="Search jobs by title, company, location…">
+        <div class="filters">
+          <button type="button" class="chip on" data-filter="all">All</button>
+          <button type="button" class="chip" data-filter="mine">My posts</button>
+          <button type="button" class="chip" data-filter="recent">Last 7 days</button>
+        </div>
+        <div id="jList"></div>
+      </div>
       <button class="fab" id="postJob">+ Post a job</button>
+    </section>
+
+    <!-- Resume builder -->
+    <section class="page" id="page-resume">
+      <div class="scroll">
+        <div id="resumeRoot">
+          <div class="empty">Loading resume builder…</div>
+        </div>
+      </div>
     </section>
 
     <section class="page" id="page-profile">
       <div class="scroll">
+        <div id="completeBanner" class="banner hide">Add a photo and short about to look more professional.</div>
         <div class="card" style="text-align:center">
           <label for="avIn" style="cursor:pointer"><div class="av big" id="pAv" style="margin:0 auto 8px"></div><span class="link">Change photo</span></label>
           <input type="file" id="avIn" accept="image/*" class="hide">
@@ -212,7 +112,20 @@ table.prev td,table.prev th{padding:5px 6px;border-bottom:1px solid var(--line);
         <div class="card">
           <div class="field"><label for="eName">Name</label><input id="eName" maxlength="60"></div>
           <div class="field"><label for="eAbout">About</label><textarea id="eAbout" rows="3" maxlength="200" placeholder="Tell members what you do"></textarea></div>
+          <div class="field"><label for="eCompany">Company</label><input id="eCompany" maxlength="80"></div>
+          <div class="field"><label for="eDes">Designation</label><input id="eDes" maxlength="60"></div>
           <button class="btn" id="saveProfile">Save changes</button>
+        </div>
+        <div class="card">
+          <h3 style="margin:0 0 10px;font-size:15px">Preferences</h3>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px">
+            <span>Dark mode</span>
+            <button type="button" class="btn sm ghost" id="themeBtn">Toggle</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <span>Desktop notifications</span>
+            <button type="button" class="btn sm ghost" id="notifBtn">Enable</button>
+          </div>
         </div>
         <button class="btn ghost" id="installBtn2" style="margin-bottom:10px">Download app</button>
         <button class="btn danger" id="logout">Log out</button>
@@ -245,6 +158,7 @@ table.prev td,table.prev th{padding:5px 6px;border-bottom:1px solid var(--line);
     <button data-p="chat" class="on"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.5 7.2L3 21l1.8-5.5A8 8 0 1 1 21 12z"/></svg>Chats<i class="badge hide" id="unread"></i></button>
     <button data-p="members"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></svg>Members</button>
     <button data-p="jobs"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>Jobs</button>
+    <button data-p="resume"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8M8 9h2"/></svg>Resume</button>
     <button data-p="profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile</button>
     <button data-p="admin" id="tabAdmin" class="hide"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Admin</button>
   </nav>
@@ -253,473 +167,6 @@ table.prev td,table.prev th{padding:5px 6px;border-bottom:1px solid var(--line);
 <div id="scrim"><div id="sheet"></div></div>
 <div id="toast"></div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber, signOut }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-  collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot,
-  query, orderBy, limit, startAfter, serverTimestamp, writeBatch }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getStorage, ref as sref, uploadBytes, getDownloadURL }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
-
-/* ====== 1. PASTE YOUR FIREBASE WEB CONFIG HERE ====== */
-const firebaseConfig = {
-  apiKey: "AIzaSyDWVgkBEXfD1nmgHvccO7-im2jEPXsoMbM",
-  authDomain: "fpjob26.firebaseapp.com",
-  databaseURL: "https://fpjob26-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "fpjob26",
-  storageBucket: "fpjob26.firebasestorage.app",
-  messagingSenderId: "1066973147296",
-  appId: "1:1066973147296:web:ccaf4b51e381c8305ad9c5"
-};
-const SUPER_ADMIN = "+918929397949";       // must match firestore.rules & storage.rules
-/* ==================================================== */
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app); auth.languageCode = "en";
-const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
-const storage = getStorage(app);
-
-const $ = (s) => document.querySelector(s);
-const $$ = (s) => [...document.querySelectorAll(s)];
-const esc = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const LINK_RE = /(https?:\/\/[^\s<]+|www\.[^\s<]+)|([A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,})|(\+?\d[\d ()\-]{6,}\d)/g;
-function linkify(text = "") {
-  const keep = [];
-  const hold = (h) => "\uE000" + (keep.push(h) - 1) + "\uE001";
-  let t = esc(text);
-  // 1) links first (held as placeholders so formatting never breaks them)
-  t = t.replace(LINK_RE, (m, url, mail, tel, off, str) => {
-    if (url) {
-      const tail = (m.match(/[.,;:!?)\]]+$/) || [""])[0], u = tail ? m.slice(0, -tail.length) : m;
-      return hold(`<a href="${/^www\./i.test(u) ? "https://" + u : u}" target="_blank" rel="noopener">${u}</a>`) + tail;
-    }
-    if (mail) return hold(`<a href="mailto:${mail}">${mail}</a>`);
-    if (tel) {
-      const prev = off > 0 ? str[off - 1] : "";
-      const digits = tel.replace(/\D/g, "");
-      if (/[\w@.\/]/.test(prev) || digits.length < 8 || digits.length > 15) return m;
-      return hold(`<a href="tel:${(tel.trim().startsWith("+") ? "+" : "") + digits}">${tel}</a>`);
-    }
-    return m;
-  });
-  // 2) WhatsApp text styles
-  t = t.replace(/```([\s\S]+?)```/g, (m, c) => hold("<code>" + c + "</code>"));
-  t = t.replace(/(^|[^\w*])\*([^*\n]+)\*(?![\w*])/g, "$1<b>$2</b>")
-       .replace(/(^|[^\w_])_([^_\n]+)_(?![\w_])/g, "$1<i>$2</i>")
-       .replace(/(^|[^\w~])~([^~\n]+)~(?![\w~])/g, "$1<s>$2</s>");
-  // 3) restore held pieces
-  return t.replace(/\uE000(\d+)\uE001/g, (m, i) => keep[+i]);
-}
-const colors = ["#e26b00", "#1f7aec", "#a832c9", "#00897b", "#c2185b", "#6d4c41", "#5e35b1", "#2e7d32"];
-const colorOf = (s = "") => colors[[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % colors.length];
-const initial = (n = "?") => (n.trim()[0] || "?").toUpperCase();
-let toastT; const toast = (m) => { const t = $("#toast"); t.textContent = m; t.style.display = "block"; clearTimeout(toastT); toastT = setTimeout(() => (t.style.display = "none"), 2800); };
-
-/* ---------- sheet ---------- */
-function sheet(html) { $("#sheet").innerHTML = html; $("#scrim").classList.add("on"); }
-function closeSheet() { $("#scrim").classList.remove("on"); }
-$("#scrim").addEventListener("click", (e) => { if (e.target.id === "scrim") closeSheet(); });
-function confirmSheet(title, text, okLabel, fn, danger = true) {
-  sheet(`<h3>${esc(title)}</h3><p style="color:var(--muted)">${esc(text)}</p><div class="acts"><button class="btn sm ${danger ? "danger" : ""}" id="cOk">${esc(okLabel)}</button><button class="btn sm ghost" id="cNo">Cancel</button></div>`);
-  $("#cNo").onclick = closeSheet; $("#cOk").onclick = async () => { closeSheet(); await fn(); };
-}
-
-/* ---------- PWA install ---------- */
-let deferredPrompt = null;
-const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-function showInstallBar(v) { $("#installBar").classList.toggle("hide", !v); document.body.classList.toggle("hasBar", v); }
-function refreshInstallUI() {
-  const can = !standalone && (deferredPrompt || isIOS);
-  showInstallBar(can && !sessionStorage.getItem("barX"));
-  $("#installBtn2").classList.toggle("hide", !can);
-}
-window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; refreshInstallUI(); });
-window.addEventListener("appinstalled", () => { deferredPrompt = null; refreshInstallUI(); toast("FPJob installed"); });
-async function doInstall() {
-  if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; refreshInstallUI(); }
-  else if (isIOS) sheet(`<h3>Install FPJob</h3><p>Tap the <b>Share</b> button in Safari, then choose <b>Add to Home Screen</b>.</p><button class="btn" onclick="document.getElementById('scrim').classList.remove('on')">Got it</button>`);
-}
-$("#installBtn").onclick = doInstall; $("#installBtn2").onclick = doInstall;
-$("#installX").onclick = () => { sessionStorage.setItem("barX", "1"); showInstallBar(false); };
-refreshInstallUI();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
-
-/* ---------- login (OTP) ---------- */
-let confirmation = null, verifier = null, resendT;
-const loginErr = (m) => ($("#loginErr").textContent = m || "");
-const niceErr = (e) => ({
-  "auth/invalid-phone-number": "Enter a valid mobile number.",
-  "auth/too-many-requests": "Too many attempts. Try again after some time.",
-  "auth/invalid-verification-code": "Wrong OTP. Check and try again.",
-  "auth/code-expired": "OTP expired. Tap Resend OTP.",
-  "auth/network-request-failed": "No internet connection."
-}[e.code] || e.message || "Something went wrong");
-
-function startResendTimer() {
-  let s = 30; const b = $("#resend"); b.disabled = true;
-  clearInterval(resendT);
-  resendT = setInterval(() => { s--; b.textContent = s > 0 ? `Resend in ${s}s` : "Resend OTP"; if (s <= 0) { b.disabled = false; clearInterval(resendT); } }, 1000);
-  b.textContent = "Resend in 30s";
-}
-async function sendOtp() {
-  const cc = $("#cc").value;
-  let n = $("#phone").value.replace(/\D/g, "").replace(/^0+/, "");
-  if (cc === "+91") { n = n.slice(-10); if (n.length !== 10) return loginErr("Enter your 10-digit mobile number."); }
-  else if (n.length < 6 || n.length > 13) return loginErr("Enter a valid mobile number.");
-  loginErr(""); $("#sendOtp").disabled = true; $("#sendOtp").textContent = "Sending…";
-  try {
-    try { verifier?.clear(); } catch {}
-    $("#recaptcha").innerHTML = "";
-    verifier = new RecaptchaVerifier(auth, "recaptcha", { size: "invisible" });
-    confirmation = await signInWithPhoneNumber(auth, cc + n, verifier);
-    $("#sentTo").textContent = cc + " " + n;
-    $("#stepPhone").classList.add("hide"); $("#stepOtp").classList.remove("hide");
-    $("#otp").focus(); startResendTimer();
-  } catch (e) { loginErr(niceErr(e)); }
-  $("#sendOtp").disabled = false; $("#sendOtp").textContent = "Send OTP";
-}
-$("#sendOtp").onclick = sendOtp;
-$("#resend").onclick = sendOtp;
-$("#changeNum").onclick = () => { $("#stepOtp").classList.add("hide"); $("#stepPhone").classList.remove("hide"); loginErr(""); };
-$("#phone").addEventListener("keydown", (e) => { if (e.key === "Enter") sendOtp(); });
-let verifying = false;
-async function verifyOtp() {
-  if (verifying) return;
-  const code = $("#otp").value.trim();
-  if (code.length !== 6) return loginErr("Enter the 6-digit OTP.");
-  verifying = true;
-  loginErr(""); $("#verifyOtp").disabled = true; $("#verifyOtp").textContent = "Verifying…";
-  try { await confirmation.confirm(code); } catch (e) { loginErr(niceErr(e)); }
-  verifying = false;
-  $("#verifyOtp").disabled = false; $("#verifyOtp").textContent = "Verify and sign in";
-}
-$("#verifyOtp").onclick = verifyOtp;
-$("#otp").addEventListener("input", (e) => { if (e.target.value.length === 6) verifyOtp(); });
-
-/* ---------- session ---------- */
-let me = null, isAdmin = false, unsubs = [], booted = false;
-const showSplash = (v) => { const s = $("#splash"); if (v) { s.classList.remove("out"); s.style.display = "flex"; } else { s.classList.add("out"); setTimeout(() => (s.style.display = "none"), 260); } };
-
-onAuthStateChanged(auth, async (user) => {
-  if (!user) { teardown(); $("#app").classList.add("hide"); $("#login").classList.remove("hide"); showSplash(false); return; }
-  try {
-    const phone = user.phoneNumber;
-    const mref = doc(db, "members", phone);
-    let snap = null;
-    try { snap = await getDoc(mref); } catch {}
-    if (phone === SUPER_ADMIN && !(snap && snap.exists())) {
-      await setDoc(mref, { mobile: phone, name: "Admin", company: "", designation: "", department: "", role: "admin", active: true, createdAt: serverTimestamp() });
-      snap = await getDoc(mref);
-    }
-    if (!snap || !snap.exists() || snap.data().active === false) {
-      await signOut(auth); loginErr("This number has not been added by the admin."); return;
-    }
-    if (booted) return;
-    booted = true; me = { id: phone, ...snap.data() }; isAdmin = me.role === "admin" || phone === SUPER_ADMIN;
-    $("#login").classList.add("hide"); $("#app").classList.remove("hide");
-    $("#tabAdmin").classList.toggle("hide", !isAdmin);
-    renderProfile(); startChat(); startJobs();
-    // live watch of own record: removed or role changed by admin -> apply instantly
-    unsubs.push(onSnapshot(mref, (d) => {
-      if (!d.exists() || d.data().active === false) { if (phone !== SUPER_ADMIN) { signOut(auth); toast("You were removed by the admin"); } return; }
-      me = { id: phone, ...d.data() }; const a = me.role === "admin" || phone === SUPER_ADMIN;
-      if (a !== isAdmin) { isAdmin = a; $("#tabAdmin").classList.toggle("hide", !a); renderJobs(); }
-      renderProfile();
-    }, () => { signOut(auth); }));
-  } catch (e) { loginErr(niceErr(e)); await signOut(auth); }
-  finally { showSplash(false); }
-});
-function teardown() { unsubs.forEach((u) => u()); unsubs = []; booted = false; me = null; membersStarted = false; $("#chatList").innerHTML = ""; nodes.clear(); jobsData = []; }
-$("#logout").onclick = () => confirmSheet("Log out?", "You will need a new OTP to sign in again.", "Log out", () => signOut(auth));
-
-/* ---------- tabs ---------- */
-const titles = { chat: "Chats", members: "Members", jobs: "Jobs", profile: "Profile", admin: "Admin" };
-let curPage = "chat";
-$("#tabs").addEventListener("click", (e) => {
-  const b = e.target.closest("button"); if (!b) return; const p = b.dataset.p; curPage = p;
-  $$("#tabs button").forEach((x) => x.classList.toggle("on", x === b));
-  $$(".page").forEach((x) => x.classList.toggle("on", x.id === "page-" + p));
-  $("#pageTitle").textContent = titles[p];
-  if (p === "chat") { unread = 0; setBadge(); scrollDown(); }
-  if (p === "members" || p === "admin") startMembers();
-});
-
-/* ==================== CHAT ==================== */
-const PAGE = 40;
-const nodes = new Map();
-let oldestSnap = null, hasMore = true, loadingOlder = false, firstLoad = true, unread = 0;
-const list = $("#chatList");
-const nearBottom = () => list.scrollHeight - list.scrollTop - list.clientHeight < 120;
-const scrollDown = () => requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; $("#toBottom").classList.add("hide"); });
-const setBadge = () => { const b = $("#unread"); b.textContent = unread > 99 ? "99+" : unread; b.classList.toggle("hide", !unread); };
-const fmtTime = (ms) => { const d = new Date(ms), t = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); return d.toDateString() === new Date().toDateString() ? t : d.toLocaleDateString([], { day: "numeric", month: "short" }) + ", " + t; };
-const tsOf = (d) => (d.createdAt && d.createdAt.toMillis ? d.createdAt.toMillis() : Number.MAX_SAFE_INTEGER);
-
-function buildNode(id, d, pending) {
-  const mine = d.senderPhone === me.id, el = document.createElement("div");
-  el.className = "row " + (mine ? "mine" : "other"); el.dataset.id = id; el.dataset.ts = tsOf(d);
-  const ms = tsOf(d), time = ms === Number.MAX_SAFE_INTEGER ? "" : fmtTime(ms);
-  let body;
-  if (d.deleted) body = `<div class="txt gone">🚫 This message was deleted</div>`;
-  else body = (d.imageURL ? `<img class="pic" loading="lazy" src="${esc(d.imageURL)}" alt="photo">` : "") + (d.text ? `<div class="txt">${linkify(d.text)}</div>` : "");
-  el.innerHTML = `<div class="bub">${mine ? "" : `<div class="who" style="color:${colorOf(d.senderPhone)}">${esc(d.senderName || d.senderPhone)}</div>`}${body}<div class="meta"><span>${time}</span>${mine ? `<span>${pending ? "🕓" : "✓"}</span>` : ""}</div></div>`;
-  el.querySelector(".bub").addEventListener("click", (e) => {
-    if (e.target.closest("a")) return;
-    const img = e.target.closest(".pic"); if (img) return sheet(`<img class="full" src="${esc(img.src)}" alt=""><div class="acts"><button class="btn sm ghost" onclick="document.getElementById('scrim').classList.remove('on')">Close</button></div>`);
-    if (d.deleted || !(mine || isAdmin)) return;
-    confirmSheet("Delete message?", mine ? "This will delete the message for everyone." : "Delete this member's message for everyone?", "Delete", () =>
-      updateDoc(doc(db, "messages", id), { deleted: true, text: "", imageURL: "" }).catch(() => toast("Could not delete")));
-  });
-  return el;
-}
-function insertNode(id, d, pending) {
-  const el = buildNode(id, d, pending), ts = +el.dataset.ts;
-  let i = list.lastElementChild;
-  while (i && (i.classList.contains("older") || +i.dataset.ts > ts)) { if (i.classList.contains("older")) break; i = i.previousElementSibling; }
-  if (i && !i.classList.contains("older")) i.after(el); else { const o = list.querySelector(".older"); o ? o.after(el) : list.prepend(el); }
-  nodes.set(id, el);
-}
-function startChat() {
-  const q = query(collection(db, "messages"), orderBy("createdAt", "desc"), limit(PAGE));
-  unsubs.push(onSnapshot(q, { includeMetadataChanges: true }, (snap) => {
-    const stick = nearBottom() || firstLoad;
-    let newFromOthers = 0, added = false;
-    snap.docChanges().forEach((ch) => {
-      const d = ch.doc.data(), id = ch.doc.id, pending = ch.doc.metadata.hasPendingWrites;
-      if (ch.type === "added" && !nodes.has(id)) {
-        insertNode(id, d, pending); added = true;
-        if (!firstLoad && d.senderPhone !== me.id) newFromOthers++;
-      } else if (ch.type === "modified" || nodes.has(id)) {
-        const old = nodes.get(id); if (!old) return;
-        const fresh = buildNode(id, d, pending);
-        if (old.innerHTML !== fresh.innerHTML || old.dataset.ts !== fresh.dataset.ts) { old.replaceWith(fresh); nodes.set(id, fresh); }
-      }
-      // 'removed' is ignored on purpose: it only means the doc slid out of the live window
-    });
-    if (firstLoad) {
-      oldestSnap = snap.docs[snap.docs.length - 1] || null; hasMore = snap.size >= PAGE;
-      if (hasMore) { const o = document.createElement("div"); o.className = "older"; o.textContent = "Scroll up for older messages"; list.prepend(o); }
-      firstLoad = false;
-      if (!snap.metadata.fromCache || snap.size) scrollDown();
-    } else if (added) {
-      const lastMine = snap.docChanges().some((c) => c.type === "added" && c.doc.data().senderPhone === me.id);
-      if (stick || lastMine) scrollDown(); else if (newFromOthers) $("#toBottom").classList.remove("hide");
-      if (newFromOthers && curPage !== "chat") { unread += newFromOthers; setBadge(); }
-    }
-  }, (err) => console.error("chat", err)));
-}
-list.addEventListener("scroll", () => {
-  if (nearBottom()) $("#toBottom").classList.add("hide");
-  if (list.scrollTop < 100 && hasMore && !loadingOlder && oldestSnap) loadOlder();
-}, { passive: true });
-$("#toBottom").onclick = scrollDown;
-async function loadOlder() {
-  loadingOlder = true;
-  try {
-    const s = await getDocs(query(collection(db, "messages"), orderBy("createdAt", "desc"), startAfter(oldestSnap), limit(PAGE)));
-    const before = list.scrollHeight, top = list.scrollTop;
-    s.docs.forEach((d) => { if (!nodes.has(d.id)) insertNode(d.id, d.data(), false); });
-    if (s.docs.length) oldestSnap = s.docs[s.docs.length - 1];
-    hasMore = s.size >= PAGE; if (!hasMore) list.querySelector(".older")?.remove();
-    list.scrollTop = top + (list.scrollHeight - before);
-  } catch (e) { console.error(e); }
-  loadingOlder = false;
-}
-async function sendMsg(extra = {}) {
-  const t = $("#msg").value.trim();
-  if (!t && !extra.imageURL) return;
-  const data = { senderPhone: me.id, senderName: me.name || me.id, createdAt: serverTimestamp(), deleted: false, ...extra };
-  if (t) data.text = t;
-  $("#msg").value = ""; autosize();
-  try { await addDoc(collection(db, "messages"), data); } catch (e) { toast("Message not sent"); if (t) $("#msg").value = t; }
-}
-const autosize = () => { const m = $("#msg"); m.style.height = "auto"; m.style.height = Math.min(m.scrollHeight, 120) + "px"; };
-$("#msg").addEventListener("input", autosize);
-$("#msg").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && matchMedia("(hover:hover)").matches) { e.preventDefault(); sendMsg(); } });
-$("#sendBtn").onclick = () => { sendMsg(); $("#msg").focus(); };
-
-async function shrink(file, max, q) {
-  const bmp = await createImageBitmap(file); const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
-  const c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
-  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-  return new Promise((r) => c.toBlob(r, "image/jpeg", q));
-}
-$("#imgIn").addEventListener("change", async (e) => {
-  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
-  try {
-    toast("Sending photo…");
-    const blob = await shrink(f, 1280, 0.75);
-    const r = sref(storage, `chat/${me.id}/${Date.now()}.jpg`);
-    await uploadBytes(r, blob, { contentType: "image/jpeg" });
-    await sendMsg({ imageURL: await getDownloadURL(r) });
-  } catch (err) { toast("Photo failed to send"); }
-});
-
-/* ==================== MEMBERS ==================== */
-let membersMap = new Map(), membersStarted = false, membersReady = null;
-function startMembers() {
-  if (membersStarted) return membersReady; membersStarted = true;
-  membersReady = new Promise((res) => {
-    unsubs.push(onSnapshot(collection(db, "members"), (s) => {
-      membersMap = new Map(s.docs.map((d) => [d.id, { id: d.id, ...d.data() }]));
-      renderMembers(); renderAdmins(); res();
-    }, () => res()));
-  });
-  return membersReady;
-}
-const avStyle = (m) => m.photoURL ? `background-image:url('${esc(m.photoURL)}')` : `background:${colorOf(m.id)}`;
-function renderMembers() {
-  const q = $("#mSearch").value.trim().toLowerCase();
-  const arr = [...membersMap.values()].filter((m) => m.active !== false && (!q || [m.name, m.company, m.designation, m.department, m.mobile].join(" ").toLowerCase().includes(q)))
-    .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-  $("#mList").innerHTML = arr.length ? arr.map((m) => `<button class="item" data-id="${esc(m.id)}"><div class="av" style="${avStyle(m)}">${m.photoURL ? "" : esc(initial(m.name))}</div><div><div class="t">${esc(m.name || m.id)}${m.role === "admin" ? '<span class="tag">Admin</span>' : ""}</div><div class="s">${esc([m.company, m.designation, m.department].filter(Boolean).join(" · ") || m.mobile)}</div></div></button>`).join("") : `<div class="empty">No members found.</div>`;
-}
-$("#mSearch").addEventListener("input", renderMembers);
-$("#mList").addEventListener("click", (e) => { const b = e.target.closest(".item"); if (b) openMember(b.dataset.id); });
-
-async function openMember(id) {
-  const m = membersMap.get(id); if (!m) return;
-  let priv = {};
-  if (isAdmin) { try { const p = await getDoc(doc(db, "memberPrivate", id)); if (p.exists()) priv = p.data(); } catch {} }
-  const kv = (k, v) => v ? `<div class="kv"><span>${k}</span><span>${esc(v)}</span></div>` : "";
-  const isSuperM = id === SUPER_ADMIN;
-  sheet(`<div style="display:flex;gap:12px;align-items:center;margin-bottom:8px"><div class="av big" style="${avStyle(m)};width:64px;height:64px;font-size:26px">${m.photoURL ? "" : esc(initial(m.name))}</div><div><h3 style="margin:0">${esc(m.name || id)}</h3><div class="s" style="color:var(--muted)">${esc(m.about || "")}</div></div></div>
-    ${kv("Mobile", m.mobile || id)}${kv("Company", m.company)}${kv("Designation", m.designation)}${kv("Department", m.department)}
-    ${isAdmin ? kv("Email", priv.email) + kv("CTC", priv.ctc) + kv("Authority", priv.authority) : ""}
-    <div class="acts"><a class="btn sm" href="tel:${esc(id)}" style="text-decoration:none">Call</a>
-    ${isAdmin && !isSuperM ? `<button class="btn sm ghost" id="mRole">${m.role === "admin" ? "Remove admin" : "Make admin"}</button><button class="btn sm danger" id="mDel">Remove member</button>` : ""}
-    <button class="btn sm ghost" onclick="document.getElementById('scrim').classList.remove('on')">Close</button></div>`);
-  if (isAdmin && !isSuperM) {
-    $("#mRole").onclick = () => { closeSheet(); updateDoc(doc(db, "members", id), { role: m.role === "admin" ? "member" : "admin" }).then(() => toast("Role updated")).catch(() => toast("Not allowed")); };
-    $("#mDel").onclick = () => confirmSheet("Remove member?", `${m.name || id} will be logged out and can no longer sign in.`, "Remove", async () => {
-      try { const b = writeBatch(db); b.delete(doc(db, "members", id)); b.delete(doc(db, "memberPrivate", id)); await b.commit(); toast("Member removed"); } catch { toast("Could not remove"); }
-    });
-  }
-}
-function renderAdmins() {
-  const a = [...membersMap.values()].filter((m) => m.role === "admin");
-  $("#admList").innerHTML = a.map((m) => `<button class="item" data-id="${esc(m.id)}"><div class="av" style="${avStyle(m)}">${m.photoURL ? "" : esc(initial(m.name))}</div><div><div class="t">${esc(m.name || m.id)}</div><div class="s">${esc(m.mobile || m.id)}</div></div></button>`).join("") || `<div class="empty">No admins yet.</div>`;
-}
-$("#admList").addEventListener("click", (e) => { const b = e.target.closest(".item"); if (b) openMember(b.dataset.id); });
-
-/* ---------- admin: Excel upload ---------- */
-function normPhone(v) {
-  const raw = String(v ?? "").trim(), d = raw.replace(/\D/g, "");
-  if (raw.startsWith("+") && !d.startsWith("91")) return d.length >= 8 && d.length <= 15 ? "+" + d : null;   // other countries
-  if (raw.startsWith("00") && !d.startsWith("0091")) return d.length >= 10 && d.length <= 17 ? "+" + d.slice(2) : null;
-  if (d.length === 10) return "+91" + d;
-  if (d.length === 12 && d.startsWith("91")) return "+" + d;
-  if (d.length === 11 && d[0] === "0") return "+91" + d.slice(1);
-  return null;
-}
-let parsed = [];
-$("#xlIn").addEventListener("change", async (e) => {
-  const f = e.target.files[0]; if (!f) return;
-  if (!window.XLSX) return toast("Excel reader still loading, try again");
-  await startMembers();
-  const wb = XLSX.read(await f.arrayBuffer(), { type: "array" });
-  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "", raw: false });
-  const seen = new Set(); parsed = []; let bad = 0, dup = 0;
-  for (const r of rows) {
-    const g = {}; Object.keys(r).forEach((k) => (g[k.toLowerCase().replace(/\s+/g, "")] = String(r[k]).trim()));
-    const mob = normPhone(g["mobilenumber"] ?? g["mobile"] ?? g["phone"]);
-    if (!mob) { bad++; continue; }
-    if (seen.has(mob)) { dup++; continue; } seen.add(mob);
-    parsed.push({ mob, name: g["name"] || mob, company: g["companyname"] || g["company"] || "", designation: g["designation"] || "", department: g["department"] || "", ctc: g["ctc"] || "", email: g["emailid"] || g["email"] || "", authority: g["authority"] || "", isNew: !membersMap.has(mob) });
-  }
-  const news = parsed.filter((p) => p.isNew).length;
-  $("#xlPrev").innerHTML = `<p><b>${parsed.length}</b> valid numbers (${news} new, ${parsed.length - news} already added). ${bad} skipped (invalid number), ${dup} duplicates in file.</p>
-    <div class="pw"><table class="prev"><tr><th>Mobile</th><th>Name</th><th>Company</th><th>Dept</th></tr>${parsed.slice(0, 8).map((p) => `<tr><td>${esc(p.mob)}</td><td>${esc(p.name)}</td><td>${esc(p.company)}</td><td>${esc(p.department)}</td></tr>`).join("")}</table></div>
-    ${parsed.length ? `<button class="btn amber" id="xlGo">Add ${parsed.length} members</button>` : ""}`;
-  $("#xlGo")?.addEventListener("click", uploadMembers);
-});
-async function uploadMembers() {
-  const btn = $("#xlGo"); btn.disabled = true;
-  try {
-    const rows = parsed.filter((p) => p.mob !== SUPER_ADMIN); let done = 0;
-    for (let i = 0; i < rows.length; i += 200) {
-      const b = writeBatch(db);
-      rows.slice(i, i + 200).forEach((p) => {
-        const pub = { mobile: p.mob, name: p.name, company: p.company, designation: p.designation, department: p.department, active: true, addedBy: me.id };
-        if (p.isNew) { pub.role = "member"; pub.createdAt = serverTimestamp(); }
-        b.set(doc(db, "members", p.mob), pub, { merge: true });
-        b.set(doc(db, "memberPrivate", p.mob), { ctc: p.ctc, email: p.email, authority: p.authority }, { merge: true });
-      });
-      await b.commit(); done += Math.min(200, rows.length - i); btn.textContent = `Uploading ${done}/${rows.length}…`;
-    }
-    toast(`${rows.length} members saved`); $("#xlPrev").innerHTML = ""; $("#xlIn").value = ""; parsed = [];
-  } catch (e) { console.error(e); toast("Upload failed"); btn.disabled = false; }
-}
-$("#aAdd").onclick = async () => {
-  const mob = normPhone($("#aMob").value); if (!mob) return toast("Enter a valid mobile number (add + and country code for non-India)");
-  await startMembers();
-  try {
-    const isNew = !membersMap.has(mob);
-    const d = { mobile: mob, name: $("#aName").value.trim() || mob, company: $("#aCo").value.trim(), designation: $("#aDes").value.trim(), department: $("#aDep").value.trim(), active: true, addedBy: me.id };
-    if (isNew) { d.role = "member"; d.createdAt = serverTimestamp(); }
-    await setDoc(doc(db, "members", mob), d, { merge: true });
-    ["#aMob", "#aName", "#aCo", "#aDes", "#aDep"].forEach((s) => ($(s).value = "")); toast("Member added");
-  } catch { toast("Could not add member"); }
-};
-
-/* ==================== JOBS ==================== */
-let jobsData = [];
-function startJobs() {
-  unsubs.push(onSnapshot(query(collection(db, "jobs"), orderBy("createdAt", "desc"), limit(100)), (s) => { jobsData = s.docs.map((d) => ({ id: d.id, ...d.data() })); renderJobs(); }));
-}
-function renderJobs() {
-  $("#jList").innerHTML = jobsData.length ? jobsData.map((j) => `<div class="card job"><h3>${esc(j.title)}</h3><div class="co">${esc([j.company, j.location].filter(Boolean).join(" · "))}</div>${j.description ? `<div class="d">${linkify(j.description)}</div>` : ""}
-    <div class="f"><span>Posted by ${esc(j.postedByName || j.postedBy)}${j.createdAt?.toMillis ? " · " + fmtTime(j.createdAt.toMillis()) : ""}</span></div>
-    <div class="acts" style="display:flex;gap:8px;margin-top:10px">${j.contact ? `<a class="btn sm" style="text-decoration:none" href="tel:${esc(j.contact)}">Call</a><a class="btn sm amber" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/${esc(j.contact.replace(/\D/g, ""))}">WhatsApp</a>` : ""}${(j.postedBy === me?.id || isAdmin) ? `<button class="btn sm ghost" data-del="${j.id}">Delete</button>` : ""}</div></div>`).join("") : `<div class="empty">No jobs posted yet. Tap “Post a job” to add the first one.</div>`;
-}
-$("#jList").addEventListener("click", (e) => { const b = e.target.closest("[data-del]"); if (b) confirmSheet("Delete job?", "This removes the job for everyone.", "Delete", () => deleteDoc(doc(db, "jobs", b.dataset.del)).catch(() => toast("Not allowed"))); });
-$("#postJob").onclick = () => {
-  sheet(`<h3>Post a job</h3>
-   <div class="field"><label>Job title</label><input id="jT" maxlength="150"></div>
-   <div class="field"><label>Company</label><input id="jC" value="${esc(me.company || "")}"></div>
-   <div class="field"><label>Location</label><input id="jL"></div>
-   <div class="field"><label>Details</label><textarea id="jD" rows="4" maxlength="2000"></textarea></div>
-   <div class="field"><label>Contact number</label><input id="jN" type="tel" value="${esc(me.id)}"></div>
-   <div class="acts"><button class="btn sm" id="jGo">Post job</button><button class="btn sm ghost" id="jNo">Cancel</button></div>`);
-  $("#jNo").onclick = closeSheet;
-  $("#jGo").onclick = async () => {
-    const title = $("#jT").value.trim(); if (!title) return toast("Enter a job title");
-    try {
-      await addDoc(collection(db, "jobs"), { title, company: $("#jC").value.trim(), location: $("#jL").value.trim(), description: $("#jD").value.trim(), contact: $("#jN").value.trim(), postedBy: me.id, postedByName: me.name || me.id, createdAt: serverTimestamp() });
-      closeSheet(); toast("Job posted");
-    } catch { toast("Could not post job"); }
-  };
-};
-
-/* ==================== PROFILE ==================== */
-function renderProfile() {
-  if (!me) return;
-  $("#who").textContent = me.name || "";
-  const av = $("#pAv"); av.style.cssText = avStyle(me); av.textContent = me.photoURL ? "" : initial(me.name);
-  $("#pName").textContent = me.name || me.id;
-  $("#pMeta").textContent = [me.company, me.designation, me.department].filter(Boolean).join(" · ");
-  $("#pMobile").textContent = me.id + (isAdmin ? " · Admin" : "");
-  if (document.activeElement !== $("#eName")) $("#eName").value = me.name || "";
-  if (document.activeElement !== $("#eAbout")) $("#eAbout").value = me.about || "";
-}
-$("#saveProfile").onclick = async () => {
-  const name = $("#eName").value.trim(); if (!name) return toast("Name cannot be empty");
-  try { await updateDoc(doc(db, "members", me.id), { name, about: $("#eAbout").value.trim() }); toast("Profile saved"); } catch { toast("Could not save"); }
-};
-$("#avIn").addEventListener("change", async (e) => {
-  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
-  try {
-    toast("Uploading photo…");
-    const r = sref(storage, `profiles/${me.id}/avatar.jpg`);
-    await uploadBytes(r, await shrink(f, 384, 0.8), { contentType: "image/jpeg" });
-    await updateDoc(doc(db, "members", me.id), { photoURL: (await getDownloadURL(r)) + "" });
-    toast("Photo updated");
-  } catch { toast("Photo upload failed"); }
-});
-</script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>

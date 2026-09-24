@@ -1,40 +1,50 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
 
     function signedIn() {
       return request.auth != null && request.auth.token.phone_number != null;
     }
+
     function phone() {
       return request.auth.token.phone_number;
     }
-    function isSuper() {
+
+    function isSuperAdmin() {
       return signedIn() && phone() == '+918929397949';
     }
-    function isMember() {
-      return signedIn()
-        && (isSuper()
-            || (firestore.exists(/databases/(default)/documents/members/$(phone()))
-                && firestore.get(/databases/(default)/documents/members/$(phone())).data.active == true));
+
+    // Lightweight check: signed-in phone users only.
+    // Membership is enforced in Firestore; storage only gates by auth + path ownership.
+    function isUser() {
+      return signedIn();
     }
+
+    function isOwnerPath(uid) {
+      return signedIn() && phone() == uid;
+    }
+
     function isImage() {
       return request.resource.contentType.matches('image/.*');
     }
 
-    // Chat images: any member can read, member can upload own images (max 5 MB)
-    match /chat/{mobile}/{file} {
-      allow read: if isMember();
-      allow create: if isMember() && mobile == phone()
-                    && isImage() && request.resource.size < 5 * 1024 * 1024;
-      allow delete: if isMember() && mobile == phone();
+    function under5MB() {
+      return request.resource.size < 5 * 1024 * 1024;
     }
 
-    // Profile photos: any member can read, only owner writes (max 2 MB)
-    match /profiles/{mobile}/{file} {
-      allow read: if isMember();
-      allow write: if isMember() && mobile == phone()
-                   && isImage() && request.resource.size < 2 * 1024 * 1024;
+    // Chat photos: chat/{phone}/{filename}.jpg
+    match /chat/{uid}/{fileName} {
+      allow read: if isUser();
+      allow write: if isOwnerPath(uid) && isImage() && under5MB();
+      allow delete: if isOwnerPath(uid) || isSuperAdmin();
+    }
+
+    // Profile avatars: profiles/{phone}/avatar.jpg
+    match /profiles/{uid}/{fileName} {
+      allow read: if isUser();
+      allow write: if isOwnerPath(uid) && isImage() && under5MB()
+        && fileName == 'avatar.jpg';
+      allow delete: if isOwnerPath(uid) || isSuperAdmin();
     }
 
     match /{allPaths=**} {
