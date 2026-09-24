@@ -47,7 +47,7 @@ body.hasBar #app,body.hasBar #login{padding-top:calc(48px + var(--sat))}
 .box label{font-size:13px;color:var(--muted);font-weight:600}
 .phoneRow{display:flex;align-items:center;border:2px solid var(--line);border-radius:12px;margin:6px 0 14px;overflow:hidden}
 .phoneRow:focus-within{border-color:var(--pine)}
-.phoneRow b{padding:0 12px;background:#f2f5f3;align-self:stretch;display:flex;align-items:center}
+.phoneRow select{border:0;background:#f2f5f3;padding:0 6px;font-weight:700;align-self:stretch;outline:0;max-width:120px}
 .phoneRow input{flex:1;border:0;padding:13px 12px;font-size:18px;letter-spacing:1px;outline:0;min-width:0}
 .btn{display:block;width:100%;background:var(--pine);color:#fff;padding:13px;border-radius:12px;font-weight:700;font-size:16px}
 .btn:disabled{opacity:.55}
@@ -157,7 +157,7 @@ table.prev td,table.prev th{padding:5px 6px;border-bottom:1px solid var(--line);
   <div class="box">
     <div id="stepPhone">
       <label for="phone">Mobile number</label>
-      <div class="phoneRow"><b>+91</b><input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit number" autocomplete="tel-national"></div>
+      <div class="phoneRow"><select id="cc" aria-label="Country code"><option value="+91">+91 India</option><option value="+971">+971 UAE</option><option value="+966">+966 Saudi</option><option value="+968">+968 Oman</option><option value="+973">+973 Bahrain</option><option value="+974">+974 Qatar</option><option value="+965">+965 Kuwait</option><option value="+977">+977 Nepal</option><option value="+880">+880 Bangladesh</option><option value="+94">+94 Sri Lanka</option><option value="+92">+92 Pakistan</option><option value="+234">+234 Nigeria</option><option value="+27">+27 S. Africa</option><option value="+98">+98 Iran</option><option value="+60">+60 Malaysia</option><option value="+62">+62 Indonesia</option><option value="+44">+44 UK</option><option value="+31">+31 Netherlands</option><option value="+34">+34 Spain</option><option value="+36">+36 Hungary</option><option value="+1">+1 USA/Canada</option></select><input id="phone" type="tel" inputmode="numeric" maxlength="14" placeholder="Mobile number" autocomplete="tel-national"></div>
       <button class="btn" id="sendOtp">Send OTP</button>
     </div>
     <div id="stepOtp" class="hide">
@@ -336,15 +336,17 @@ function startResendTimer() {
   b.textContent = "Resend in 30s";
 }
 async function sendOtp() {
-  const n = $("#phone").value.replace(/\D/g, "").slice(-10);
-  if (n.length !== 10) return loginErr("Enter your 10-digit mobile number.");
+  const cc = $("#cc").value;
+  let n = $("#phone").value.replace(/\D/g, "").replace(/^0+/, "");
+  if (cc === "+91") { n = n.slice(-10); if (n.length !== 10) return loginErr("Enter your 10-digit mobile number."); }
+  else if (n.length < 6 || n.length > 13) return loginErr("Enter a valid mobile number.");
   loginErr(""); $("#sendOtp").disabled = true; $("#sendOtp").textContent = "Sending…";
   try {
     try { verifier?.clear(); } catch {}
     $("#recaptcha").innerHTML = "";
     verifier = new RecaptchaVerifier(auth, "recaptcha", { size: "invisible" });
-    confirmation = await signInWithPhoneNumber(auth, "+91" + n, verifier);
-    $("#sentTo").textContent = "+91 " + n;
+    confirmation = await signInWithPhoneNumber(auth, cc + n, verifier);
+    $("#sentTo").textContent = cc + " " + n;
     $("#stepPhone").classList.add("hide"); $("#stepOtp").classList.remove("hide");
     $("#otp").focus(); startResendTimer();
   } catch (e) { loginErr(niceErr(e)); }
@@ -576,7 +578,9 @@ $("#admList").addEventListener("click", (e) => { const b = e.target.closest(".it
 
 /* ---------- admin: Excel upload ---------- */
 function normPhone(v) {
-  const d = String(v ?? "").replace(/\D/g, "");
+  const raw = String(v ?? "").trim(), d = raw.replace(/\D/g, "");
+  if (raw.startsWith("+") && !d.startsWith("91")) return d.length >= 8 && d.length <= 15 ? "+" + d : null;   // other countries
+  if (raw.startsWith("00") && !d.startsWith("0091")) return d.length >= 10 && d.length <= 17 ? "+" + d.slice(2) : null;
   if (d.length === 10) return "+91" + d;
   if (d.length === 12 && d.startsWith("91")) return "+" + d;
   if (d.length === 11 && d[0] === "0") return "+91" + d.slice(1);
@@ -621,7 +625,7 @@ async function uploadMembers() {
   } catch (e) { console.error(e); toast("Upload failed"); btn.disabled = false; }
 }
 $("#aAdd").onclick = async () => {
-  const mob = normPhone($("#aMob").value); if (!mob) return toast("Enter a valid 10-digit number");
+  const mob = normPhone($("#aMob").value); if (!mob) return toast("Enter a valid mobile number (add + and country code for non-India)");
   await startMembers();
   try {
     const isNew = !membersMap.has(mob);
