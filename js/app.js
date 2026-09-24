@@ -199,7 +199,9 @@ function teardown() {
   firstLoad = true; oldestSnap = null; hasMore = true; unread = 0; setBadge();
   if ($("#cSearch")) $("#cSearch").value = "";
   if ($("#jSearch")) $("#jSearch").value = "";
+  if ($("#mSearch")) $("#mSearch").value = "";
   jobFilter = "all";
+  memberDesFilter = "all";
 }
 $("#logout").onclick = () => confirmSheet("Log out?", "You will need a new OTP to sign in again.", "Log out", () => signOut(auth));
 
@@ -400,6 +402,7 @@ $("#imgIn").addEventListener("change", async (e) => {
 
 /* ==================== MEMBERS ==================== */
 let membersMap = new Map(), membersStarted = false, membersReady = null;
+let memberDesFilter = "all";
 function startMembers() {
   if (membersStarted) return membersReady; membersStarted = true;
   membersReady = new Promise((res) => {
@@ -425,16 +428,49 @@ function lastSeenText(m) {
   if (hrs < 24) return `Last seen ${hrs}h ago`;
   return `Last seen ${fmtTime(ms)}`;
 }
+function uniqueDesignations() {
+  const set = new Set();
+  for (const m of membersMap.values()) {
+    if (m.active === false) continue;
+    const d = (m.designation || "").trim();
+    if (d) set.add(d);
+  }
+  return [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+}
+function renderDesFilters() {
+  const el = $("#mFilters");
+  if (!el) return;
+  const list = uniqueDesignations();
+  const chips = [`<button type="button" class="chip ${memberDesFilter === "all" ? "on" : ""}" data-des="all">All</button>`];
+  for (const d of list) {
+    chips.push(`<button type="button" class="chip ${memberDesFilter === d ? "on" : ""}" data-des="${esc(d)}">${esc(d)}</button>`);
+  }
+  el.innerHTML = chips.join("");
+}
 function renderMembers() {
-  const q = $("#mSearch").value.trim().toLowerCase();
-  const arr = [...membersMap.values()].filter((m) => m.active !== false && (!q || [m.name, m.company, m.designation, m.department, m.mobile].join(" ").toLowerCase().includes(q)))
-    .sort((a, b) => (isOnline(b) - isOnline(a)) || (a.name || "").localeCompare(b.name || ""));
-  $("#mList").innerHTML = arr.length ? arr.map((m) => `<button class="item" data-id="${esc(m.id)}"><div class="av" style="${avStyle(m)}">${m.photoURL ? "" : esc(initial(m.name))}</div><div><div class="t"><span class="dot ${isOnline(m) ? "" : "off"}"></span>${esc(m.name || m.id)}${m.role === "admin" ? '<span class="tag">Admin</span>' : ""}</div><div class="s">${esc([m.company, m.designation, m.department].filter(Boolean).join(" · ") || m.mobile)}${lastSeenText(m) ? " · " + lastSeenText(m) : ""}</div></div></button>`).join("") : `<div class="empty">No members found.<br><small>Try a different search.</small></div>`;
+  const q = ($("#mSearch")?.value || "").trim().toLowerCase();
+  renderDesFilters();
+  const arr = [...membersMap.values()].filter((m) => {
+    if (m.active === false) return false;
+    if (memberDesFilter !== "all") {
+      const d = (m.designation || "").trim();
+      if (d !== memberDesFilter) return false;
+    }
+    if (q && ![m.name, m.company, m.designation, m.department, m.mobile].join(" ").toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a, b) => (isOnline(b) - isOnline(a)) || (a.name || "").localeCompare(b.name || ""));
+  $("#mList").innerHTML = arr.length ? arr.map((m) => `<button class="item" data-id="${esc(m.id)}"><div class="av" style="${avStyle(m)}">${m.photoURL ? "" : esc(initial(m.name))}</div><div><div class="t"><span class="dot ${isOnline(m) ? "" : "off"}"></span>${esc(m.name || m.id)}${m.role === "admin" ? '<span class="tag">Admin</span>' : ""}</div><div class="s">${esc([m.company, m.designation, m.department].filter(Boolean).join(" · ") || m.mobile)}${lastSeenText(m) ? " · " + lastSeenText(m) : ""}</div></div></button>`).join("") : `<div class="empty">No members found.<br><small>Try a different search or designation filter.</small></div>`;
   // profile completeness banner
   const incomplete = me && (!me.photoURL || !me.about || !me.company);
   $("#profileBanner")?.classList.toggle("hide", !incomplete);
 }
 $("#mSearch").addEventListener("input", renderMembers);
+$("#mFilters")?.addEventListener("click", (e) => {
+  const c = e.target.closest(".chip");
+  if (!c) return;
+  memberDesFilter = c.dataset.des || "all";
+  renderMembers();
+});
 $("#mList").addEventListener("click", (e) => { const b = e.target.closest(".item"); if (b) openMember(b.dataset.id); });
 
 async function openMember(id) {
