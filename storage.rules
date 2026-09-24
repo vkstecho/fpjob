@@ -1,0 +1,44 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.phone_number != null;
+    }
+    function phone() {
+      return request.auth.token.phone_number;
+    }
+    function isSuper() {
+      return signedIn() && phone() == '+918829397949';
+    }
+    function isMember() {
+      return signedIn()
+        && (isSuper()
+            || (firestore.exists(/databases/(default)/documents/members/$(phone()))
+                && firestore.get(/databases/(default)/documents/members/$(phone())).data.active == true));
+    }
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    // Chat images: any member can read, member can upload own images (max 5 MB)
+    match /chat/{mobile}/{file} {
+      allow read: if isMember();
+      allow create: if isMember() && mobile == phone()
+                    && isImage() && request.resource.size < 5 * 1024 * 1024;
+      allow delete: if isMember() && mobile == phone();
+    }
+
+    // Profile photos: any member can read, only owner writes (max 2 MB)
+    match /profiles/{mobile}/{file} {
+      allow read: if isMember();
+      allow write: if isMember() && mobile == phone()
+                   && isImage() && request.resource.size < 2 * 1024 * 1024;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

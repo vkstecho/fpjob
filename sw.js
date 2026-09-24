@@ -1,93 +1,77 @@
-// FPJob Service Worker v39
-// Network-first strategy with offline fallback
-var CACHE_NAME = 'fpjob-v39';
-var ASSETS = [
+/* FPJob service worker
+   - App shell + Firebase SDK files cached for instant start and offline open
+   - Firestore / Auth / Storage traffic is never touched (Firestore has its own offline cache)
+   Bump VERSION whenever index.html changes so users get the update. */
+const VERSION = 'fpjob-v1';
+const SHELL = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-72.png',
   '/icon-96.png',
-  '/icon-128.png',
-  '/icon-144.png',
-  '/icon-152.png',
   '/icon-192.png',
-  '/icon-384.png',
   '/icon-512.png'
 ];
 
-// Install: cache core assets
-self.addEventListener('install', function(e) {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(function(cache) {
-      return cache.addAll(ASSETS).catch(function(err){
-        console.warn('SW: Some assets failed to cache:', err);
-      });
-    })
-  );
-  self.skipWaiting();
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 
-// Activate: clean old caches
-self.addEventListener('activate', function(e) {
+self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then(function(names) {
-      return Promise.all(
-        names.filter(function(n) { return n !== CACHE_NAME; })
-             .map(function(n) {
-               console.log('SW: Removing old cache:', n);
-               return caches.delete(n);
-             })
-      );
-    }).then(function(){ return self.clients.claim(); })
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch: network-first for HTML, cache-first for static assets
-self.addEventListener('fetch', function(e) {
-  // Don't cache API calls or external resources
-  var url = new URL(e.request.url);
-  if (url.hostname !== self.location.hostname) return;
-  if (url.pathname.indexOf('/api/') === 0) return;
-  if (url.pathname.indexOf('firebaseio.com') !== -1) return;
-  if (url.pathname.indexOf('firebasedatabase.app') !== -1) return;
-  if (url.pathname.indexOf('firebasestorage') !== -1) return;
-  
-  // HTML: network-first (always get fresh)
-  if (e.request.mode === 'navigate' || (e.request.headers.get('accept') || '').indexOf('text/html') !== -1) {
+self.addEventListener('message', (e) => {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  // Never intercept live Firebase / Google API calls
+  if (/googleapis\.com|firebaseio\.com|firebasestorage|identitytoolkit|recaptcha|google\.com\/recaptcha|gstatic\.com\/recaptcha/.test(url.href)) return;
+
+  // Page navigations: network first, fall back to cached shell
+  if (req.mode === 'navigate') {
     e.respondWith(
-      fetch(e.request).then(function(res) {
-        // Update cache with fresh copy
-        var copy = res.clone();
-        caches.open(CACHE_NAME).then(function(cache) { cache.put(e.request, copy); });
-        return res;
-      }).catch(function() {
-        // Offline: serve cached version
-        return caches.match(e.request).then(function(cached) {
-          return cached || caches.match('/');
-        });
-      })
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(VERSION).then((c) => c.put('/index.html', copy));
+          return res;
+        })
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
-  
-  // Static assets: cache-first
-  e.respondWith(
-    caches.match(e.request).then(function(cached) {
-      if (cached) return cached;
-      return fetch(e.request).then(function(res) {
-        if (res && res.status === 200 && res.type === 'basic') {
-          var copy = res.clone();
-          caches.open(CACHE_NAME).then(function(cache) { cache.put(e.request, copy); });
-        }
-        return res;
-      });
-    })
-  );
-});
 
-// Listen for skip-waiting message
-self.addEventListener('message', function(e) {
-  if (e.data && e.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+  // Static files + SDK/library scripts: stale-while-revalidate
+  const cacheable =
+    url.origin === location.origin ||
+    url.hostname === 'www.gstatic.com' ||
+    url.hostname === 'cdn.sheetjs.com' ||
+    url.hostname === 'fonts.googleapis.com' ||
+    url.hostname === 'fonts.gstatic.com';
+
+  if (cacheable) {
+    e.respondWith(
+      caches.match(req).then((cached) => {
+        const fetching = fetch(req)
+          .then((res) => {
+            if (res && (res.status === 200 || res.type === 'opaque')) {
+              const copy = res.clone();
+              caches.open(VERSION).then((c) => c.put(req, copy));
+            }
+            return res;
+          })
+          .catch(() => cached);
+        return cached || fetching;
+      })
+    );
   }
 });

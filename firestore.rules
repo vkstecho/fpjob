@@ -1,0 +1,96 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+    function signedIn() {
+      return request.auth != null && request.auth.token.phone_number != null;
+    }
+    function phone() {
+      return request.auth.token.phone_number;               // e.g. +918829397949
+    }
+    // Super admin (cannot be removed / demoted by anyone)
+    function isSuper() {
+      return signedIn() && phone() == '+918829397949';
+    }
+    function memberDoc() {
+      return get(/databases/$(database)/documents/members/$(phone()));
+    }
+    function isMember() {
+      return signedIn()
+        && (isSuper()
+            || (exists(/databases/$(database)/documents/members/$(phone()))
+                && memberDoc().data.active == true));
+    }
+    function isAdmin() {
+      return isSuper()
+        || (isMember() && memberDoc().data.role == 'admin');
+    }
+
+    // ---------- Members (public directory info) ----------
+    match /members/{mobile} {
+      allow read: if isMember();
+
+      // Admin adds / edits / removes members (Excel upload uses batched creates)
+      allow create: if isAdmin() && request.resource.data.role in ['member', 'admin']
+                    && (mobile != '+918829397949' || isSuper());
+      allow update: if
+        // admin can change anything except the super admin's record
+        (isAdmin() && mobile != '+918829397949')
+        // member can edit only own profile fields
+        || (isMember() && mobile == phone()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['about', 'photoURL', 'name', 'lastSeen']));
+      allow delete: if isAdmin() && mobile != '+918829397949';
+    }
+
+    // ---------- Private member details (CTC, Email) : admin only ----------
+    match /memberPrivate/{mobile} {
+      allow read, write: if isAdmin();
+    }
+
+    // ---------- Group chat ----------
+    match /messages/{id} {
+      allow read: if isMember();
+
+      allow create: if isMember()
+        && request.resource.data.keys().hasOnly(
+             ['text', 'imageURL', 'senderPhone', 'senderName', 'createdAt', 'deleted', 'replyTo'])
+        && request.resource.data.senderPhone == phone()
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.deleted == false
+        && (!('text' in request.resource.data)
+            || (request.resource.data.text is string && request.resource.data.text.size() <= 4000))
+        && (request.resource.data.get('text', '') != '' || request.resource.data.get('imageURL', '') != '');
+
+      // Soft delete only (keeps chat window fast & consistent): owner or admin
+      allow update: if isMember()
+        && (resource.data.senderPhone == phone() || isAdmin())
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['deleted', 'text', 'imageURL']);
+
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Jobs ----------
+    match /jobs/{id} {
+      allow read: if isMember();
+      allow create: if isMember()
+        && request.resource.data.postedBy == phone()
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 150;
+      allow update: if isMember()
+        && (resource.data.postedBy == phone() || isAdmin());
+      allow delete: if isMember()
+        && (resource.data.postedBy == phone() || isAdmin());
+    }
+
+    // Everything else is closed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
