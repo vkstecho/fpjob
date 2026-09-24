@@ -13,10 +13,27 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800;900&family=Poppins:wght@400;600;700;800;900&family=Source+Code+Pro:wght@500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800;900&family=Poppins:wght@400;600;700;800;900&family=Source+Code+Pro:wght@500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<script>
+// Heavy libraries load ONLY when a feature needs them (banner/PDF/Excel), not on every app open
+window.loadLib=(function(){
+  var U={
+    html2canvas:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+    jspdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+    xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+  },P={};
+  return function(n){
+    if(P[n])return P[n];
+    P[n]=new Promise(function(res,rej){
+      var sc=document.createElement('script');sc.src=U[n];sc.onload=res;
+      sc.onerror=function(){delete P[n];rej(new Error('Library load failed: '+n))};
+      document.head.appendChild(sc);
+    });
+    return P[n];
+  };
+})();
+</script>
 <script>
 // PWA: Register service worker for offline capability + Play Store TWA
 if('serviceWorker' in navigator){
@@ -3401,6 +3418,7 @@ async function downloadBanner(){
   
   try{
     var sz = BANNER_SIZES[window._bannerState.size];
+    await window.loadLib('html2canvas');
     var canvas = await html2canvas(bannerEl, {
       scale: sz.scale,
       useCORS: true,
@@ -3981,6 +3999,9 @@ function showJobBanner(job){
 }
 
 function saveBannerImage(){
+  window.loadLib('html2canvas').then(_saveBannerImage,_saveBannerImage);
+}
+function _saveBannerImage(){
   var el=document.getElementById('job-banner');if(!el)return;
   var btn=$('bn-dl');
   if(btn){btn.textContent='Generating...';btn.disabled=true}
@@ -4283,10 +4304,13 @@ async function sendChatImage(input){
   var file=input.files&&input.files[0];
   if(!file)return;
   if(!file.type.startsWith('image/')){toast('❌ Sirf image files allowed','err');input.value='';return}
-  if(file.size>5*1024*1024){toast('❌ Image 5MB se chhoti honi chahiye','err');input.value='';return}
+  if(file.size>40*1024*1024){toast('❌ Image bahut badi hai','err');input.value='';return}
   input.value='';
   try{
+    toast('📤 Photo taiyaar ho rahi hai...');
     var upload=await compressImageForChat(file);
+    if(upload.size>5*1024*1024){toast('❌ Photo compress nahi ho payi — chhoti photo chunein','err');return}
+    if(!/^image\/(jpeg|png|webp|gif)$/.test(upload.type)){toast('❌ Sirf JPG/PNG photo bhej sakte hain','err');return}
     var path='chat_images/'+Date.now()+'_'+ME.phone+'_'+file.name.replace(/[^a-zA-Z0-9._-]/g,'').replace(/\.\w+$/,'')+'.jpg';
     // Real progress instead of a static "sending..." toast that never moves —
     // on a slow connection an unmoving message reads as frozen even when the
@@ -4300,7 +4324,11 @@ async function sendChatImage(input){
       createdAt:new Date().toISOString()
     });
     toast('✅ Photo bhej diya');
-  }catch(e){toast('❌ Photo upload fail: '+e.message,'err')}
+  }catch(e){
+    console.error('chat image error',e);
+    var hint=(e&&e.code==='storage/unauthorized')?' (Storage rules: chat_images allow karein)':'';
+    toast('❌ Photo upload fail: '+e.message+hint,'err');
+  }
 }
 window.sendChatImage=sendChatImage;
 
@@ -5305,6 +5333,7 @@ function buildResumePreview(d){
 }
 
 async function generateResumePDF(){
+  try{await window.loadLib('jspdf')}catch(e){}
   if(typeof window.jspdf==='undefined'){toast('PDF library load nahi hui — refresh karo','err');return}
   var d=window._rbState.data;
   var btn=$('rb-generate');var orig=btn.textContent;
@@ -6816,6 +6845,7 @@ async function handleContactsUpload(input){
   statusEl.textContent='⏳ Reading file...';
   try{
     var data=await file.arrayBuffer();
+    await window.loadLib('xlsx');
     var wb=XLSX.read(data,{type:'array'});
     var sheet=wb.Sheets[wb.SheetNames[0]];
     var rows=XLSX.utils.sheet_to_json(sheet,{defval:''});
@@ -6940,7 +6970,7 @@ var _appStarted=false;var _fbReady=false;
 
 function tryStart(){
   if(_appStarted)return;_appStarted=true;
-  console.log('🔧 FPJob Version: index_30_v52 (24-Sep-2026)');
+  console.log('🔧 FPJob Version: index_30_v53 (24-Sep-2026)');
   // Apply saved language
   var savedLang=localStorage.getItem('fpjob_lang')||'hi';
   LANG=savedLang;
@@ -6983,7 +7013,7 @@ function tryStart(){
       showScr('login');goStep(3);startPoll(pp);return;
     }
     showScr('login');goStep(1);
-  },1200);
+  },350);
 }
 
 // REST API fallback — ensures data loads even if SDK WebSocket fails
@@ -7008,6 +7038,7 @@ window.loadDataViaREST=loadDataViaREST;
 // Also auto-refresh via REST every 30 seconds
 setInterval(function(){
   if(!window.FB_READY)return;
+  if(Object.keys(DB.users||{}).length)return; // SDK listeners are live — no need to re-download everything
   fbRest.get('users').then(function(d){if(d)DB.users=d}).catch(function(){});
   fbRest.get('jobs').then(function(d){if(d)DB.jobs=d}).catch(function(){});
 },30000);
@@ -7087,8 +7118,7 @@ window.ensureManagerListeners=ensureManagerListeners;
 
 function onFbReady(){
   if(_fbReady)return;_fbReady=true;
-  // REST API fallback — load data even if SDK listeners fail
-  loadDataViaREST();
+  // (REST fallback runs below only if the SDK delivers nothing within 4s)
   window.FB.listen('users',function(data){
     DB.users=data||{};
     ensureManagerListeners(); // role may only be knowable once users data has loaded
@@ -7202,7 +7232,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }
   },4000);
   // ── Version-based cache clearing ──
-  var APP_VERSION = 'index_30_v52';
+  var APP_VERSION = 'index_30_v53';
   var lastVer = localStorage.getItem('fpjob_version');
   if(lastVer !== APP_VERSION){
     console.log('[FPJob] Version changed: '+lastVer+' → '+APP_VERSION+'. Clearing caches...');
