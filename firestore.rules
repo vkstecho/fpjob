@@ -8,11 +8,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.phone_number != null;
     }
     function phone() {
-      return request.auth.token.phone_number;               // e.g. +918829397949
+      return request.auth.token.phone_number;               // e.g. +918929397949
     }
     // Super admin (cannot be removed / demoted by anyone)
     function isSuper() {
-      return signedIn() && phone() == '+918829397949';
+      return signedIn() && phone() == '+918929397949';
     }
     function memberDoc() {
       return get(/databases/$(database)/documents/members/$(phone()));
@@ -34,15 +34,15 @@ service cloud.firestore {
 
       // Admin adds / edits / removes members (Excel upload uses batched creates)
       allow create: if isAdmin() && request.resource.data.role in ['member', 'admin']
-                    && (mobile != '+918829397949' || isSuper());
+                    && (mobile != '+918929397949' || isSuper());
       allow update: if
         // admin can change anything except the super admin's record
-        (isAdmin() && mobile != '+918829397949')
+        (isAdmin() && mobile != '+918929397949')
         // member can edit only own profile fields
         || (isMember() && mobile == phone()
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['about', 'photoURL', 'name', 'lastSeen']));
-      allow delete: if isAdmin() && mobile != '+918829397949';
+      allow delete: if isAdmin() && mobile != '+918929397949';
     }
 
     // ---------- Private member details (CTC, Email) : admin only ----------

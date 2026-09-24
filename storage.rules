@@ -10,7 +10,7 @@ service firebase.storage {
       return request.auth.token.phone_number;
     }
     function isSuper() {
-      return signedIn() && phone() == '+918829397949';
+      return signedIn() && phone() == '+918929397949';
     }
     function isMember() {
       return signedIn()

@@ -271,7 +271,7 @@ const firebaseConfig = {
   messagingSenderId: "1066973147296",
   appId: "1:1066973147296:web:ccaf4b51e381c8305ad9c5"
 };
-const SUPER_ADMIN = "+918829397949";       // must match firestore.rules & storage.rules
+const SUPER_ADMIN = "+918929397949";       // must match firestore.rules & storage.rules
 /* ==================================================== */
 
 const app = initializeApp(firebaseConfig);
@@ -354,11 +354,15 @@ $("#sendOtp").onclick = sendOtp;
 $("#resend").onclick = sendOtp;
 $("#changeNum").onclick = () => { $("#stepOtp").classList.add("hide"); $("#stepPhone").classList.remove("hide"); loginErr(""); };
 $("#phone").addEventListener("keydown", (e) => { if (e.key === "Enter") sendOtp(); });
+let verifying = false;
 async function verifyOtp() {
+  if (verifying) return;
   const code = $("#otp").value.trim();
   if (code.length !== 6) return loginErr("Enter the 6-digit OTP.");
+  verifying = true;
   loginErr(""); $("#verifyOtp").disabled = true; $("#verifyOtp").textContent = "Verifying…";
   try { await confirmation.confirm(code); } catch (e) { loginErr(niceErr(e)); }
+  verifying = false;
   $("#verifyOtp").disabled = false; $("#verifyOtp").textContent = "Verify and sign in";
 }
 $("#verifyOtp").onclick = verifyOtp;

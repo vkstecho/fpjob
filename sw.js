@@ -2,7 +2,7 @@
    - App shell + Firebase SDK files cached for instant start and offline open
    - Firestore / Auth / Storage traffic is never touched (Firestore has its own offline cache)
    Bump VERSION whenever index.html changes so users get the update. */
-const VERSION = 'fpjob-v1';
+const VERSION = 'fpjob-v2';
 const SHELL = [
   '/',
   '/index.html',
