@@ -324,3 +324,25 @@ table.prev td,table.prev th{padding:5px 6px;border-bottom:1px solid var(--line);
   #resumePrintArea,#resumePrintArea *{visibility:visible}
   #resumePrintArea{position:absolute;left:0;top:0;width:100%}
 }
+
+/* Resume easy picks (checkboxes) */
+.pick-grid{display:grid;grid-template-columns:1fr;gap:6px;margin-top:6px}
+@media (min-width:560px){.pick-grid{grid-template-columns:1fr 1fr}}
+.pick{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:10px;font-size:13.5px;cursor:pointer;line-height:1.35}
+.pick:has(input:checked){border-color:var(--pine);background:#e8f5ef}
+[data-theme="dark"] .pick:has(input:checked){background:#1a3d2e}
+.pick input{margin-top:2px;flex:none;width:18px;height:18px;accent-color:var(--pine)}
+.pick-group{margin-bottom:14px}
+.pick-group-title{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.field select{appearance:auto;cursor:pointer}
+
+/* Skill row with level dropdown */
+.skill-grid{grid-template-columns:1fr}
+@media (min-width:700px){.skill-grid{grid-template-columns:1fr 1fr}}
+.skill-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+.skill-row.on{border-color:var(--pine);background:#e8f5ef}
+[data-theme="dark"] .skill-row.on{background:#1a3d2e}
+.skill-row .pick-main{display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;font-size:13.5px;margin:0}
+.skill-row .pick-main input{width:18px;height:18px;accent-color:var(--pine)}
+.level-sel{width:auto;min-width:100px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);font-size:12.5px;font-weight:600}
+.level-sel:disabled{opacity:.45}
