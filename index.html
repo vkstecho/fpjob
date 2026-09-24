@@ -1037,7 +1037,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 <!-- ══════════════ FIREBASE ══════════════ -->
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getDatabase,ref,set,get,push,update,remove,onValue}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import{getDatabase,ref,set,get,push,update,remove,onValue,query as fbQuery,limitToLast}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import{getAuth,RecaptchaVerifier,signInWithPhoneNumber,signInWithCustomToken}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import{getStorage,ref as sRef,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 // This app's Realtime Database was provisioned in asia-southeast1. The legacy,
@@ -1068,6 +1068,11 @@ function initFB(attempt){
       // (permission-denied) on a listener just silently never called cb again,
       // leaving whatever screen was reading it stuck showing stale/empty data
       // forever with zero indication anything was wrong. Surface it instead.
+      // SDK push with INSTANT local echo: key is available immediately and the
+      // realtime listener fires locally before the server even replies.
+      pushFast:function(p,v){var pr=push(r(p),v);return{key:pr.key,done:pr.then(function(){return pr.key})}},
+      // Live listener on only the last n children (key order = time order for push ids)
+      listenLast:function(p,n,cb){onValue(fbQuery(r(p),limitToLast(n)),function(s){cb(s.exists()?s.val():null)},function(err){console.error('FB.listenLast error at path:',p,err);toast('⚠️ '+p+' load fail: '+err.message,'err')})},
       listen:function(p,cb){onValue(r(p),function(s){cb(s.exists()?s.val():null)},function(err){console.error('FB.listen error at path:',p,err);toast('⚠️ '+p+' load fail: '+err.message,'err')})}
     };
     // Firebase Phone Auth
@@ -4201,12 +4206,19 @@ async function sendChatMessage(){
   if(!mod.ok){toast('❌ Yeh message allowed nahi hai','err');return}
   inp.value='';
   inp.style.height='44px';
+  var newId=null;
   try{
-    var newId=await fbRest.push('chats',{
+    var msg={
       authorPhone:ME.phone,authorName:ME.name||'Member',
       text:san(text),
       createdAt:new Date().toISOString()
-    });
+    };
+    var sent=window.FB.pushFast('chats',msg);
+    newId=sent.key;
+    // Message shows instantly (SDK local echo + this render); server confirmation follows
+    DB.chats=DB.chats||{};DB.chats[newId]=msg;
+    if(document.querySelector('.page.on#pg-chats'))renderChats();
+    await sent.done;
     // Sending used to clear the box and then rely ENTIRELY on the separate
     // realtime listener round-trip to make the message actually appear —
     // so if that write succeeded but the listener was slow, didn't re-fire,
@@ -4215,10 +4227,11 @@ async function sendChatMessage(){
     // zero confirmation, even though the send genuinely worked. Render the
     // sent message immediately once the server confirms it, instead of
     // waiting on that separate path.
-    DB.chats=DB.chats||{};
-    DB.chats[newId]={authorPhone:ME.phone,authorName:ME.name||'Member',text:san(text),createdAt:new Date().toISOString()};
+  }catch(e){
+    if(newId&&DB.chats)delete DB.chats[newId];
     if(document.querySelector('.page.on#pg-chats'))renderChats();
-  }catch(e){toast('❌ Message send nahi hua: '+e.message,'err');inp.value=text}
+    toast('❌ Message send nahi hua: '+e.message,'err');inp.value=text
+  }
 }
 window.sendChatMessage=sendChatMessage;
 
@@ -4281,7 +4294,7 @@ async function sendChatImage(input){
     var result=await window.FB_uploadFile(path,upload,function(pct){
       toast('📤 Photo bhej rahe hain... '+pct+'%');
     });
-    await fbRest.push('chats',{
+    await window.FB.push('chats',{
       authorPhone:ME.phone,authorName:ME.name||'Member',
       imageUrl:result.url,
       createdAt:new Date().toISOString()
@@ -4308,7 +4321,7 @@ async function deleteChatMsg(id){
   if(DB.chats)delete DB.chats[id];
   if(document.querySelector('.page.on#pg-chats'))renderChats();
   try{
-    await fbRest.remove('chats/'+id);
+    await window.FB.remove('chats/'+id);
   }catch(e){
     if(prev){DB.chats=DB.chats||{};DB.chats[id]=prev}
     if(document.querySelector('.page.on#pg-chats'))renderChats();
@@ -6927,7 +6940,7 @@ var _appStarted=false;var _fbReady=false;
 
 function tryStart(){
   if(_appStarted)return;_appStarted=true;
-  console.log('🔧 FPJob Version: index_30_v51 (20-Sep-2026)');
+  console.log('🔧 FPJob Version: index_30_v52 (24-Sep-2026)');
   // Apply saved language
   var savedLang=localStorage.getItem('fpjob_lang')||'hi';
   LANG=savedLang;
@@ -7029,7 +7042,7 @@ function ensureChatsListener(){
   if(!window.FB)return;
   if(!_chatsListenerAttached){
     _chatsListenerAttached=true;
-    window.FB.listen('chats',function(data){
+    window.FB.listenLast('chats',100,function(data){
       DB.chats=data||{};
       if(document.querySelector('.page.on#pg-chats'))renderChats();
     });
@@ -7189,7 +7202,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }
   },4000);
   // ── Version-based cache clearing ──
-  var APP_VERSION = 'index_30_v51';
+  var APP_VERSION = 'index_30_v52';
   var lastVer = localStorage.getItem('fpjob_version');
   if(lastVer !== APP_VERSION){
     console.log('[FPJob] Version changed: '+lastVer+' → '+APP_VERSION+'. Clearing caches...');
