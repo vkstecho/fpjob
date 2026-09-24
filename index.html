@@ -79,22 +79,25 @@ nav.tabs button.on::before{content:"";position:absolute;top:0;width:34px;height:
 .badge{position:absolute;top:3px;left:calc(50% + 6px);background:var(--amber);color:#2a1d00;border-radius:10px;font-size:11px;font-weight:800;min-width:18px;padding:0 5px;text-align:center}
 
 /* ---------- chat ---------- */
-#chatList{flex:1;overflow-y:auto;padding:10px 10px 6px;background:#dfe6e2;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch;overflow-anchor:none}
+#chatList{flex:1;overflow-y:auto;padding:10px 10px 6px;background:#efeae2;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch;overflow-anchor:none}
 .row{display:flex;margin:2px 0}
 .row.mine{justify-content:flex-end}
-.bub{max-width:82%;background:#fff;border-radius:4px 14px 14px 14px;padding:6px 10px 4px;box-shadow:0 1px 1px rgba(0,0,0,.12);word-wrap:break-word;overflow-wrap:anywhere}
-.row.mine .bub{background:var(--pine);color:#fff;border-radius:14px 4px 14px 14px}
+.bub{max-width:84%;background:#fff;color:#111b21;border-radius:0 9px 9px 9px;padding:6px 9px 4px 9px;box-shadow:0 1px .5px rgba(11,20,26,.14);font-size:15.5px;word-wrap:break-word;overflow-wrap:anywhere}
+.row.mine .bub{background:#d9fdd3;color:#111b21;border-radius:9px 0 9px 9px}
+.row.mine+.row.mine .bub,.row.other+.row.other .bub{border-radius:9px}
 .who{font-size:12.5px;font-weight:700;margin-bottom:1px}
 .txt{white-space:pre-wrap}
-.txt a{color:inherit;text-decoration:underline}
+.txt a{color:#027eb5;text-decoration:underline;word-break:break-word}
+.txt code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92em}
 .pic{display:block;max-width:100%;max-height:300px;border-radius:9px;margin:2px 0 3px;background:#0002;min-height:60px}
-.meta{font-size:11px;opacity:.65;text-align:right;margin-top:1px;display:flex;justify-content:flex-end;gap:4px}
+.meta{font-size:11px;color:#667781;text-align:right;margin-top:1px;display:flex;justify-content:flex-end;gap:4px}
 .gone{font-style:italic;opacity:.7}
 .older{align-self:center;margin:4px 0 8px;font-size:12px;color:var(--muted);background:#fffc;padding:3px 12px;border-radius:12px}
-.composer{flex:none;display:flex;align-items:flex-end;gap:8px;padding:8px;background:#f4f6f5;border-top:1px solid var(--line)}
-.composer textarea{flex:1;resize:none;max-height:120px;border:1px solid var(--line);border-radius:22px;padding:10px 14px;background:#fff;outline:0;line-height:1.3}
+.composer{flex:none;display:flex;align-items:flex-end;gap:8px;padding:6px 8px;background:#f0f2f5}
+.composer textarea{flex:1;resize:none;max-height:120px;border:0;border-radius:22px;padding:10px 14px;background:#fff;outline:0;line-height:1.3}
 .circ{flex:none;width:44px;height:44px;border-radius:50%;background:var(--pine);display:flex;align-items:center;justify-content:center}
 .circ svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#sendBtn{background:#00a884}
 .circ.plain{background:transparent}.circ.plain svg{stroke:var(--pine2)}
 #toBottom{position:absolute;right:14px;bottom:74px;background:var(--amber);color:#2a1d00;font-weight:800;border-radius:20px;padding:6px 14px;box-shadow:0 2px 8px #0004}
 
@@ -282,8 +285,35 @@ const storage = getStorage(app);
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const esc = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const linkify = (s) => esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-const colors = ["#0e6b52", "#8a4fff", "#c2571a", "#1b6fb5", "#b0306b", "#5d7a0f", "#a3541b", "#00796b"];
+const LINK_RE = /(https?:\/\/[^\s<]+|www\.[^\s<]+)|([A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,})|(\+?\d[\d ()\-]{6,}\d)/g;
+function linkify(text = "") {
+  const keep = [];
+  const hold = (h) => "\uE000" + (keep.push(h) - 1) + "\uE001";
+  let t = esc(text);
+  // 1) links first (held as placeholders so formatting never breaks them)
+  t = t.replace(LINK_RE, (m, url, mail, tel, off, str) => {
+    if (url) {
+      const tail = (m.match(/[.,;:!?)\]]+$/) || [""])[0], u = tail ? m.slice(0, -tail.length) : m;
+      return hold(`<a href="${/^www\./i.test(u) ? "https://" + u : u}" target="_blank" rel="noopener">${u}</a>`) + tail;
+    }
+    if (mail) return hold(`<a href="mailto:${mail}">${mail}</a>`);
+    if (tel) {
+      const prev = off > 0 ? str[off - 1] : "";
+      const digits = tel.replace(/\D/g, "");
+      if (/[\w@.\/]/.test(prev) || digits.length < 8 || digits.length > 15) return m;
+      return hold(`<a href="tel:${(tel.trim().startsWith("+") ? "+" : "") + digits}">${tel}</a>`);
+    }
+    return m;
+  });
+  // 2) WhatsApp text styles
+  t = t.replace(/```([\s\S]+?)```/g, (m, c) => hold("<code>" + c + "</code>"));
+  t = t.replace(/(^|[^\w*])\*([^*\n]+)\*(?![\w*])/g, "$1<b>$2</b>")
+       .replace(/(^|[^\w_])_([^_\n]+)_(?![\w_])/g, "$1<i>$2</i>")
+       .replace(/(^|[^\w~])~([^~\n]+)~(?![\w~])/g, "$1<s>$2</s>");
+  // 3) restore held pieces
+  return t.replace(/\uE000(\d+)\uE001/g, (m, i) => keep[+i]);
+}
+const colors = ["#e26b00", "#1f7aec", "#a832c9", "#00897b", "#c2185b", "#6d4c41", "#5e35b1", "#2e7d32"];
 const colorOf = (s = "") => colors[[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % colors.length];
 const initial = (n = "?") => (n.trim()[0] || "?").toUpperCase();
 let toastT; const toast = (m) => { const t = $("#toast"); t.textContent = m; t.style.display = "block"; clearTimeout(toastT); toastT = setTimeout(() => (t.style.display = "none"), 2800); };
