@@ -17,21 +17,17 @@ const auth = getAuth(app); auth.languageCode = "en";
 const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
 const storage = getStorage(app);
 
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber, signOut }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-  collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot,
-  query, orderBy, limit, startAfter, serverTimestamp, writeBatch }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getStorage, ref as sref, uploadBytes, getDownloadURL }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
-
-
-
-
-
+/* splash safety – always clear after boot attempt */
+setTimeout(() => {
+  const s = document.getElementById("splash");
+  if (s && getComputedStyle(s).display !== "none") {
+    s.classList.add("out");
+    setTimeout(() => (s.style.display = "none"), 260);
+    if (!document.getElementById("app") || document.getElementById("app").classList.contains("hide")) {
+      document.getElementById("login")?.classList.remove("hide");
+    }
+  }
+}, 6000);
 
 
 /* ---------- theme ---------- */
@@ -69,7 +65,7 @@ document.addEventListener("click", (e) => { if (e.target.id === "notifBtn") enab
 function notifyNewMsg(name, text) {
   if (!notifEnabled || Notification.permission !== "granted" || document.hasFocus() && curPage === "chat") return;
   try {
-    const n = new Notification(name || "FPJob", { body: text || "New message", icon: "/icon-192.png", tag: "fpjob-msg" });
+    const n = new Notification(name || "FPJob – Packaging Industry Network", { body: text || "New message", icon: "/icon-192.png", tag: "fpjob-msg" });
     n.onclick = () => { window.focus(); n.close(); };
   } catch {}
 }
@@ -102,7 +98,7 @@ window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); defe
 window.addEventListener("appinstalled", () => { deferredPrompt = null; refreshInstallUI(); toast("FPJob installed"); });
 async function doInstall() {
   if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; refreshInstallUI(); }
-  else if (isIOS) sheet(`<h3>Install FPJob</h3><p>Tap the <b>Share</b> button in Safari, then choose <b>Add to Home Screen</b>.</p><button class="btn" onclick="document.getElementById('scrim').classList.remove('on')">Got it</button>`);
+  else if (isIOS) sheet(`<h3>Install FPJob – Packaging Industry Network</h3><p>Tap the <b>Share</b> button in Safari, then choose <b>Add to Home Screen</b>.</p><button class="btn" onclick="document.getElementById('scrim').classList.remove('on')">Got it</button>`);
 }
 $("#installBtn").onclick = doInstall; $("#installBtn2").onclick = doInstall;
 $("#installX").onclick = () => { sessionStorage.setItem("barX", "1"); showInstallBar(false); };

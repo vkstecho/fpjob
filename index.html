@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>FPJob</title>
+<title>FPJob – Packaging Industry Network</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e3b2e">
-<meta name="description" content="FPJob – member chat, jobs and resume builder">
+<meta name="description" content="FPJob – Packaging Industry Network">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" sizes="96x96" href="/icon-96.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="FPJob">
+<meta name="apple-mobile-web-app-title" content="FPJob – Packaging Industry Network">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="css/app.css">
 <script defer src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -23,14 +23,14 @@
 <!-- Install bar -->
 <div id="installBar" class="hide">
   <img src="/icon-96.png" alt="">
-  <span>Get the FPJob app on your phone</span>
+  <span>Install FPJob – Packaging Industry Network</span>
   <button class="go" id="installBtn">Download app</button>
   <button class="x" id="installX" aria-label="Dismiss">×</button>
 </div>
 
 <!-- Login -->
 <section id="login" class="hide">
-  <div class="brand"><img src="/icon-192.png" alt=""><div><h1>FPJob</h1><p>Members only. Sign in with your mobile number.</p></div></div>
+  <div class="brand"><img src="/icon-192.png" alt=""><div><h1>FPJob</h1><p>Packaging Industry Network · Members only</p></div></div>
   <div class="box">
     <div id="stepPhone">
       <label for="phone">Mobile number</label>
@@ -167,6 +167,15 @@
 <div id="scrim"><div id="sheet"></div></div>
 <div id="toast"></div>
 
+<script>
+// Never leave user stuck on splash if module fails
+setTimeout(function(){
+  var s=document.getElementById('splash');
+  if(s && s.style.display!=='none'){ s.classList.add('out'); s.style.display='none';
+    var login=document.getElementById('login'); if(login) login.classList.remove('hide');
+  }
+}, 8000);
+</script>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

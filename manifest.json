@@ -1,7 +1,7 @@
 {
-  "name": "FPJob – Packaging Industry Network",
+  "name": "FPJob \u2013 Packaging Industry Network",
   "short_name": "FPJob",
-  "description": "Member chat, jobs and resume builder for the packaging industry",
+  "description": "FPJob \u2013 Packaging Industry Network",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0e3b2e",
