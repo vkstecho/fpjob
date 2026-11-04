@@ -24,7 +24,9 @@ setTimeout(() => {
     s.classList.add("out");
     setTimeout(() => (s.style.display = "none"), 260);
     if (!document.getElementById("app") || document.getElementById("app").classList.contains("hide")) {
-      document.getElementById("login")?.classList.remove("hide");
+      const land = document.getElementById("landing");
+      if (land) land.classList.remove("hide");
+      else document.getElementById("login")?.classList.remove("hide");
     }
   }
 }, 6000);
@@ -65,7 +67,7 @@ document.addEventListener("click", (e) => { if (e.target.id === "notifBtn") enab
 function notifyNewMsg(name, text) {
   if (!notifEnabled || Notification.permission !== "granted" || document.hasFocus() && curPage === "chat") return;
   try {
-    const n = new Notification(name || "FPJob – Packaging Industry Network", { body: text || "New message", icon: "/icon-192.png", tag: "fpjob-msg" });
+    const n = new Notification(name || "FPJob – Packaging Industry Network", { body: text || "New message", icon: "/Assets/icon-192.png", tag: "fpjob-msg" });
     n.onclick = () => { window.focus(); n.close(); };
   } catch {}
 }
@@ -84,26 +86,179 @@ document.addEventListener("keydown", (e) => {
 });
 
 
-/* ---------- PWA install ---------- */
-let deferredPrompt = null;
-const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+/* ---------- PWA install + share (Man Power-style) ---------- */
+let deferredPrompt = window.__fpDeferredPrompt || null;
+const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-function showInstallBar(v) { $("#installBar").classList.toggle("hide", !v); document.body.classList.toggle("hasBar", v); }
+const isAndroid = /android/i.test(navigator.userAgent);
+
+function isStandaloneApp() {
+  return standalone || window.__fpPwaInstalled === true ||
+    (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+}
+
+function showInstallBar(v) {
+  const bar = $("#installBar");
+  if (bar) bar.classList.toggle("hide", !v);
+  document.body.classList.toggle("hasBar", !!v);
+}
+
+function canOfferInstall() {
+  if (isStandaloneApp()) return false;
+  if (deferredPrompt || window.__fpDeferredPrompt) return true;
+  if (isIOS || isAndroid) return true;
+  return true; // still show guidance on desktop browsers
+}
+
 function refreshInstallUI() {
-  const can = !standalone && (deferredPrompt || isIOS);
-  showInstallBar(can && !sessionStorage.getItem("barX"));
-  $("#installBtn2").classList.toggle("hide", !can);
+  deferredPrompt = deferredPrompt || window.__fpDeferredPrompt || null;
+  const can = canOfferInstall();
+  showInstallBar(can && !sessionStorage.getItem("barX") && !isStandaloneApp());
+  const hideInstall = isStandaloneApp();
+  ["installBtn2", "pwaInstallBtn", "loginPwaBtn", "ldInstallTop", "ldInstallHero"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (hideInstall) el.classList.add("hide");
+    else el.classList.remove("hide");
+  });
 }
-window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; refreshInstallUI(); });
-window.addEventListener("appinstalled", () => { deferredPrompt = null; refreshInstallUI(); toast("FPJob installed"); });
+window.refreshInstallUI = refreshInstallUI;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  window.__fpDeferredPrompt = e;
+  refreshInstallUI();
+});
+window.addEventListener("appinstalled", () => {
+  deferredPrompt = null;
+  window.__fpDeferredPrompt = null;
+  refreshInstallUI();
+  toast("FPJob installed");
+});
+
+function openInstallHelpModal() {
+  const modal = $("#fpInstallModal");
+  const body = $("#fpInstallBody");
+  if (!modal || !body) {
+    toast(isIOS ? "iPhone: Share → Add to Home Screen" : "Browser menu → Install app / Add to Home screen");
+    return;
+  }
+  if (isIOS) {
+    body.innerHTML = `<p>Install FPJob on iPhone / iPad:</p>
+      <ol>
+        <li>Open this page in <b>Safari</b></li>
+        <li>Tap the <b>Share</b> button</li>
+        <li>Choose <b>Add to Home Screen</b></li>
+        <li>Tap <b>Add</b></li>
+      </ol>`;
+  } else if (isAndroid) {
+    body.innerHTML = `<p>Install FPJob on Android:</p>
+      <ol>
+        <li>Tap the browser menu <b>⋮</b></li>
+        <li>Choose <b>Install app</b> or <b>Add to Home screen</b></li>
+        <li>Confirm <b>Install</b></li>
+      </ol>
+      <p>Or use the Install button in the address bar if Chrome shows it.</p>`;
+  } else {
+    body.innerHTML = `<p>Install FPJob on this device:</p>
+      <ol>
+        <li>Look for an <b>Install</b> icon in the address bar</li>
+        <li>Or open the browser menu → <b>Install app</b> / <b>Apps</b></li>
+      </ol>`;
+  }
+  modal.classList.remove("hide");
+}
+
 async function doInstall() {
-  if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; refreshInstallUI(); }
-  else if (isIOS) sheet(`<h3>Install FPJob – Packaging Industry Network</h3><p>Tap the <b>Share</b> button in Safari, then choose <b>Add to Home Screen</b>.</p><button class="btn" onclick="document.getElementById('scrim').classList.remove('on')">Got it</button>`);
+  const prompt = deferredPrompt || window.__fpDeferredPrompt;
+  if (prompt) {
+    try {
+      prompt.prompt();
+      await prompt.userChoice;
+    } catch (e) {}
+    deferredPrompt = null;
+    window.__fpDeferredPrompt = null;
+    refreshInstallUI();
+    return;
+  }
+  openInstallHelpModal();
 }
-$("#installBtn").onclick = doInstall; $("#installBtn2").onclick = doInstall;
-$("#installX").onclick = () => { sessionStorage.setItem("barX", "1"); showInstallBar(false); };
+window.triggerFPInstall = doInstall;
+
+async function shareApp() {
+  const url = location.origin + "/";
+  const data = {
+    title: "FPJob – Packaging Industry Network",
+    text: "Join FPJob — members-only network for flexible packaging professionals. Jobs, chats, members & resume tools.",
+    url
+  };
+  try {
+    if (navigator.share) {
+      await navigator.share(data);
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === "AbortError") return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    toast("Link copied — share it with your team");
+  } catch (e2) {
+    toast(url);
+  }
+}
+window.shareApp = shareApp;
+
+function wireInstallShareClicks() {
+  const map = [
+    ["installBtn", doInstall],
+    ["installBtn2", doInstall],
+    ["loginPwaBtn", doInstall],
+    ["pwaInstallBtn", doInstall],
+    ["ldInstallTop", doInstall],
+    ["ldInstallHero", doInstall],
+    ["shareAppBtn", shareApp],
+    ["loginShareBtn", shareApp],
+    ["shareBtnProfile", shareApp],
+    ["fpInstallClose", () => $("#fpInstallModal")?.classList.add("hide")],
+  ];
+  map.forEach(([id, fn]) => {
+    const el = document.getElementById(id);
+    if (el) el.onclick = fn;
+  });
+  const x = $("#installX");
+  if (x) x.onclick = () => { sessionStorage.setItem("barX", "1"); showInstallBar(false); };
+  const modal = $("#fpInstallModal");
+  if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hide"); });
+}
+wireInstallShareClicks();
 refreshInstallUI();
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+
+/* ---------- Landing → Login ---------- */
+function showLanding() {
+  $("#landing")?.classList.remove("hide");
+  $("#login")?.classList.add("hide");
+  $("#app")?.classList.add("hide");
+}
+function showLoginFromLanding() {
+  $("#landing")?.classList.add("hide");
+  $("#login")?.classList.remove("hide");
+  $("#app")?.classList.add("hide");
+  try { window.scrollTo(0, 0); } catch (e) {}
+}
+["ldLoginTop", "ldLoginHero", "ldLoginFoot"].forEach((id) => {
+  const el = document.getElementById(id);
+  if (el) el.onclick = showLoginFromLanding;
+});
+const resumeScrollBtn = document.getElementById("resumeScrollBtn");
+if (resumeScrollBtn) {
+  resumeScrollBtn.onclick = () => {
+    const root = document.getElementById("resumeRoot");
+    if (root) root.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+}
 
 /* ---------- login (OTP) ---------- */
 let confirmation = null, verifier = null, resendT;
@@ -122,6 +277,48 @@ function startResendTimer() {
   resendT = setInterval(() => { s--; b.textContent = s > 0 ? `Resend in ${s}s` : "Resend OTP"; if (s <= 0) { b.disabled = false; clearInterval(resendT); } }, 1000);
   b.textContent = "Resend in 30s";
 }
+/* Web OTP autofill (Chrome Android) — same pattern as Man Power / Mentor */
+let _fpWebOtpAbort = null;
+function stopFpWebOtp() {
+  try { if (_fpWebOtpAbort) _fpWebOtpAbort.abort(); } catch (e) {}
+  _fpWebOtpAbort = null;
+}
+function startFpWebOtp() {
+  stopFpWebOtp();
+  const el = $("#otp");
+  if (el) {
+    try {
+      el.setAttribute("autocomplete", "one-time-code");
+      el.setAttribute("inputmode", "numeric");
+      el.setAttribute("name", "one-time-code");
+      el.setAttribute("enterkeyhint", "done");
+    } catch (e) {}
+  }
+  if (typeof window.OTPCredential === "undefined" || !navigator.credentials || !window.isSecureContext) return;
+  try {
+    _fpWebOtpAbort = new AbortController();
+    const tmo = setTimeout(() => { try { stopFpWebOtp(); } catch (e) {} }, 120000);
+    navigator.credentials.get({ otp: { transport: ["sms"] }, signal: _fpWebOtpAbort.signal })
+      .then((cred) => {
+        try { clearTimeout(tmo); } catch (e) {}
+        if (!cred || !cred.code) return;
+        const code = String(cred.code).replace(/\D/g, "").slice(0, 6);
+        if (code.length < 4) return;
+        if (el) {
+          el.value = code;
+          try { el.dispatchEvent(new Event("input", { bubbles: true })); } catch (e) {}
+        }
+        try { toast("OTP auto-filled from SMS"); } catch (e) {}
+        if (code.length === 6) setTimeout(() => { try { verifyOtp(); } catch (e) {} }, 250);
+      })
+      .catch((err) => {
+        try { clearTimeout(tmo); } catch (e) {}
+        if (err && err.name === "AbortError") return;
+        console.warn("[FPJob WebOTP]", err && err.message);
+      });
+  } catch (e) {}
+}
+
 async function sendOtp() {
   const cc = $("#cc").value;
   let n = $("#phone").value.replace(/\D/g, "").replace(/^0+/, "");
@@ -134,35 +331,67 @@ async function sendOtp() {
     verifier = new RecaptchaVerifier(auth, "recaptcha", { size: "invisible" });
     confirmation = await signInWithPhoneNumber(auth, cc + n, verifier);
     $("#sentTo").textContent = cc + " " + n;
-    $("#stepPhone").classList.add("hide"); $("#stepOtp").classList.remove("hide");
-    $("#otp").focus(); startResendTimer();
+    $("#stepPhone").classList.add("hide"); $("#stepOtp").classList.remove("hide"); $("#login")?.classList.add("otp-step");
+    // Hide install/share on OTP step (Man Power / Mentor pattern)
+    try { const row = $("#loginInstallRow"); if (row) row.style.display = "none"; } catch (e) {}
+    const o = $("#otp");
+    if (o) { o.value = ""; o.focus(); }
+    startResendTimer();
+    startFpWebOtp();
+    // Restart WebOTP on focus if user grants later
+    if (o && !o._fpWebOtpFocusBound) {
+      o._fpWebOtpFocusBound = true;
+      o.addEventListener("focus", () => {
+        if ((o.value || "").replace(/\D/g, "").length >= 6) return;
+        startFpWebOtp();
+      });
+    }
+    try {
+      clearTimeout(window._fpOtpSlowTimer);
+      window._fpOtpSlowTimer = setTimeout(() => {
+        if ($("#stepOtp") && !$("#stepOtp").classList.contains("hide")) {
+          try { toast("Taking longer — check your SMS inbox"); } catch (e) {}
+        }
+      }, 15000);
+    } catch (e) {}
   } catch (e) { loginErr(niceErr(e)); }
   $("#sendOtp").disabled = false; $("#sendOtp").textContent = "Send OTP";
 }
 $("#sendOtp").onclick = sendOtp;
 $("#resend").onclick = sendOtp;
-$("#changeNum").onclick = () => { $("#stepOtp").classList.add("hide"); $("#stepPhone").classList.remove("hide"); loginErr(""); };
+$("#changeNum").onclick = () => {
+  stopFpWebOtp();
+  $("#stepOtp").classList.add("hide");
+  $("#stepPhone").classList.remove("hide");
+  $("#login")?.classList.remove("otp-step");
+  try { const row = $("#loginInstallRow"); if (row) row.style.display = ""; } catch (e) {}
+  loginErr("");
+};
 $("#phone").addEventListener("keydown", (e) => { if (e.key === "Enter") sendOtp(); });
 let verifying = false;
 async function verifyOtp() {
   if (verifying) return;
-  const code = $("#otp").value.trim();
+  const code = ($("#otp").value || "").trim().replace(/\D/g, "");
   if (code.length !== 6) return loginErr("Enter the 6-digit OTP.");
   verifying = true;
+  stopFpWebOtp();
   loginErr(""); $("#verifyOtp").disabled = true; $("#verifyOtp").textContent = "Verifying…";
   try { await confirmation.confirm(code); } catch (e) { loginErr(niceErr(e)); }
   verifying = false;
   $("#verifyOtp").disabled = false; $("#verifyOtp").textContent = "Verify and sign in";
 }
 $("#verifyOtp").onclick = verifyOtp;
-$("#otp").addEventListener("input", (e) => { if (e.target.value.length === 6) verifyOtp(); });
+$("#otp").addEventListener("input", (e) => {
+  e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6);
+  if (e.target.value.length === 6) verifyOtp();
+});
 
 /* ---------- session ---------- */
 let me = null, isAdmin = false, unsubs = [], booted = false;
 const showSplash = (v) => { const s = $("#splash"); if (v) { s.classList.remove("out"); s.style.display = "flex"; } else { s.classList.add("out"); setTimeout(() => (s.style.display = "none"), 260); } };
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) { teardown(); $("#app").classList.add("hide"); $("#login").classList.remove("hide"); showSplash(false); return; }
+  if (!user) { teardown(); $("#app").classList.add("hide"); $("#login").classList.add("hide"); $("#landing")?.classList.remove("hide"); showSplash(false); refreshInstallUI(); return; }
   try {
     const phone = user.phoneNumber;
     const mref = doc(db, "members", phone);
@@ -177,7 +406,7 @@ onAuthStateChanged(auth, async (user) => {
     }
     if (booted) return;
     booted = true; me = { id: phone, ...snap.data() }; isAdmin = me.role === "admin" || phone === SUPER_ADMIN;
-    $("#login").classList.add("hide"); $("#app").classList.remove("hide");
+    $("#login").classList.add("hide"); $("#landing")?.classList.add("hide"); $("#app").classList.remove("hide"); refreshInstallUI();
     $("#tabAdmin").classList.toggle("hide", !isAdmin);
     // mark online / last active
     updateDoc(mref, { lastActive: serverTimestamp() }).catch(() => {});

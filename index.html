@@ -1,14 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background:#0e3b2e">
 <head>
 <meta charset="utf-8">
 <title>FPJob – Packaging Industry Network</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e3b2e">
-<meta name="description" content="FPJob – Packaging Industry Network">
+<meta name="description" content="FPJob – India's packaging industry network. Verified members, job board, company profiles, chats, and AI-ready resume tools for flexible packaging professionals.">
+<meta property="og:title" content="FPJob – Packaging Industry Network">
+<meta property="og:description" content="Connect with packaging professionals, post and find jobs, build your resume — built for flexible packaging.">
+<meta property="og:type" content="website">
 <link rel="manifest" href="/manifest.json">
-<link rel="icon" type="image/png" sizes="96x96" href="/icon-96.png">
-<link rel="apple-touch-icon" href="/icon-192.png">
+<script>
+/* Capture install prompt early (same pattern as Man Power) */
+window.__fpDeferredPrompt = null;
+window.__fpPwaInstallReady = false;
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault();
+  window.__fpDeferredPrompt = e;
+  window.__fpPwaInstallReady = true;
+  try { if (typeof window.refreshInstallUI === 'function') window.refreshInstallUI(); } catch(x){}
+});
+window.addEventListener('appinstalled', function(){
+  window.__fpDeferredPrompt = null;
+  window.__fpPwaInstallReady = false;
+  window.__fpPwaInstalled = true;
+  try { localStorage.setItem('fp_pwa_installed','1'); } catch(x){}
+  try { if (typeof window.refreshInstallUI === 'function') window.refreshInstallUI(); } catch(x){}
+});
+</script>
+<link rel="icon" type="image/png" sizes="96x96" href="/Assets/icon-96.png">
+<link rel="apple-touch-icon" href="/Assets/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="FPJob – Packaging Industry Network">
@@ -16,13 +37,101 @@
 <link rel="stylesheet" href="css/app.css">
 <script defer src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
-<body>
+<body style="background:#0e3b2e;margin:0;min-height:100vh">
 
-<div id="splash"><img src="/icon-192.png" alt="FPJob"></div>
+<div id="splash"><img src="/Assets/icon-192.png" alt="FPJob"></div>
+
+
+<!-- ========== LANDING (public marketing) ========== -->
+<section id="landing" class="landing">
+  <div class="ld-nav">
+    <div class="ld-brand">
+      <img src="/Assets/icon-96.png" alt="FPJob" width="36" height="36">
+      <div>
+        <strong>FPJob</strong>
+        <span>Packaging Industry Network</span>
+      </div>
+    </div>
+    <div class="ld-nav-actions">
+      <button type="button" class="ld-btn ghost" id="ldInstallTop" onclick="try{window.triggerFPInstall&&window.triggerFPInstall()}catch(e){}">📲 Install</button>
+      <button type="button" class="ld-btn primary" id="ldLoginTop">Log in →</button>
+    </div>
+  </div>
+
+  <div class="ld-hero">
+    <div class="ld-eyebrow">🇮🇳 Built for Flexible Packaging · VKS Tech</div>
+    <h1>Your industry network<br><span>for packaging careers</span></h1>
+    <p class="ld-lead">
+      FPJob is a members-only network for flexible packaging professionals —
+      verified colleagues, job posts (hiring &amp; seeking), company context, private chats,
+      and a resume workspace in one place.
+    </p>
+    <div class="ld-cta-row">
+      <button type="button" class="ld-btn primary lg" id="ldLoginHero">Log in with OTP</button>
+      <button type="button" class="ld-btn ghost lg" id="ldInstallHero" onclick="try{window.triggerFPInstall&&window.triggerFPInstall()}catch(e){}">Install app</button>
+    </div>
+    <p class="ld-note">Admin-verified mobiles only · Free for members · Works as a phone app (PWA)</p>
+  </div>
+
+  <div class="ld-purpose">
+    <h2>What FPJob is for</h2>
+    <p class="ld-sub">Not a generic job site. A focused network for people who work in film, converting, printing, lamination, and packaging plants.</p>
+    <div class="ld-grid">
+      <article class="ld-card">
+        <div class="ic">💬</div>
+        <h3>Industry chats</h3>
+        <p>Talk with verified packaging peers — not random applicants from the open web.</p>
+      </article>
+      <article class="ld-card">
+        <div class="ic">👷</div>
+        <h3>Member directory</h3>
+        <p>Find people by company, designation, and department across the packaging ecosystem.</p>
+      </article>
+      <article class="ld-card">
+        <div class="ic">💼</div>
+        <h3>Job board</h3>
+        <p>Post hiring or “seeking” roles. Filter by your posts and recent listings.</p>
+      </article>
+      <article class="ld-card">
+        <div class="ic">📄</div>
+        <h3>Resume workspace</h3>
+        <p>Build an ATS-friendly resume inside the app, or open the full VKS Resume Builder.</p>
+      </article>
+      <article class="ld-card">
+        <div class="ic">🏢</div>
+        <h3>Company context</h3>
+        <p>Profiles rooted in real packaging companies (UFlex, JPFL, Cosmo, SRF and more).</p>
+      </article>
+      <article class="ld-card">
+        <div class="ic">🔐</div>
+        <h3>Members only</h3>
+        <p>Login is OTP on numbers added by admin — keeps the network professional.</p>
+      </article>
+    </div>
+  </div>
+
+  <div class="ld-how">
+    <h2>How it works</h2>
+    <ol>
+      <li><strong>Admin adds your mobile</strong> to the member list (Excel upload or manual).</li>
+      <li><strong>You log in with OTP</strong> — no passwords to remember.</li>
+      <li><strong>Complete your profile</strong>, explore members, post or apply for jobs, build your resume.</li>
+      <li><strong>Install the app</strong> on your phone for a home-screen shortcut and faster access.</li>
+    </ol>
+  </div>
+
+  <div class="ld-footer">
+    <div>
+      <strong>FPJob</strong> · by <a href="https://vkstech.com" target="_blank" rel="noopener">VKS Tech</a>
+      · <a href="/privacy.html">Privacy</a>
+    </div>
+    <button type="button" class="ld-btn primary" id="ldLoginFoot">Log in →</button>
+  </div>
+</section>
 
 <!-- Install bar -->
 <div id="installBar" class="hide">
-  <img src="/icon-96.png" alt="">
+  <img src="/Assets/icon-96.png" alt="">
   <span>Install FPJob – Packaging Industry Network</span>
   <button class="go" id="installBtn">Download app</button>
   <button class="x" id="installX" aria-label="Dismiss">×</button>
@@ -30,7 +139,18 @@
 
 <!-- Login -->
 <section id="login" class="hide">
-  <div class="brand"><img src="/icon-192.png" alt=""><div><h1>FPJob</h1><p>Packaging Industry Network · Members only</p></div></div>
+  <div class="brand"><img src="/Assets/icon-192.png" alt=""><div><h1>FPJob</h1><p>Packaging Industry Network · Members only</p></div></div>
+  <p class="login-purpose">Verified network for flexible packaging — jobs, members, chats &amp; resume tools.</p>
+  <div class="login-install-row" id="loginInstallRow" role="navigation" aria-label="Install app">
+    <button type="button" class="fp-sec-install" id="loginPwaBtn" title="Install FPJob app">
+      <span class="fp-sec-ic">📲</span>
+      <span class="fp-sec-lb">Install app · iOS / Android / Windows</span>
+    </button>
+    <button type="button" class="fp-sec-install ghost" id="loginShareBtn" title="Share FPJob">
+      <span class="fp-sec-ic">📤</span>
+      <span class="fp-sec-lb">Share app</span>
+    </button>
+  </div>
   <div class="box">
     <div id="stepPhone">
       <label for="phone">Mobile number</label>
@@ -38,8 +158,10 @@
       <button class="btn" id="sendOtp">Send OTP</button>
     </div>
     <div id="stepOtp" class="hide">
-      <label for="otp">Enter the 6-digit OTP sent to <b id="sentTo"></b></label>
-      <input id="otp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••">
+      <label for="otp">FPJob verification — 6-digit OTP</label>
+      <p class="otp-brand-note">Code is for <b>fpjob.vkstech.com</b> — not Man Power or Mentor</p>
+      <p class="otp-sent-line">Sent to <b id="sentTo"></b></p>
+      <input id="otp" type="text" name="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" enterkeyhint="done" autocapitalize="off" spellcheck="false" placeholder="••••••">
       <button class="btn" id="verifyOtp">Verify and sign in</button>
       <div style="display:flex;justify-content:space-between;margin-top:6px">
         <button class="link" id="changeNum">Change number</button>
@@ -53,7 +175,15 @@
 
 <!-- App -->
 <div id="app" class="hide">
-  <header class="top"><img src="/icon-96.png" alt=""><h2 id="pageTitle">Chats</h2><small id="who"></small></header>
+  <header class="top">
+    <img src="/Assets/icon-96.png" alt="">
+    <h2 id="pageTitle">Chats</h2>
+    <div class="hdr-actions">
+      <button type="button" class="hdr-chip" id="shareAppBtn" title="Share app" aria-label="Share app">📤 Share</button>
+      <button type="button" class="hdr-chip" id="pwaInstallBtn" title="Install app" aria-label="Install app">📲 Install</button>
+      <small id="who"></small>
+    </div>
+  </header>
   <main>
     <section class="page on" id="page-chat">
       <div class="toolbar">
@@ -97,6 +227,18 @@
     <!-- Resume builder -->
     <section class="page" id="page-resume">
       <div class="scroll">
+        <div class="card resume-promo">
+          <div class="resume-promo-head">
+            <div>
+              <h3 style="margin:0 0 4px;font-size:16px">📄 Resume workspace</h3>
+              <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.45">Build a clean, ATS-friendly resume here — or open the full VKS Resume Builder for more templates and PDF polish.</p>
+            </div>
+          </div>
+          <div class="resume-promo-actions">
+            <button type="button" class="btn sm" id="resumeScrollBtn">Use in-app builder</button>
+            <a class="btn sm ghost" id="resumeExternalBtn" href="https://manpower.vkstech.com/resume-builder/" target="_blank" rel="noopener">Open full Resume Builder ↗</a>
+          </div>
+        </div>
         <div id="resumeRoot">
           <div class="empty">Loading resume builder…</div>
         </div>
@@ -130,7 +272,8 @@
             <button type="button" class="btn sm ghost" id="notifBtn">Enable</button>
           </div>
         </div>
-        <button class="btn ghost" id="installBtn2" style="margin-bottom:10px">Download app</button>
+        <button class="btn ghost" id="installBtn2" style="margin-bottom:10px">📲 Install / Download app</button>
+        <button class="btn ghost" id="shareBtnProfile" style="margin-bottom:10px">📤 Share FPJob</button>
         <button class="btn danger" id="logout">Log out</button>
       </div>
     </section>
@@ -169,13 +312,22 @@
 
 <div id="scrim"><div id="sheet"></div></div>
 <div id="toast"></div>
+<div id="fpInstallModal" class="fp-modal hide" role="dialog" aria-modal="true" aria-labelledby="fpInstallTitle">
+  <div class="fp-modal-card">
+    <h3 id="fpInstallTitle">📲 Install FPJob</h3>
+    <div id="fpInstallBody"></div>
+    <button type="button" class="btn" id="fpInstallClose">OK</button>
+  </div>
+</div>
 
 <script>
 // Never leave user stuck on splash if module fails
 setTimeout(function(){
   var s=document.getElementById('splash');
   if(s && s.style.display!=='none'){ s.classList.add('out'); s.style.display='none';
-    var login=document.getElementById('login'); if(login) login.classList.remove('hide');
+    var land=document.getElementById('landing');
+    if(land) land.classList.remove('hide');
+    else { var login=document.getElementById('login'); if(login) login.classList.remove('hide'); }
   }
 }, 8000);
 </script>

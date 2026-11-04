@@ -1,7 +1,7 @@
 {
   "name": "FPJob \u2013 Packaging Industry Network",
   "short_name": "FPJob",
-  "description": "FPJob \u2013 Packaging Industry Network",
+  "description": "Members-only network for flexible packaging professionals \u2014 jobs, chats, directory and resume tools.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0e3b2e",
@@ -9,16 +9,22 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/Assets/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Assets/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-96.png",
-      "sizes": "96x96",
+      "src": "/Assets/icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }

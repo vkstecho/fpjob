@@ -1,5 +1,5 @@
 /* FPJob service worker – cache shell for offline-ish use */
-const CACHE = "fpjob-v1";
+const CACHE = "fpjob-v2-assets";
 const SHELL = [
   "/",
   "/index.html",
@@ -7,7 +7,11 @@ const SHELL = [
   "/js/app.js",
   "/js/config.js",
   "/js/utils.js",
-  "/manifest.json"
+  "/manifest.json",
+  "/Assets/icon-96.png",
+  "/Assets/icon-192.png",
+  "/Assets/icon-512.png",
+  "/Assets/vkslogo.png"
 ];
 
 self.addEventListener("install", (e) => {
